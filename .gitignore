@@ -1,0 +1,7 @@
+terraform-provider-nix
+example/.terraform
+example/terraform.tfstate
+example/terraform.tfstate.backup
+example/pinned_nixpkgs
+example/nixosimage
+example/*-generated.nix
