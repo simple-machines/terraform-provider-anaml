@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func ResourceFeature() *schema.Resource {
@@ -39,42 +40,38 @@ func ResourceFeature() *schema.Resource {
 				Required:    true,
 				Description: "A reference to a Table ID the feature is derived from",
 			},
-			"window": {
-				Type:        schema.TypeSet,
-				Elem:        windowSchema(),
-				Required:    true,
-				Description: "An event window",
-				MinItems:    1,
-				MaxItems:    1,
+			"days": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Description:  "An event window",
+				ExactlyOneOf: []string{"days", "rows", "open"},
+				ValidateFunc: validation.IntAtLeast(1),
+			},
+			"rows": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Description:  "An event window",
+				ExactlyOneOf: []string{"days", "rows", "open"},
+				ValidateFunc: validation.IntAtLeast(1),
+			},
+			"open": {
+				Type:         schema.TypeBool,
+				Optional:     true,
+				Description:  "An event window",
+				ExactlyOneOf: []string{"days", "rows", "open"},
+				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+					if !val.(bool) {
+						errs = append(errs, errors.New("Open must be set to true"))
+					}
+					return
+				},
 			},
 			"aggregation": {
 				Type:     schema.TypeString,
 				Required: true,
-			},
-		},
-	}
-}
-
-func windowSchema() *schema.Resource {
-	return &schema.Resource{
-		Schema: map[string]*schema.Schema{
-			"days": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				// ExactlyOneOf: []string{"rows", "days", "open"},
-			},
-			"rows": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				// ExactlyOneOf: []string{"rows", "days", "open"},
-			},
-			"open": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{},
-				},
-				// ExactlyOneOf: []string{"rows", "days", "open"},
+				ValidateFunc: validation.StringInSlice([]string{
+					"sum", "count", "countdistinct", "avg", "std", "last", "percentagechange", "absolutechange", "standardscore",
+				}, true),
 			},
 		},
 	}
@@ -82,9 +79,9 @@ func windowSchema() *schema.Resource {
 
 func resourceFeatureRead(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
-	tableID := d.Id()
+	featureID := d.Id()
 
-	feature, err := c.GetFeature(tableID)
+	feature, err := c.GetFeature(featureID)
 	if err != nil {
 		return err
 	}
@@ -92,6 +89,43 @@ func resourceFeatureRead(d *schema.ResourceData, m interface{}) error {
 		d.SetId("")
 		return nil
 	}
+
+	if err := d.Set("name", feature.Name); err != nil {
+		return err
+	}
+	if err := d.Set("description", feature.Description); err != nil {
+		return err
+	}
+
+	if feature.Window.Type == "daywindow" {
+		err := d.Set("days", feature.Window.Days)
+		if err != nil {
+			return err
+		}
+	} else if feature.Window.Type == "rowwindow" {
+		err := d.Set("rows", feature.Window.Rows)
+		if err != nil {
+			return err
+		}
+	} else if feature.Window.Type == "openwindow" {
+		err := d.Set("open", true)
+		if err != nil {
+			return err
+		}
+	}
+
+	if err := d.Set("select", feature.Select.SQL); err != nil {
+		return err
+	}
+
+	if err := d.Set("table", strconv.Itoa(feature.Table)); err != nil {
+		return err
+	}
+
+	if err := d.Set("aggregation", feature.Aggregate.Type); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -161,52 +195,26 @@ func buildFeature(d *schema.ResourceData) (*Feature, error) {
 			return nil, err
 		}
 
-		window, err := expandWindowList(d)
-		if err != nil {
-			return nil, err
+		window := EventWindow{}
+		if d.Get("days").(int) != 0 {
+			window.Type = "daywindow"
+			window.Days = d.Get("days").(int)
+		} else if d.Get("rows").(int) != 0 {
+			window.Type = "rowwindow"
+			window.Rows = d.Get("rows").(int)
+		} else if d.Get("open").(bool) {
+			window.Type = "openwindow"
+		} else {
+			return nil, errors.New("Open window not set to true")
 		}
 
 		feature.Type = "event"
 		feature.Table = number
-		feature.Window = *window
+		feature.Window = window
 	} else {
 		feature.Type = "row"
 		return nil, errors.New("Rows not quite implemented yet")
 	}
 
 	return &feature, nil
-}
-
-func expandWindowList(d *schema.ResourceData) (*EventWindow, error) {
-	vIR := d.Get("window").(*schema.Set).List()
-	ew := EventWindow{}
-
-	if len(vIR) == 1 {
-		r := vIR[0].(map[string]interface{})
-
-		if r["days"].(int) != 0 {
-			days, _ := r["days"].(int)
-			ew = EventWindow{
-				Type: "daywindow",
-				Days: days,
-			}
-		} else if r["rows"].(int) != 0 {
-			rows, _ := r["rows"].(int)
-			ew = EventWindow{
-				Type: "rowwindow",
-				Rows: rows,
-			}
-		} else if r["open"] != nil {
-			ew = EventWindow{
-				Type: "openwindow",
-			}
-		} else {
-			return nil, errors.New("No rows, days or open specified")
-		}
-
-	} else {
-		return nil, errors.New("More than one specified")
-	}
-
-	return &ew, nil
 }

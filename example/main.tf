@@ -38,15 +38,10 @@ resource "anaml_table" "household_normalised" {
 }
 
 resource "anaml_feature" "household" {
-  name           = "household_normalised"
-  description    = "A household level view"
-
-  select = "these"
-  window {
-    rows = 3
-  }
-  table = anaml_table.household.id
-
-  aggregation = "sum"
-
+  name           = "household_count"
+  description    = "Count of household items"
+  select         = "these"
+  open           = true
+  table          = anaml_table.household.id
+  aggregation    = "count"
 }

@@ -8,7 +8,7 @@ import (
 )
 
 func (c *Client) GetFeature(featureID string) (*Feature, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/table/%s", c.HostURL, featureID), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/feature/%s", c.HostURL, featureID), nil)
 	if err != nil {
 		return nil, err
 	}
