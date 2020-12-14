@@ -31,9 +31,10 @@ func ResourceFeature() *schema.Resource {
 				Default:  "string",
 			},
 			"table": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "A reference to a Table ID the feature is derived from",
+				Type:          schema.TypeString,
+				Optional:      true,
+				Description:   "A reference to a Table ID the feature is derived from",
+				ConflictsWith: []string{"over"},
 			},
 			"select": {
 				Type:        schema.TypeString,
@@ -44,21 +45,21 @@ func ResourceFeature() *schema.Resource {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Description:  "An event window",
-				ExactlyOneOf: []string{"days", "rows", "open"},
+				ExactlyOneOf: []string{"days", "rows", "open", "over"},
 				ValidateFunc: validation.IntAtLeast(1),
 			},
 			"rows": {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Description:  "An event window",
-				ExactlyOneOf: []string{"days", "rows", "open"},
+				ExactlyOneOf: []string{"days", "rows", "open", "over"},
 				ValidateFunc: validation.IntAtLeast(1),
 			},
 			"open": {
 				Type:         schema.TypeBool,
 				Optional:     true,
 				Description:  "An event window",
-				ExactlyOneOf: []string{"days", "rows", "open"},
+				ExactlyOneOf: []string{"days", "rows", "open", "over"},
 				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
 					if !val.(bool) {
 						errs = append(errs, errors.New("Open must be set to true"))
@@ -68,10 +69,26 @@ func ResourceFeature() *schema.Resource {
 			},
 			"aggregation": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 				ValidateFunc: validation.StringInSlice([]string{
 					"sum", "count", "countdistinct", "avg", "std", "last", "percentagechange", "absolutechange", "standardscore",
 				}, true),
+				ConflictsWith: []string{"over"},
+			},
+			"over": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				Description:   "A list of Features this row feature depends on",
+				ConflictsWith: []string{"table"},
+
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"entity": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"table"},
 			},
 		},
 	}
@@ -96,34 +113,35 @@ func resourceFeatureRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("description", feature.Description); err != nil {
 		return err
 	}
-
-	if feature.Window.Type == "daywindow" {
-		err := d.Set("days", feature.Window.Days)
-		if err != nil {
-			return err
-		}
-	} else if feature.Window.Type == "rowwindow" {
-		err := d.Set("rows", feature.Window.Rows)
-		if err != nil {
-			return err
-		}
-	} else if feature.Window.Type == "openwindow" {
-		err := d.Set("open", true)
-		if err != nil {
-			return err
-		}
-	}
-
 	if err := d.Set("select", feature.Select.SQL); err != nil {
 		return err
 	}
 
-	if err := d.Set("table", strconv.Itoa(feature.Table)); err != nil {
-		return err
-	}
+	if feature.Type == "event" {
+		if feature.Window.Type == "daywindow" {
+			err := d.Set("days", feature.Window.Days)
+			if err != nil {
+				return err
+			}
+		} else if feature.Window.Type == "rowwindow" {
+			err := d.Set("rows", feature.Window.Rows)
+			if err != nil {
+				return err
+			}
+		} else if feature.Window.Type == "openwindow" {
+			err := d.Set("open", true)
+			if err != nil {
+				return err
+			}
+		}
 
-	if err := d.Set("aggregation", feature.Aggregate.Type); err != nil {
-		return err
+		if err := d.Set("table", strconv.Itoa(feature.Table)); err != nil {
+			return err
+		}
+
+		if err := d.Set("aggregation", feature.Aggregate.Type); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -183,7 +201,7 @@ func buildFeature(d *schema.ResourceData) (*Feature, error) {
 		Select: SQLExpression{
 			SQL: d.Get("select").(string),
 		},
-		Aggregate: AggregateExpression{
+		Aggregate: &AggregateExpression{
 			Type: d.Get("aggregation").(string),
 		},
 	}
@@ -210,10 +228,12 @@ func buildFeature(d *schema.ResourceData) (*Feature, error) {
 
 		feature.Type = "event"
 		feature.Table = number
-		feature.Window = window
+		feature.Window = &window
 	} else {
 		feature.Type = "row"
-		return nil, errors.New("Rows not quite implemented yet")
+		feature.Over = expandIdentifierList(d.Get("over").([]interface{}))
+		number, _ := strconv.Atoi(d.Get("entity").(string))
+		feature.EntityId = number
 	}
 
 	return &feature, nil

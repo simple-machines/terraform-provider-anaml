@@ -40,8 +40,23 @@ resource "anaml_table" "household_normalised" {
 resource "anaml_feature" "household" {
   name           = "household_count"
   description    = "Count of household items"
-  select         = "these"
-  open           = true
   table          = anaml_table.household.id
-  aggregation    = "count"
+  select         = "count"
+  aggregation    = "sum"
+  days           = 4
+}
+
+
+resource "anaml_feature_set" "household" {
+  name           = "household"
+  entity         = anaml_entity.household.id
+  features       = [ anaml_feature.household.id ]
+}
+
+resource "anaml_feature_store" "household" {
+  name           = "household"
+  description    = "Daily view of households"
+  feature_set    = anaml_feature_set.household.id
+  mode           = "daily"
+  namespace      = "household"
 }

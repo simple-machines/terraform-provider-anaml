@@ -49,16 +49,18 @@ type DataType struct {
 
 // Again, completely normalised.
 type Feature struct {
-	Id          int                 `json:"id,omitempty"`
-	Name        string              `json:"name"`
-	Description string              `json:"description"`
-	Type        string              `json:"adt_type"`
-	DataType    DataType            `json:"dataType"`
-	Table       int                 `json:"table"`
-	Window      EventWindow         `json:"window"`
-	Select      SQLExpression       `json:"select"`
-	Aggregate   AggregateExpression `json:"aggregate"`
-	// PostExpr    SQLExpression       `json:"postAggregateExpr"`
+	Id          int                  `json:"id,omitempty"`
+	Name        string               `json:"name"`
+	Description string               `json:"description"`
+	Type        string               `json:"adt_type"`
+	DataType    DataType             `json:"dataType"`
+	Table       int                  `json:"table,omitempty"`
+	Window      *EventWindow         `json:"window,omitempty"`
+	Select      SQLExpression        `json:"select"`
+	Aggregate   *AggregateExpression `json:"aggregate,omitempty"`
+	PostExpr    *SQLExpression       `json:"postAggregateExpr,omitempty"`
+	Over        []int                `json:"over,omitempty"`
+	EntityId    int                  `json:"entityId,omitempty"`
 }
 
 // Again, completely normalised.
@@ -73,4 +75,22 @@ type FeatureTemplate struct {
 	Select       SQLExpression         `json:"select"`
 	Aggregations []AggregateExpression `json:"aggregations"`
 	PostExpr     SQLExpression         `json:"postAggregateExpr"`
+}
+
+type FeatureSet struct {
+	Id          int    `json:"id,omitempty"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	EntityId    int    `json:"entity,omitempty"`
+	Features    []int  `json:"features,omitempty"`
+}
+
+type FeatureStore struct {
+	Id          int    `json:"id,omitempty"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	FeatureSet  int    `json:"featureSet"`
+	Namespace   string `json:"namespace"`
+	TableName   string `json:"tableName,omitempty"`
+	Mode        string `json:"mode"`
 }

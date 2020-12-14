@@ -20,13 +20,11 @@ func ResourceEntity() *schema.Resource {
 			},
 			"description": {
 				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "root",
+				Required: true,
 			},
 			"default_column": {
 				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "root",
+				Required: true,
 			},
 		},
 	}
