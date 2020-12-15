@@ -14,6 +14,9 @@ func ResourceFeature() *schema.Resource {
 		Read:   resourceFeatureRead,
 		Update: resourceFeatureUpdate,
 		Delete: resourceFeatureDelete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": {

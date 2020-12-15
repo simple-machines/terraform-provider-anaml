@@ -12,6 +12,9 @@ func ResourceTable() *schema.Resource {
 		Read:   resourceTableRead,
 		Update: resourceTableUpdate,
 		Delete: resourceTableDelete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": {
