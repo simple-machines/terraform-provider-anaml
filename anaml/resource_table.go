@@ -37,7 +37,8 @@ func ResourceTable() *schema.Resource {
 				RequiredWith: []string{"expression"},
 
 				Elem: &schema.Schema{
-					Type: schema.TypeString,
+					Type:         schema.TypeString,
+					ValidateFunc: validateAnamlIdentifier(),
 				},
 			},
 			"event": {
@@ -54,8 +55,9 @@ func eventSchema() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"entity": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validateAnamlIdentifier(),
 			},
 			"key_column": {
 				Type:     schema.TypeString,

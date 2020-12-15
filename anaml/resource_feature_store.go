@@ -28,8 +28,9 @@ func ResourceFeatureStore() *schema.Resource {
 				Optional: true,
 			},
 			"feature_set": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validateAnamlIdentifier(),
 			},
 			"namespace": {
 				Type:     schema.TypeString,

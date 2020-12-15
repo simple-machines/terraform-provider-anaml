@@ -1,7 +1,11 @@
 package anaml
 
 import (
+	"regexp"
 	"strconv"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 // Takes the result of flatmap.Expand for an array of strings
@@ -37,4 +41,8 @@ func identifierList(ints []int) []string {
 		vs = append(vs, strconv.Itoa(v))
 	}
 	return vs
+}
+
+func validateAnamlIdentifier() schema.SchemaValidateFunc {
+	return validation.StringMatch(regexp.MustCompile(`^[0-9]+$`), "Must be parsable as an integer")
 }

@@ -26,8 +26,9 @@ func ResourceFeatureSet() *schema.Resource {
 				Optional: true,
 			},
 			"entity": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validateAnamlIdentifier(),
 			},
 			"features": {
 				Type:        schema.TypeList,
@@ -35,7 +36,8 @@ func ResourceFeatureSet() *schema.Resource {
 				Required:    true,
 
 				Elem: &schema.Schema{
-					Type: schema.TypeString,
+					Type:         schema.TypeString,
+					ValidateFunc: validateAnamlIdentifier(),
 				},
 			},
 		},

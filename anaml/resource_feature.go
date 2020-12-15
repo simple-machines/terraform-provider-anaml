@@ -37,6 +37,7 @@ func ResourceFeature() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 				Description:   "A reference to a Table ID the feature is derived from",
+				ValidateFunc:  validateAnamlIdentifier(),
 				ConflictsWith: []string{"over"},
 			},
 			"select": {
@@ -85,12 +86,14 @@ func ResourceFeature() *schema.Resource {
 				ConflictsWith: []string{"table"},
 
 				Elem: &schema.Schema{
-					Type: schema.TypeString,
+					Type:         schema.TypeString,
+					ValidateFunc: validateAnamlIdentifier(),
 				},
 			},
 			"entity": {
 				Type:          schema.TypeString,
 				Optional:      true,
+				ValidateFunc:  validateAnamlIdentifier(),
 				ConflictsWith: []string{"table"},
 			},
 		},
