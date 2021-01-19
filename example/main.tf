@@ -1,9 +1,9 @@
-
 provider "anaml" {
   host     = "http://127.0.0.1:8080/api"
   username = "admin"
   password = "test password"
   branch   = "development"
+  version  = "0.3.4"
 }
 
 resource "anaml_entity" "household" {
@@ -17,8 +17,9 @@ resource "anaml_table" "household" {
   description    = "A household level view"
 
   event {
-    entity = anaml_entity.household.id
-    key_column = "household_id"
+    entities = {
+      (anaml_entity.household.id) = "household_id"
+    }
     timestamp_column = "timestamp"
   }
 }
@@ -31,8 +32,9 @@ resource "anaml_table" "household_normalised" {
   sources        = [ anaml_table.household.id ]
 
   event {
-    entity = anaml_entity.household.id
-    key_column = "household"
+    entities = {
+      (anaml_entity.household.id) = "household"
+    }
     timestamp_column = "timestamp"
   }
 }

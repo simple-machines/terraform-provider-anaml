@@ -13,9 +13,8 @@ type TimestampInfo struct {
 }
 
 type EventDescription struct {
-	Id            int            `json:"entityId"`
-	Column        string         `json:"keyColumn"`
-	TimestampInfo *TimestampInfo `json:"timestampInfo"`
+	Entities      map[string]string `json:"entities"`
+	TimestampInfo *TimestampInfo    `json:"timestampInfo"`
 }
 
 // Go's support for ADTs is so bad we need to use a completely normalised form.

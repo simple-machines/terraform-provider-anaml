@@ -8,6 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
+var identifierPattern = regexp.MustCompile(`^[0-9]+$`)
+
 // Takes the result of flatmap.Expand for an array of strings
 // and returns a []string
 func expandStringList(configured []interface{}) []string {
@@ -44,5 +46,10 @@ func identifierList(ints []int) []string {
 }
 
 func validateAnamlIdentifier() schema.SchemaValidateFunc {
-	return validation.StringMatch(regexp.MustCompile(`^[0-9]+$`), "Must be parsable as an integer")
+	return validation.StringMatch(identifierPattern, "Must be parsable as an integer")
 }
+
+func validateMapKeysAnamlIdentifier() schema.SchemaValidateDiagFunc {
+	return validation.MapKeyMatch(identifierPattern, "Map keys must be parsable as an integer")
+}
+
