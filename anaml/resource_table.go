@@ -41,7 +41,7 @@ func ResourceTable() *schema.Resource {
 				},
 			},
 			"event": {
-				Type:     schema.TypeSet,
+				Type:     schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
 				Elem:     eventSchema(),
@@ -165,7 +165,7 @@ func buildTable(d *schema.ResourceData) *Table {
 }
 
 func expandEntityDescription(d *schema.ResourceData) *EventDescription {
-	vIR := d.Get("event").(*schema.Set).List()
+	vIR := d.Get("event").([]interface{})
 	ed := EventDescription{}
 
 	if len(vIR) == 1 {
