@@ -63,6 +63,9 @@ func NewClient(host, username, password, branch *string) (*Client, error) {
 		}
 
 		body, err := c.doRequest(req)
+		if err != nil {
+			return nil, err
+		}
 
 		// parse response body
 		ar := AuthResponse{}
