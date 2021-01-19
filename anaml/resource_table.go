@@ -2,7 +2,6 @@ package anaml
 
 import (
 	"strconv"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -54,14 +53,13 @@ func ResourceTable() *schema.Resource {
 func eventSchema() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
-			"entity": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validateAnamlIdentifier(),
-			},
-			"key_column": {
-				Type:     schema.TypeString,
+			"entities": {
+				Type: schema.TypeMap,
 				Required: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				ValidateDiagFunc: validateMapKeysAnamlIdentifier(),
 			},
 			"timestamp_column": {
 				Type:     schema.TypeString,
@@ -172,11 +170,15 @@ func expandEntityDescription(d *schema.ResourceData) *EventDescription {
 
 	if len(vIR) == 1 {
 		r := vIR[0].(map[string]interface{})
-		number, _ := strconv.Atoi(r["entity"].(string))
+
+		entities := make(map[string]string)
+
+		for k, v := range r["entities"].(map[string]interface {}) {
+			entities[k] = v.(string)
+		}
 
 		ed = EventDescription{
-			Id:     number,
-			Column: r["key_column"].(string),
+			Entities: entities,
 			TimestampInfo: &TimestampInfo{
 				Column: r["timestamp_column"].(string),
 			},
@@ -194,8 +196,7 @@ func flattenEntityDescription(ed *EventDescription) []interface{} {
 
 		oi := make(map[string]interface{})
 
-		oi["entity"] = strconv.Itoa(ed.Id)
-		oi["key_column"] = ed.Column
+		oi["entities"] = ed.Entities
 
 		td := ed.TimestampInfo
 		oi["timestamp_column"] = td.Column
