@@ -43,7 +43,12 @@ func ResourceFeature() *schema.Resource {
 			"select": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "A reference to a Table ID the feature is derived from",
+				Description: "An SQL expression for the column to aggregate",
+			},
+			"filter": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "An SQL column expression to filter with",
 			},
 			"days": {
 				Type:         schema.TypeInt,
@@ -121,6 +126,11 @@ func resourceFeatureRead(d *schema.ResourceData, m interface{}) error {
 	}
 	if err := d.Set("select", feature.Select.SQL); err != nil {
 		return err
+	}
+	if feature.Filter != nil {
+		if err := d.Set("filter", feature.Filter.SQL); err != nil {
+			return err
+		}
 	}
 
 	if feature.Type == "event" {
@@ -206,6 +216,9 @@ func buildFeature(d *schema.ResourceData) (*Feature, error) {
 		},
 		Select: SQLExpression{
 			SQL: d.Get("select").(string),
+		},
+		Filter: &SQLExpression{
+			SQL: d.Get("filter").(string),
 		},
 		Aggregate: &AggregateExpression{
 			Type: d.Get("aggregation").(string),

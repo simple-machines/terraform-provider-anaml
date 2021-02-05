@@ -56,6 +56,7 @@ type Feature struct {
 	Table       int                  `json:"table,omitempty"`
 	Window      *EventWindow         `json:"window,omitempty"`
 	Select      SQLExpression        `json:"select"`
+	Filter      *SQLExpression       `json:"filter"`
 	Aggregate   *AggregateExpression `json:"aggregate,omitempty"`
 	PostExpr    *SQLExpression       `json:"postAggregateExpr,omitempty"`
 	Over        []int                `json:"over,omitempty"`
