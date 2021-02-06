@@ -31,7 +31,7 @@ func ResourceFeatureSet() *schema.Resource {
 				ValidateFunc: validateAnamlIdentifier(),
 			},
 			"features": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Description: "Features to include in the feature set",
 				Required:    true,
 
@@ -80,7 +80,7 @@ func resourceFeatureSetCreate(d *schema.ResourceData, m interface{}) error {
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		EntityId:    entity,
-		Features:    expandIdentifierList(d.Get("features").([]interface{})),
+		Features:    expandIdentifierList(d.Get("features").(*schema.Set).List()),
 	}
 
 	e, err := c.CreateFeatureSet(FeatureSet)
@@ -101,7 +101,7 @@ func resourceFeatureSetUpdate(d *schema.ResourceData, m interface{}) error {
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		EntityId:    entity,
-		Features:    expandIdentifierList(d.Get("features").([]interface{})),
+		Features:    expandIdentifierList(d.Get("features").(*schema.Set).List()),
 	}
 
 	err := c.UpdateFeatureSet(FeatureSetID, FeatureSet)

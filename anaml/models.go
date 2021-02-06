@@ -19,13 +19,16 @@ type EventDescription struct {
 
 // Go's support for ADTs is so bad we need to use a completely normalised form.
 type Table struct {
-	Id          int               `json:"id,omitempty"`
-	Name        string            `json:"name"`
-	Description string            `json:"description"`
-	Type        string            `json:"adt_type"`
-	Sources     []int             `json:"sources"`
-	Expression  string            `json:"expression"`
-	EventInfo   *EventDescription `json:"eventDescription,omitempty"`
+	Id            int               `json:"id,omitempty"`
+	Name          string            `json:"name"`
+	Description   string            `json:"description"`
+	Type          string            `json:"adt_type"`
+	Sources       []int             `json:"sources"`
+	Expression    string            `json:"expression"`
+	EventInfo     *EventDescription `json:"eventDescription,omitempty"`
+	Entity        int               `json:"entityId,omitempty"`
+	Pivot         int               `json:"pivotFeature,omitempty"`
+	ExtraFeatures []int             `json:"extraFeatures,omitempty"`
 }
 
 type EventWindow struct {

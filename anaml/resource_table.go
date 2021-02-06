@@ -2,6 +2,7 @@ package anaml
 
 import (
 	"strconv"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -46,6 +47,31 @@ func ResourceTable() *schema.Resource {
 				MaxItems: 1,
 				Elem:     eventSchema(),
 			},
+
+			"entity": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ValidateFunc:  validateAnamlIdentifier(),
+				ConflictsWith: []string{"event"},
+				RequiredWith:  []string{"pivot_feature"},
+			},
+			"pivot_feature": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ValidateFunc:  validateAnamlIdentifier(),
+				ConflictsWith: []string{"event"},
+			},
+			"extra_features": {
+				Type:          schema.TypeList,
+				Description:   "Tables upon which this view is created",
+				Optional:      true,
+				ConflictsWith: []string{"event"},
+
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validateAnamlIdentifier(),
+				},
+			},
 		},
 	}
 }
@@ -54,7 +80,7 @@ func eventSchema() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"entities": {
-				Type: schema.TypeMap,
+				Type:     schema.TypeMap,
 				Required: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
@@ -106,6 +132,21 @@ func resourceTableRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("sources", identifierList(table.Sources)); err != nil {
 		return err
 	}
+
+	if table.Type == "pivot" {
+		if err := d.Set("entity", strconv.Itoa(table.Entity)); err != nil {
+			return err
+		}
+
+		if err := d.Set("pivot_feature", strconv.Itoa(table.Pivot)); err != nil {
+			return err
+		}
+
+		if err := d.Set("extra_features", identifierList(table.ExtraFeatures)); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -153,10 +194,18 @@ func buildTable(d *schema.ResourceData) *Table {
 		EventInfo:   expandEntityDescription(d),
 	}
 
+	entity, _ := strconv.Atoi(d.Get("entity").(string))
+	pivot, _ := strconv.Atoi(d.Get("pivot_feature").(string))
+
 	if d.Get("expression").(string) != "" {
 		table.Type = "view"
 		table.Expression = d.Get("expression").(string)
 		table.Sources = expandIdentifierList(d.Get("sources").([]interface{}))
+	} else if d.Get("pivot_feature").(string) != "" {
+		table.Type = "pivot"
+		table.Entity = entity
+		table.Pivot = pivot
+		table.ExtraFeatures = expandIdentifierList(d.Get("extra_features").([]interface{}))
 	} else {
 		table.Type = "root"
 	}
@@ -173,7 +222,7 @@ func expandEntityDescription(d *schema.ResourceData) *EventDescription {
 
 		entities := make(map[string]string)
 
-		for k, v := range r["entities"].(map[string]interface {}) {
+		for k, v := range r["entities"].(map[string]interface{}) {
 			entities[k] = v.(string)
 		}
 

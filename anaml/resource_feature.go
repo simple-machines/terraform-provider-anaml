@@ -217,12 +217,15 @@ func buildFeature(d *schema.ResourceData) (*Feature, error) {
 		Select: SQLExpression{
 			SQL: d.Get("select").(string),
 		},
-		Filter: &SQLExpression{
-			SQL: d.Get("filter").(string),
-		},
 		Aggregate: &AggregateExpression{
 			Type: d.Get("aggregation").(string),
 		},
+	}
+
+	if d.Get("filter").(string) != "" {
+		feature.Filter = &SQLExpression{
+			SQL: d.Get("filter").(string),
+		}
 	}
 
 	if d.Get("table").(string) != "" {
