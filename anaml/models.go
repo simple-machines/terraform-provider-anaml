@@ -7,6 +7,13 @@ type Entity struct {
 	DefaultColumn string `json:"defaultColumn"`
 }
 
+type EntityMapping struct {
+	Id      int `json:"id,omitempty"`
+	From    int `json:"from"`
+	To      int `json:"to"`
+	Mapping int `json:"mapping"`
+}
+
 type TimestampInfo struct {
 	Column string `json:"timestampColumn"`
 	Zone   string `json:"timezone,omitempty"`
@@ -23,11 +30,11 @@ type Table struct {
 	Name          string            `json:"name"`
 	Description   string            `json:"description"`
 	Type          string            `json:"adt_type"`
-	Sources       []int             `json:"sources"`
-	Expression    string            `json:"expression"`
+	Sources       []int             `json:"sources,omitempty"`
+	Source        int               `json:"source,omitempty"`
+	Expression    string            `json:"expression,omitempty"`
 	EventInfo     *EventDescription `json:"eventDescription,omitempty"`
-	Entity        int               `json:"entityId,omitempty"`
-	Pivot         int               `json:"pivotFeature,omitempty"`
+	EntityMapping int               `json:"entityMapping,omitempty"`
 	ExtraFeatures []int             `json:"extraFeatures,omitempty"`
 }
 
@@ -96,4 +103,22 @@ type FeatureStore struct {
 	Namespace   string `json:"namespace"`
 	TableName   string `json:"tableName,omitempty"`
 	Mode        string `json:"mode"`
+}
+
+type Source struct {
+	Id          int    `json:"id,omitempty"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+type Destination struct {
+	Id          int    `json:"id,omitempty"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+type Cluster struct {
+	Id          int    `json:"id,omitempty"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }

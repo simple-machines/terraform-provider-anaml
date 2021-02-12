@@ -52,4 +52,3 @@ func validateAnamlIdentifier() schema.SchemaValidateFunc {
 func validateMapKeysAnamlIdentifier() schema.SchemaValidateDiagFunc {
 	return validation.MapKeyMatch(identifierPattern, "Map keys must be parsable as an integer")
 }
-

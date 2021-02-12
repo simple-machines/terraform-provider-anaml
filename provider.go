@@ -9,35 +9,40 @@ import (
 func Provider() *schema.Provider {
 	provider := schema.Provider{
 		Schema: map[string]*schema.Schema{
-			"host": &schema.Schema{
+			"host": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("ANAML_HOST", nil),
 			},
-			"username": &schema.Schema{
+			"username": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("ANAML_USERNAME", nil),
 			},
-			"password": &schema.Schema{
+			"password": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Sensitive:   true,
 				DefaultFunc: schema.EnvDefaultFunc("ANAML_PASSWORD", nil),
 			},
-			"branch": &schema.Schema{
+			"branch": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("ANAML_DEFAULT_BRANCH", nil),
 			},
 		},
 
+		DataSourcesMap: map[string]*schema.Resource{
+			"anaml_source": anaml.ResourceSource(),
+		},
+
 		ResourcesMap: map[string]*schema.Resource{
-			"anaml_entity":        anaml.ResourceEntity(),
-			"anaml_table":         anaml.ResourceTable(),
-			"anaml_feature":       anaml.ResourceFeature(),
-			"anaml_feature_set":   anaml.ResourceFeatureSet(),
-			"anaml_feature_store": anaml.ResourceFeatureStore(),
+			"anaml_entity":         anaml.ResourceEntity(),
+			"anaml_entity_mapping": anaml.ResourceEntityMapping(),
+			"anaml_table":          anaml.ResourceTable(),
+			"anaml_feature":        anaml.ResourceFeature(),
+			"anaml_feature_set":    anaml.ResourceFeatureSet(),
+			"anaml_feature_store":  anaml.ResourceFeatureStore(),
 		},
 
 		ConfigureFunc: providerConfigure,

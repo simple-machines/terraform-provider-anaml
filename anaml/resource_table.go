@@ -48,14 +48,7 @@ func ResourceTable() *schema.Resource {
 				Elem:     eventSchema(),
 			},
 
-			"entity": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ValidateFunc:  validateAnamlIdentifier(),
-				ConflictsWith: []string{"event"},
-				RequiredWith:  []string{"pivot_feature"},
-			},
-			"pivot_feature": {
+			"entity_mapping": {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ValidateFunc:  validateAnamlIdentifier(),
@@ -71,6 +64,12 @@ func ResourceTable() *schema.Resource {
 					Type:         schema.TypeString,
 					ValidateFunc: validateAnamlIdentifier(),
 				},
+			},
+			"source": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validateAnamlIdentifier(),
+				ExactlyOneOf: []string{"source", "expression", "entity_mapping"},
 			},
 		},
 	}
@@ -129,16 +128,16 @@ func resourceTableRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
+	if err := d.Set("source", strconv.Itoa(table.Source)); err != nil {
+		return err
+	}
+
 	if err := d.Set("sources", identifierList(table.Sources)); err != nil {
 		return err
 	}
 
 	if table.Type == "pivot" {
-		if err := d.Set("entity", strconv.Itoa(table.Entity)); err != nil {
-			return err
-		}
-
-		if err := d.Set("pivot_feature", strconv.Itoa(table.Pivot)); err != nil {
+		if err := d.Set("entity_mapping", strconv.Itoa(table.EntityMapping)); err != nil {
 			return err
 		}
 
@@ -194,20 +193,20 @@ func buildTable(d *schema.ResourceData) *Table {
 		EventInfo:   expandEntityDescription(d),
 	}
 
-	entity, _ := strconv.Atoi(d.Get("entity").(string))
-	pivot, _ := strconv.Atoi(d.Get("pivot_feature").(string))
-
 	if d.Get("expression").(string) != "" {
 		table.Type = "view"
 		table.Expression = d.Get("expression").(string)
 		table.Sources = expandIdentifierList(d.Get("sources").([]interface{}))
-	} else if d.Get("pivot_feature").(string) != "" {
+	} else if d.Get("entity_mapping").(string) != "" {
 		table.Type = "pivot"
-		table.Entity = entity
-		table.Pivot = pivot
+		entity, _ := strconv.Atoi(d.Get("entity_mapping").(string))
+
+		table.EntityMapping = entity
 		table.ExtraFeatures = expandIdentifierList(d.Get("extra_features").([]interface{}))
 	} else {
 		table.Type = "root"
+		source, _ := strconv.Atoi(d.Get("source").(string))
+		table.Source = source
 	}
 
 	return &table
