@@ -128,12 +128,14 @@ func resourceTableRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	if err := d.Set("source", strconv.Itoa(table.Source)); err != nil {
+	if err := d.Set("sources", identifierList(table.Sources)); err != nil {
 		return err
 	}
 
-	if err := d.Set("sources", identifierList(table.Sources)); err != nil {
-		return err
+	if table.Type == "root" {
+		if err := d.Set("source", strconv.Itoa(*table.Source)); err != nil {
+			return err
+		}
 	}
 
 	if table.Type == "pivot" {
@@ -206,7 +208,7 @@ func buildTable(d *schema.ResourceData) *Table {
 	} else {
 		table.Type = "root"
 		source, _ := strconv.Atoi(d.Get("source").(string))
-		table.Source = source
+		table.Source = &source
 	}
 
 	return &table

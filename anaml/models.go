@@ -31,7 +31,7 @@ type Table struct {
 	Description   string            `json:"description"`
 	Type          string            `json:"adt_type"`
 	Sources       []int             `json:"sources,omitempty"`
-	Source        int               `json:"source,omitempty"`
+	Source        *int              `json:"source,omitempty"`
 	Expression    string            `json:"expression,omitempty"`
 	EventInfo     *EventDescription `json:"eventDescription,omitempty"`
 	EntityMapping int               `json:"entityMapping,omitempty"`
@@ -96,13 +96,14 @@ type FeatureSet struct {
 }
 
 type FeatureStore struct {
-	Id          int    `json:"id,omitempty"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	FeatureSet  int    `json:"featureSet"`
-	Namespace   string `json:"namespace"`
-	TableName   string `json:"tableName,omitempty"`
-	Mode        string `json:"mode"`
+	Id           int                    `json:"id,omitempty"`
+	Name         string                 `json:"name"`
+	Description  string                 `json:"description"`
+	FeatureSet   int                    `json:"featureSet"`
+	Enabled      bool                   `json:"enabled"`
+	Mode         string                 `json:"mode"`
+	Destinations []DestinationReference `json:"destinations"`
+	Cluster      int                    `json:"cluster"`
 }
 
 type Source struct {
@@ -115,6 +116,12 @@ type Destination struct {
 	Id          int    `json:"id,omitempty"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
+}
+
+type DestinationReference struct {
+	DestinationId int    `json:"destinationId"`
+	Folder        string `json:"folder,omitempty"`
+	TableName     string `json:"tableName,omitempty"`
 }
 
 type Cluster struct {

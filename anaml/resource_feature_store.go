@@ -32,9 +32,9 @@ func ResourceFeatureStore() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validateAnamlIdentifier(),
 			},
-			"namespace": {
-				Type:     schema.TypeString,
-				Optional: true,
+			"enabled": {
+				Type:     schema.TypeBool,
+				Required: true,
 			},
 			"mode": {
 				Type:     schema.TypeString,
@@ -45,6 +45,38 @@ func ResourceFeatureStore() *schema.Resource {
 				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
 					return strings.ToTitle(old) == strings.ToTitle(new)
 				},
+			},
+			"destination": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem:     destinationSchema(),
+			},
+			"cluster": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validateAnamlIdentifier(),
+			},
+		},
+	}
+}
+
+func destinationSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"destination": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validateAnamlIdentifier(),
+			},
+			"folder": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+			"table_name": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 		},
 	}
@@ -72,10 +104,16 @@ func resourceFeatureStoreRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("feature_set", strconv.Itoa(FeatureStore.FeatureSet)); err != nil {
 		return err
 	}
-	if err := d.Set("namespace", FeatureStore.Namespace); err != nil {
+	if err := d.Set("enabled", FeatureStore.Enabled); err != nil {
 		return err
 	}
 	if err := d.Set("mode", FeatureStore.Mode); err != nil {
+		return err
+	}
+	if err := d.Set("destination", flattenDestinationReferences(FeatureStore.Destinations)); err != nil {
+		return err
+	}
+	if err := d.Set("cluster", strconv.Itoa(FeatureStore.Cluster)); err != nil {
 		return err
 	}
 	return err
@@ -84,13 +122,16 @@ func resourceFeatureStoreRead(d *schema.ResourceData, m interface{}) error {
 func resourceFeatureStoreCreate(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
 	featureSet, _ := strconv.Atoi(d.Get("feature_set").(string))
+	cluster, _ := strconv.Atoi(d.Get("cluster").(string))
 
 	FeatureStore := FeatureStore{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		FeatureSet:  featureSet,
-		Namespace:   d.Get("namespace").(string),
-		Mode:        strings.ToTitle(d.Get("mode").(string)),
+		Name:         d.Get("name").(string),
+		Description:  d.Get("description").(string),
+		FeatureSet:   featureSet,
+		Enabled:      d.Get("enabled").(bool),
+		Mode:         strings.ToTitle(d.Get("mode").(string)),
+		Destinations: expandDestinationReferences(d),
+		Cluster:      cluster,
 	}
 
 	e, err := c.CreateFeatureStore(FeatureStore)
@@ -105,14 +146,17 @@ func resourceFeatureStoreCreate(d *schema.ResourceData, m interface{}) error {
 func resourceFeatureStoreUpdate(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
 	featureSet, _ := strconv.Atoi(d.Get("feature_set").(string))
+	cluster, _ := strconv.Atoi(d.Get("cluster").(string))
 	FeatureStoreID := d.Id()
 
 	FeatureStore := FeatureStore{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		FeatureSet:  featureSet,
-		Namespace:   d.Get("namespace").(string),
-		Mode:        strings.ToTitle(d.Get("mode").(string)),
+		Name:         d.Get("name").(string),
+		Description:  d.Get("description").(string),
+		FeatureSet:   featureSet,
+		Enabled:      d.Get("enabled").(bool),
+		Mode:         strings.ToTitle(d.Get("mode").(string)),
+		Destinations: expandDestinationReferences(d),
+		Cluster:      cluster,
 	}
 
 	err := c.UpdateFeatureStore(FeatureStoreID, FeatureStore)
@@ -133,4 +177,41 @@ func resourceFeatureStoreDelete(d *schema.ResourceData, m interface{}) error {
 	}
 
 	return nil
+}
+
+func expandDestinationReferences(d *schema.ResourceData) []DestinationReference {
+	drs := d.Get("destination").([]interface{})
+	res := make([]DestinationReference, 0, len(drs))
+
+	for _, dr := range drs {
+		val, _ := dr.(map[string]interface{})
+		destId, _ := strconv.Atoi(val["destination"].(string))
+
+		parsed := DestinationReference{
+			DestinationId: destId,
+			Folder:        val["folder"].(string),
+			TableName:     val["table_name"].(string),
+		}
+		res = append(res, parsed)
+	}
+
+	return res
+}
+
+func flattenDestinationReferences(destinations []DestinationReference) []interface{} {
+	res := make([]interface{}, len(destinations))
+
+	for _, destination := range destinations {
+		single := make(map[string]interface{})
+		single["destination"] = strconv.Itoa(destination.DestinationId)
+		if destination.Folder != "" {
+			single["folder"] = destination.Folder
+		}
+		if single["table_name"] != "" {
+			single["table_name"] = destination.TableName
+		}
+		res = append(res, single)
+	}
+
+	return res
 }

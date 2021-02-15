@@ -33,7 +33,9 @@ func Provider() *schema.Provider {
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
-			"anaml_source": anaml.ResourceSource(),
+			"anaml_cluster":     anaml.ResourceCluster(),
+			"anaml_destination": anaml.ResourceDestination(),
+			"anaml_source":      anaml.ResourceSource(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
