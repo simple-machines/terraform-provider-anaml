@@ -198,18 +198,14 @@ func expandDestinationReferences(d *schema.ResourceData) []DestinationReference 
 	return res
 }
 
-func flattenDestinationReferences(destinations []DestinationReference) []interface{} {
-	res := make([]interface{}, len(destinations))
+func flattenDestinationReferences(destinations []DestinationReference) []map[string]interface{} {
+	res := make([]map[string]interface{}, 0, len(destinations))
 
 	for _, destination := range destinations {
 		single := make(map[string]interface{})
 		single["destination"] = strconv.Itoa(destination.DestinationId)
-		if destination.Folder != "" {
-			single["folder"] = destination.Folder
-		}
-		if single["table_name"] != "" {
-			single["table_name"] = destination.TableName
-		}
+		single["folder"] = destination.Folder
+		single["table_name"] = destination.TableName
 		res = append(res, single)
 	}
 
