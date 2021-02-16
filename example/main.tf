@@ -2,8 +2,20 @@ provider "anaml" {
   host     = "http://127.0.0.1:8080/api"
   username = "admin"
   password = "test password"
-  branch   = "development"
+  branch   = "official"
   version  = "0.3.4"
+}
+
+data "anaml_source" "minio" {
+  name = "Minio S3 Source"
+}
+
+data "anaml_cluster" "default_local" {
+  name = "Default Local"
+}
+
+data "anaml_destination" "minio" {
+  name = "Minio S3 Destination"
 }
 
 resource "anaml_entity" "household" {
@@ -15,6 +27,7 @@ resource "anaml_entity" "household" {
 resource "anaml_table" "household" {
   name           = "household"
   description    = "A household level view"
+  source         = data.anaml_source.minio.id
 
   event {
     entities = {
@@ -39,20 +52,29 @@ resource "anaml_table" "household_normalised" {
   }
 }
 
-resource "anaml_feature" "household" {
+resource "anaml_feature_template" "household" {
   name           = "household_count"
   description    = "Count of household items"
   table          = anaml_table.household.id
   select         = "count"
-  aggregation    = "sum"
-  days           = 4
+  aggregations   = [ "sum" ]
+  days           = [ 1, 2, 4 ]
 }
 
+data "anaml_feature" "household" {
+  for_each       = toset(["1", "2", "4"])
+  template       = anaml_feature_template.household.id
+  days           = parseint(each.key, 10)
+}
 
 resource "anaml_feature_set" "household" {
   name           = "household"
   entity         = anaml_entity.household.id
-  features       = [ anaml_feature.household.id ]
+  features       = [
+      data.anaml_feature.household["1"].id
+    , data.anaml_feature.household["2"].id
+    , data.anaml_feature.household["4"].id
+    ]
 }
 
 resource "anaml_feature_store" "household" {
@@ -60,5 +82,10 @@ resource "anaml_feature_store" "household" {
   description    = "Daily view of households"
   feature_set    = anaml_feature_set.household.id
   mode           = "daily"
-  namespace      = "household"
+  enabled        = true
+  cluster        = data.anaml_cluster.default_local.id
+  destination {
+    destination = data.anaml_destination.minio.id
+    folder = "household"
+  }
 }

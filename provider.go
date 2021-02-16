@@ -33,18 +33,20 @@ func Provider() *schema.Provider {
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
-			"anaml_cluster":     anaml.ResourceCluster(),
-			"anaml_destination": anaml.ResourceDestination(),
-			"anaml_source":      anaml.ResourceSource(),
+			"anaml_cluster":     anaml.DataSourceCluster(),
+			"anaml_destination": anaml.DataSourceDestination(),
+			"anaml_source":      anaml.DataSourceSource(),
+			"anaml_feature":     anaml.DataSourceFeature(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"anaml_entity":         anaml.ResourceEntity(),
-			"anaml_entity_mapping": anaml.ResourceEntityMapping(),
-			"anaml_table":          anaml.ResourceTable(),
-			"anaml_feature":        anaml.ResourceFeature(),
-			"anaml_feature_set":    anaml.ResourceFeatureSet(),
-			"anaml_feature_store":  anaml.ResourceFeatureStore(),
+			"anaml_entity":           anaml.ResourceEntity(),
+			"anaml_entity_mapping":   anaml.ResourceEntityMapping(),
+			"anaml_table":            anaml.ResourceTable(),
+			"anaml_feature":          anaml.ResourceFeature(),
+			"anaml_feature_set":      anaml.ResourceFeatureSet(),
+			"anaml_feature_store":    anaml.ResourceFeatureStore(),
+			"anaml_feature_template": anaml.ResourceFeatureTemplate(),
 		},
 
 		ConfigureFunc: providerConfigure,

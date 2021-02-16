@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -12,6 +13,69 @@ func (c *Client) GetFeature(featureID string) (*Feature, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	body, err := c.doRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if body == nil {
+		return nil, nil
+	}
+
+	feature := Feature{}
+	err = json.Unmarshal(body, &feature)
+	if err != nil {
+		return nil, err
+	}
+
+	return &feature, nil
+}
+
+func (c *Client) FindFeatureByName(featureName string) (*Feature, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/feature", c.HostURL), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	q := req.URL.Query()
+	q.Add("name", featureName)
+	req.URL.RawQuery = q.Encode()
+
+	body, err := c.doRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if body == nil {
+		return nil, nil
+	}
+
+	feature := Feature{}
+	err = json.Unmarshal(body, &feature)
+	if err != nil {
+		return nil, err
+	}
+
+	return &feature, nil
+}
+
+func (c *Client) FindFeatureByTemplate(templateId int, rows int, days int) (*Feature, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/feature", c.HostURL), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	q := req.URL.Query()
+	q.Add("template-id", strconv.Itoa(templateId))
+
+	if rows != 0 {
+		q.Add("rows", strconv.Itoa(rows))
+	}
+	if days != 0 {
+		q.Add("days", strconv.Itoa(days))
+	}
+	req.URL.RawQuery = q.Encode()
 
 	body, err := c.doRequest(req)
 	if err != nil {

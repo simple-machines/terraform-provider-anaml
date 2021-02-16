@@ -6,9 +6,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func ResourceCluster() *schema.Resource {
+func DataSourceSource() *schema.Resource {
 	return &schema.Resource{
-		Read: resourceClusterRead,
+		Read: resourceSourceRead,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -26,26 +26,26 @@ func ResourceCluster() *schema.Resource {
 	}
 }
 
-func resourceClusterRead(d *schema.ResourceData, m interface{}) error {
+func resourceSourceRead(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
 	name := d.Get("name").(string)
 
-	cluster, err := c.FindCluster(name)
+	source, err := c.FindSource(name)
 	if err != nil {
 		return err
 	}
 
-	if cluster == nil {
+	if source == nil {
 		d.SetId("")
 		return nil
 	} else {
-		d.SetId(strconv.Itoa(cluster.Id))
+		d.SetId(strconv.Itoa(source.Id))
 	}
 
-	if err := d.Set("name", cluster.Name); err != nil {
+	if err := d.Set("name", source.Name); err != nil {
 		return err
 	}
-	if err := d.Set("description", cluster.Description); err != nil {
+	if err := d.Set("description", source.Description); err != nil {
 		return err
 	}
 	return err

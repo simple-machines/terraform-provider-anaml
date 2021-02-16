@@ -6,9 +6,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func ResourceSource() *schema.Resource {
+func DataSourceDestination() *schema.Resource {
 	return &schema.Resource{
-		Read: resourceSourceRead,
+		Read: resourceDestinationRead,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -26,26 +26,26 @@ func ResourceSource() *schema.Resource {
 	}
 }
 
-func resourceSourceRead(d *schema.ResourceData, m interface{}) error {
+func resourceDestinationRead(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
 	name := d.Get("name").(string)
 
-	source, err := c.FindSource(name)
+	destination, err := c.FindDestination(name)
 	if err != nil {
 		return err
 	}
 
-	if source == nil {
+	if destination == nil {
 		d.SetId("")
 		return nil
 	} else {
-		d.SetId(strconv.Itoa(source.Id))
+		d.SetId(strconv.Itoa(destination.Id))
 	}
 
-	if err := d.Set("name", source.Name); err != nil {
+	if err := d.Set("name", destination.Name); err != nil {
 		return err
 	}
-	if err := d.Set("description", source.Description); err != nil {
+	if err := d.Set("description", destination.Description); err != nil {
 		return err
 	}
 	return err

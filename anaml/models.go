@@ -83,6 +83,7 @@ type FeatureTemplate struct {
 	Table        int                   `json:"table"`
 	Windows      []EventWindow         `json:"windows"`
 	Select       SQLExpression         `json:"select"`
+	Filter       *SQLExpression        `json:"filter"`
 	Aggregations []AggregateExpression `json:"aggregations"`
 	PostExpr     SQLExpression         `json:"postAggregateExpr"`
 }
