@@ -38,9 +38,9 @@ func resourceDestinationRead(d *schema.ResourceData, m interface{}) error {
 	if destination == nil {
 		d.SetId("")
 		return nil
-	} else {
-		d.SetId(strconv.Itoa(destination.Id))
 	}
+
+	d.SetId(strconv.Itoa(destination.ID))
 
 	if err := d.Set("name", destination.Name); err != nil {
 		return err

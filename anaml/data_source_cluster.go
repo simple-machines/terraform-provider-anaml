@@ -38,10 +38,9 @@ func resourceClusterRead(d *schema.ResourceData, m interface{}) error {
 	if cluster == nil {
 		d.SetId("")
 		return nil
-	} else {
-		d.SetId(strconv.Itoa(cluster.Id))
 	}
 
+	d.SetId(strconv.Itoa(cluster.ID))
 	if err := d.Set("name", cluster.Name); err != nil {
 		return err
 	}

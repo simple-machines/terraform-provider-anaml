@@ -4,8 +4,10 @@ import (
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
+// ResourceTable ...
 func ResourceTable() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceTableCreate,
@@ -25,6 +27,13 @@ func ResourceTable() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"source": {
+				Type:         schema.TypeList,
+				Optional:     true,
+				MaxItems:     1,
+				Elem:         sourceSchema(),
+				ExactlyOneOf: []string{"source", "expression", "entity_mapping"},
+			},
 			"expression": {
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -41,6 +50,7 @@ func ResourceTable() *schema.Resource {
 					ValidateFunc: validateAnamlIdentifier(),
 				},
 			},
+
 			"event": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -65,12 +75,6 @@ func ResourceTable() *schema.Resource {
 					ValidateFunc: validateAnamlIdentifier(),
 				},
 			},
-			"source": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validateAnamlIdentifier(),
-				ExactlyOneOf: []string{"source", "expression", "entity_mapping"},
-			},
 		},
 	}
 }
@@ -93,6 +97,28 @@ func eventSchema() *schema.Resource {
 			"timezone": {
 				Type:     schema.TypeString,
 				Optional: true,
+			},
+		},
+	}
+}
+
+func sourceSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"source": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validateAnamlIdentifier(),
+			},
+			"folder": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+			"table_name": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 		},
 	}
@@ -133,7 +159,7 @@ func resourceTableRead(d *schema.ResourceData, m interface{}) error {
 	}
 
 	if table.Type == "root" {
-		if err := d.Set("source", strconv.Itoa(*table.Source)); err != nil {
+		if err := d.Set("source", flattenSourceReferences(table.Source)); err != nil {
 			return err
 		}
 	}
@@ -159,7 +185,7 @@ func resourceTableCreate(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	d.SetId(strconv.Itoa(e.Id))
+	d.SetId(strconv.Itoa(e.ID))
 	return err
 }
 
@@ -207,8 +233,7 @@ func buildTable(d *schema.ResourceData) *Table {
 		table.ExtraFeatures = expandIdentifierList(d.Get("extra_features").([]interface{}))
 	} else {
 		table.Type = "root"
-		source, _ := strconv.Atoi(d.Get("source").(string))
-		table.Source = &source
+		table.Source = expandSourceReferences(d)
 	}
 
 	return &table
@@ -257,4 +282,38 @@ func flattenEntityDescription(ed *EventDescription) []interface{} {
 	}
 
 	return make([]interface{}, 0)
+}
+
+func expandSourceReferences(d *schema.ResourceData) *SourceReference {
+	srs := d.Get("source").([]interface{})
+
+	for _, sr := range srs {
+		val, _ := sr.(map[string]interface{})
+		sourceID, _ := strconv.Atoi(val["source"].(string))
+
+		parsed := SourceReference{
+			SourceID:  sourceID,
+			Folder:    val["folder"].(string),
+			TableName: val["table_name"].(string),
+		}
+		return &parsed
+	}
+
+	return nil
+}
+
+func flattenSourceReferences(source *SourceReference) []map[string]interface{} {
+	res := make([]map[string]interface{}, 0, 1)
+
+	if source == nil {
+		return res
+	}
+
+	single := make(map[string]interface{})
+	single["source"] = strconv.Itoa(source.SourceID)
+	single["folder"] = source.Folder
+	single["table_name"] = source.TableName
+	res = append(res, single)
+
+	return res
 }

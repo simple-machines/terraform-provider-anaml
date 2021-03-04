@@ -52,7 +52,7 @@ func (c *Client) CreateEntityMapping(creationRequest EntityMapping) (*EntityMapp
 		return nil, err
 	}
 
-	creationRequest.Id = V
+	creationRequest.ID = V
 	return &creationRequest, nil
 }
 

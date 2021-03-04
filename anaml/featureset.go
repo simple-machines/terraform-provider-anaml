@@ -52,7 +52,7 @@ func (c *Client) CreateFeatureSet(creationRequest FeatureSet) (*FeatureSet, erro
 		return nil, err
 	}
 
-	creationRequest.Id = V
+	creationRequest.ID = V
 	return &creationRequest, nil
 }
 

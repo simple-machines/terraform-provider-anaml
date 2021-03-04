@@ -52,7 +52,7 @@ func (c *Client) CreateEntity(creationRequest Entity) (*Entity, error) {
 		return nil, err
 	}
 
-	creationRequest.Id = V
+	creationRequest.ID = V
 	return &creationRequest, nil
 }
 

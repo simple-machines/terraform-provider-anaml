@@ -1,64 +1,72 @@
 package anaml
 
+// Entity ..
 type Entity struct {
-	Id            int    `json:"id,omitempty"`
+	ID            int    `json:"id,omitempty"`
 	Name          string `json:"name"`
 	Description   string `json:"description"`
 	DefaultColumn string `json:"defaultColumn"`
 }
 
+// EntityMapping ..
 type EntityMapping struct {
-	Id      int `json:"id,omitempty"`
+	ID      int `json:"id,omitempty"`
 	From    int `json:"from"`
 	To      int `json:"to"`
 	Mapping int `json:"mapping"`
 }
 
+// TimestampInfo ..
 type TimestampInfo struct {
 	Column string `json:"timestampColumn"`
 	Zone   string `json:"timezone,omitempty"`
 }
 
+// EventDescription ..
 type EventDescription struct {
 	Entities      map[string]string `json:"entities"`
 	TimestampInfo *TimestampInfo    `json:"timestampInfo"`
 }
 
-// Go's support for ADTs is so bad we need to use a completely normalised form.
+// Table ...
 type Table struct {
-	Id            int               `json:"id,omitempty"`
+	ID            int               `json:"id,omitempty"`
 	Name          string            `json:"name"`
 	Description   string            `json:"description"`
 	Type          string            `json:"adt_type"`
 	Sources       []int             `json:"sources,omitempty"`
-	Source        *int              `json:"source,omitempty"`
+	Source        *SourceReference  `json:"source,omitempty"`
 	Expression    string            `json:"expression,omitempty"`
 	EventInfo     *EventDescription `json:"eventDescription,omitempty"`
 	EntityMapping int               `json:"entityMapping,omitempty"`
 	ExtraFeatures []int             `json:"extraFeatures,omitempty"`
 }
 
+// EventWindow ...
 type EventWindow struct {
 	Type string `json:"adt_type"`
 	Days int    `json:"days,omitempty"`
 	Rows int    `json:"rows,omitempty"`
 }
 
+// SQLExpression ...
 type SQLExpression struct {
 	SQL string `json:"sql"`
 }
 
+// AggregateExpression ...
 type AggregateExpression struct {
 	Type string `json:"adt_type"`
 }
 
+// DataType ...
 type DataType struct {
 	Type string `json:"adt_type"`
 }
 
-// Again, completely normalised.
+// Feature ... again, completely normalised.
 type Feature struct {
-	Id          int                  `json:"id,omitempty"`
+	ID          int                  `json:"id,omitempty"`
 	Name        string               `json:"name"`
 	Description string               `json:"description"`
 	Type        string               `json:"adt_type"`
@@ -70,34 +78,36 @@ type Feature struct {
 	Aggregate   *AggregateExpression `json:"aggregate,omitempty"`
 	PostExpr    *SQLExpression       `json:"postAggregateExpr,omitempty"`
 	Over        []int                `json:"over,omitempty"`
-	EntityId    int                  `json:"entityId,omitempty"`
+	EntityID    int                  `json:"entityId,omitempty"`
+	TemplateID  *int                 `json:"template,omitempty"`
 }
 
-// Again, completely normalised.
+// FeatureTemplate ... Again, completely normalised.
 type FeatureTemplate struct {
-	Id           int                   `json:"id,omitempty"`
-	Name         string                `json:"name"`
-	Description  string                `json:"description"`
-	Type         string                `json:"adt_type"`
-	DataType     DataType              `json:"dataType"`
-	Table        int                   `json:"table"`
-	Windows      []EventWindow         `json:"windows"`
-	Select       SQLExpression         `json:"select"`
-	Filter       *SQLExpression        `json:"filter"`
-	Aggregations []AggregateExpression `json:"aggregations"`
-	PostExpr     SQLExpression         `json:"postAggregateExpr"`
+	ID          int                  `json:"id,omitempty"`
+	Name        string               `json:"name"`
+	Description string               `json:"description"`
+	Type        string               `json:"adt_type"`
+	DataType    DataType             `json:"dataType"`
+	Table       int                  `json:"table"`
+	Select      SQLExpression        `json:"select"`
+	Filter      *SQLExpression       `json:"filter"`
+	Aggregate   *AggregateExpression `json:"aggregate,omitempty"`
+	PostExpr    SQLExpression        `json:"postAggregateExpr"`
 }
 
+// FeatureSet ...
 type FeatureSet struct {
-	Id          int    `json:"id,omitempty"`
+	ID          int    `json:"id,omitempty"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
-	EntityId    int    `json:"entity,omitempty"`
-	Features    []int  `json:"features,omitempty"`
+	EntityID    int    `json:"entity,omitempty"`
+	Features    []int  `json:"features"`
 }
 
+// FeatureStore ...
 type FeatureStore struct {
-	Id           int                    `json:"id,omitempty"`
+	ID           int                    `json:"id,omitempty"`
 	Name         string                 `json:"name"`
 	Description  string                 `json:"description"`
 	FeatureSet   int                    `json:"featureSet"`
@@ -107,26 +117,37 @@ type FeatureStore struct {
 	Cluster      int                    `json:"cluster"`
 }
 
+// Source ...
 type Source struct {
-	Id          int    `json:"id,omitempty"`
+	ID          int    `json:"id,omitempty"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
 
+// SourceReference ...
+type SourceReference struct {
+	SourceID  int    `json:"sourceId"`
+	Folder    string `json:"folder,omitempty"`
+	TableName string `json:"tableName,omitempty"`
+}
+
+// Destination ...
 type Destination struct {
-	Id          int    `json:"id,omitempty"`
+	ID          int    `json:"id,omitempty"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
 
+// DestinationReference ...
 type DestinationReference struct {
-	DestinationId int    `json:"destinationId"`
+	DestinationID int    `json:"destinationId"`
 	Folder        string `json:"folder,omitempty"`
 	TableName     string `json:"tableName,omitempty"`
 }
 
+// Cluster ...
 type Cluster struct {
-	Id          int    `json:"id,omitempty"`
+	ID          int    `json:"id,omitempty"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }

@@ -139,7 +139,7 @@ func resourceFeatureStoreCreate(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	d.SetId(strconv.Itoa(e.Id))
+	d.SetId(strconv.Itoa(e.ID))
 	return err
 }
 
@@ -188,7 +188,7 @@ func expandDestinationReferences(d *schema.ResourceData) []DestinationReference 
 		destId, _ := strconv.Atoi(val["destination"].(string))
 
 		parsed := DestinationReference{
-			DestinationId: destId,
+			DestinationID: destId,
 			Folder:        val["folder"].(string),
 			TableName:     val["table_name"].(string),
 		}
@@ -203,7 +203,7 @@ func flattenDestinationReferences(destinations []DestinationReference) []map[str
 
 	for _, destination := range destinations {
 		single := make(map[string]interface{})
-		single["destination"] = strconv.Itoa(destination.DestinationId)
+		single["destination"] = strconv.Itoa(destination.DestinationID)
 		single["folder"] = destination.Folder
 		single["table_name"] = destination.TableName
 		res = append(res, single)

@@ -63,7 +63,7 @@ func resourceFeatureSetRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("description", FeatureSet.Description); err != nil {
 		return err
 	}
-	if err := d.Set("entity", strconv.Itoa(FeatureSet.EntityId)); err != nil {
+	if err := d.Set("entity", strconv.Itoa(FeatureSet.EntityID)); err != nil {
 		return err
 	}
 	if err := d.Set("features", identifierList(FeatureSet.Features)); err != nil {
@@ -79,7 +79,7 @@ func resourceFeatureSetCreate(d *schema.ResourceData, m interface{}) error {
 	FeatureSet := FeatureSet{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-		EntityId:    entity,
+		EntityID:    entity,
 		Features:    expandIdentifierList(d.Get("features").(*schema.Set).List()),
 	}
 
@@ -88,7 +88,7 @@ func resourceFeatureSetCreate(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	d.SetId(strconv.Itoa(e.Id))
+	d.SetId(strconv.Itoa(e.ID))
 	return err
 }
 
@@ -100,7 +100,7 @@ func resourceFeatureSetUpdate(d *schema.ResourceData, m interface{}) error {
 	FeatureSet := FeatureSet{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-		EntityId:    entity,
+		EntityID:    entity,
 		Features:    expandIdentifierList(d.Get("features").(*schema.Set).List()),
 	}
 

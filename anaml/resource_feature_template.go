@@ -1,13 +1,13 @@
 package anaml
 
 import (
-	"errors"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
+// ResourceFeatureTemplate ...
 func ResourceFeatureTemplate() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceFeatureTemplateCreate,
@@ -49,45 +49,12 @@ func ResourceFeatureTemplate() *schema.Resource {
 				Optional:    true,
 				Description: "An SQL column expression to filter with",
 			},
-			"days": {
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Description: "Event windows",
-				Elem: &schema.Schema{
-					Type:         schema.TypeInt,
-					ValidateFunc: validation.IntAtLeast(1),
-				},
-			},
-			"rows": {
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Description: "Event windows",
-				Elem: &schema.Schema{
-					Type:         schema.TypeInt,
-					ValidateFunc: validation.IntAtLeast(1),
-				},
-			},
-			"open": {
-				Type:         schema.TypeBool,
-				Optional:     true,
-				Description:  "An event window",
-				ExactlyOneOf: []string{"days", "rows", "open"},
-				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
-					if !val.(bool) {
-						errs = append(errs, errors.New("Open must be set to true"))
-					}
-					return
-				},
-			},
-			"aggregations": {
-				Type:     schema.TypeList,
+			"aggregation": {
+				Type:     schema.TypeString,
 				Optional: true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-					ValidateFunc: validation.StringInSlice([]string{
-						"sum", "count", "countdistinct", "avg", "std", "last", "percentagechange", "absolutechange", "standardscore",
-					}, true),
-				},
+				ValidateFunc: validation.StringInSlice([]string{
+					"sum", "count", "countdistinct", "avg", "std", "last", "percentagechange", "absolutechange", "standardscore",
+				}, true),
 			},
 		},
 	}
@@ -120,35 +87,10 @@ func resourceFeatureTemplateRead(d *schema.ResourceData, m interface{}) error {
 			return err
 		}
 	}
-
-	days := make([]int, 0, len(feature.Windows))
-	rows := make([]int, 0, len(feature.Windows))
-	aggs := make([]string, 0, len(feature.Aggregations))
-
-	for _, window := range feature.Windows {
-		if window.Type == "daywindow" {
-			days = append(days, window.Days)
+	if feature.Aggregate != nil {
+		if err := d.Set("aggregation", feature.Aggregate.Type); err != nil {
+			return err
 		}
-		if window.Type == "rowwindow" {
-			rows = append(rows, window.Rows)
-		}
-		if window.Type == "openwindow" {
-			d.Set("open", true)
-		}
-	}
-
-	for _, aggregation := range feature.Aggregations {
-		aggs = append(aggs, aggregation.Type)
-	}
-
-	if err := d.Set("days", days); err != nil {
-		return err
-	}
-	if err := d.Set("rows", rows); err != nil {
-		return err
-	}
-	if err := d.Set("aggregations", aggs); err != nil {
-		return err
 	}
 
 	return nil
@@ -166,7 +108,7 @@ func resourceFeatureTemplateCreate(d *schema.ResourceData, m interface{}) error 
 		return err
 	}
 
-	d.SetId(strconv.Itoa(e.Id))
+	d.SetId(strconv.Itoa(e.ID))
 	return err
 }
 
@@ -216,6 +158,12 @@ func buildFeatureTemplate(d *schema.ResourceData) (*FeatureTemplate, error) {
 		}
 	}
 
+	if d.Get("aggregation").(string) != "" {
+		template.Aggregate = &AggregateExpression{
+			Type: d.Get("aggregation").(string),
+		}
+	}
+
 	if d.Get("table").(string) != "" {
 		number, err := strconv.Atoi(d.Get("table").(string))
 
@@ -223,57 +171,8 @@ func buildFeatureTemplate(d *schema.ResourceData) (*FeatureTemplate, error) {
 			return nil, err
 		}
 
-		hasOpen := d.Get("open").(bool)
-		days := d.Get("days").(*schema.Set).List()
-		rows := d.Get("rows").(*schema.Set).List()
-		aggs := d.Get("aggregations").([]interface{})
-
-		windows := make([]EventWindow, 0, len(rows)+len(days)+1)
-		aggregations := make([]AggregateExpression, 0, 1)
-
-		for _, day := range days {
-			val, ok := day.(int)
-			if ok && val != 0 {
-				window := EventWindow{
-					Type: "daywindow",
-					Days: val,
-				}
-				windows = append(windows, window)
-			}
-		}
-
-		for _, row := range rows {
-			val, ok := row.(int)
-			if ok && val != 0 {
-				window := EventWindow{
-					Type: "rowwindow",
-					Rows: val,
-				}
-				windows = append(windows, window)
-			}
-		}
-
-		if hasOpen {
-			window := EventWindow{
-				Type: "openwindow",
-			}
-			windows = append(windows, window)
-		}
-
-		for _, agg := range aggs {
-			val, ok := agg.(string)
-			if ok && val != "" {
-				aggregation := AggregateExpression{
-					Type: val,
-				}
-				aggregations = append(aggregations, aggregation)
-			}
-		}
-
 		template.Type = "event"
 		template.Table = number
-		template.Windows = windows
-		template.Aggregations = aggregations
 	}
 
 	return &template, nil

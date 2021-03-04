@@ -117,7 +117,7 @@ func (c *Client) CreateFeature(creationRequest Feature) (*Feature, error) {
 		return nil, err
 	}
 
-	creationRequest.Id = V
+	creationRequest.ID = V
 	return &creationRequest, nil
 }
 

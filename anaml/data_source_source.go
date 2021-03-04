@@ -39,7 +39,7 @@ func resourceSourceRead(d *schema.ResourceData, m interface{}) error {
 		d.SetId("")
 		return nil
 	} else {
-		d.SetId(strconv.Itoa(source.Id))
+		d.SetId(strconv.Itoa(source.ID))
 	}
 
 	if err := d.Set("name", source.Name); err != nil {

@@ -3,7 +3,6 @@ provider "anaml" {
   username = "admin"
   password = "test password"
   branch   = "official"
-  version  = "0.3.4"
 }
 
 data "anaml_source" "minio" {
@@ -27,7 +26,11 @@ resource "anaml_entity" "household" {
 resource "anaml_table" "household" {
   name           = "household"
   description    = "A household level view"
-  source         = data.anaml_source.minio.id
+
+  source {
+    source = data.anaml_destination.minio.id
+    folder = "household"
+  }
 
   event {
     entities = {
@@ -52,28 +55,33 @@ resource "anaml_table" "household_normalised" {
   }
 }
 
-resource "anaml_feature_template" "household" {
+resource "anaml_feature_template" "household_count" {
   name           = "household_count"
   description    = "Count of household items"
   table          = anaml_table.household.id
   select         = "count"
-  aggregations   = [ "sum" ]
-  days           = [ 1, 2, 4 ]
+  aggregation    = "sum"
 }
 
-data "anaml_feature" "household" {
+resource "anaml_feature" "household_count" {
   for_each       = toset(["1", "2", "4"])
-  template       = anaml_feature_template.household.id
   days           = parseint(each.key, 10)
+
+  name           = "household_count_${each.key}_days"
+  description    = "Count of household items"
+  table          = anaml_table.household.id
+  select         = "count"
+  aggregation    = "sum"
+  template       = anaml_feature_template.household_count.id
 }
 
 resource "anaml_feature_set" "household" {
   name           = "household"
   entity         = anaml_entity.household.id
   features       = [
-      data.anaml_feature.household["1"].id
-    , data.anaml_feature.household["2"].id
-    , data.anaml_feature.household["4"].id
+      anaml_feature.household_count["1"].id
+    , anaml_feature.household_count["2"].id
+    , anaml_feature.household_count["4"].id
     ]
 }
 
@@ -86,6 +94,6 @@ resource "anaml_feature_store" "household" {
   cluster        = data.anaml_cluster.default_local.id
   destination {
     destination = data.anaml_destination.minio.id
-    folder = "household"
+    folder = "household_results"
   }
 }

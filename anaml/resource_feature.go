@@ -101,6 +101,11 @@ func ResourceFeature() *schema.Resource {
 				ValidateFunc:  validateAnamlIdentifier(),
 				ConflictsWith: []string{"table"},
 			},
+			"template": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validateAnamlIdentifier(),
+			},
 		},
 	}
 }
@@ -129,6 +134,12 @@ func resourceFeatureRead(d *schema.ResourceData, m interface{}) error {
 	}
 	if feature.Filter != nil {
 		if err := d.Set("filter", feature.Filter.SQL); err != nil {
+			return err
+		}
+	}
+
+	if feature.TemplateID != nil {
+		if err := d.Set("template", strconv.Itoa(*feature.TemplateID)); err != nil {
 			return err
 		}
 	}
@@ -175,7 +186,7 @@ func resourceFeatureCreate(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	d.SetId(strconv.Itoa(e.Id))
+	d.SetId(strconv.Itoa(e.ID))
 	return err
 }
 
@@ -222,6 +233,11 @@ func buildFeature(d *schema.ResourceData) (*Feature, error) {
 		},
 	}
 
+	if d.Get("template").(string) != "" {
+		template, _ := strconv.Atoi(d.Get("template").(string))
+		feature.TemplateID = &template
+	}
+
 	if d.Get("filter").(string) != "" {
 		feature.Filter = &SQLExpression{
 			SQL: d.Get("filter").(string),
@@ -255,7 +271,7 @@ func buildFeature(d *schema.ResourceData) (*Feature, error) {
 		feature.Type = "row"
 		feature.Over = expandIdentifierList(d.Get("over").([]interface{}))
 		number, _ := strconv.Atoi(d.Get("entity").(string))
-		feature.EntityId = number
+		feature.EntityID = number
 	}
 
 	return &feature, nil

@@ -53,7 +53,7 @@ func (c *Client) CreateFeatureTemplate(creationRequest FeatureTemplate) (*Featur
 		return nil, err
 	}
 
-	creationRequest.Id = V
+	creationRequest.ID = V
 	return &creationRequest, nil
 }
 

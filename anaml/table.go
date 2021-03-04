@@ -53,7 +53,7 @@ func (c *Client) CreateTable(creationRequest Table) (*Table, error) {
 		return nil, err
 	}
 
-	creationRequest.Id = V
+	creationRequest.ID = V
 	return &creationRequest, nil
 }
 
