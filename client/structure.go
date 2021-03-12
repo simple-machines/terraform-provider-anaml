@@ -1,6 +1,8 @@
 package anaml
 
 import (
+	"errors"
+	"fmt"
 	"regexp"
 	"strconv"
 
@@ -35,6 +37,28 @@ func expandIdentifierList(configured []interface{}) []int {
 		}
 	}
 	return vs
+}
+
+func expandSingleMap(value interface{}) (map[string]interface{}, error) {
+	if value == nil {
+		return nil, errors.New("Value is null")
+	}
+
+	array, ok := value.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("Value is not an array. Value: %v", value)
+	}
+
+	if len(array) == 0 {
+		return nil, errors.New("Array is empty")
+	}
+
+	single, ok := array[0].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("Value at index 0 of array is not a map. Value: %v", array[0])
+	}
+
+	return single, nil
 }
 
 func identifierList(ints []int) []string {

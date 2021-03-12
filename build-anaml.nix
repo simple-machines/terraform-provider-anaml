@@ -10,5 +10,8 @@ buildGoModule rec {
   postInstall = "mv $out/bin/${pname}{,_v${version}}";
 
   vendorSha256 = null;
-  subPackages = [ "." ];
+  subPackages = [
+    "./client"
+    "./providers/${pname}"
+  ];
 }
