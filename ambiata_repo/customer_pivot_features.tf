@@ -2,7 +2,7 @@
 resource "anaml_table" "customer_plan_information" {
   name           = "customer_plan_information"
   description    = "Customer plans with data usage information."
-  entity_mapping = anaml_entity_mapping.household_to_customer.id
+  entity_mapping = anaml_entity_mapping.plan_to_customer.id
 
   extra_features = [
      anaml_feature.plan_size.id

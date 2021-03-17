@@ -2,8 +2,7 @@ provider "anaml" {
   host     = "http://127.0.0.1:8080/api"
   username = "admin"
   password = "test password"
-  branch   = "development"
-  version  = "0.3.4"
+  branch   = "official"
 }
 
 data "anaml_source" "minio" {

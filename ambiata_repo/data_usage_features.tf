@@ -8,7 +8,7 @@
 # | Video
 
 resource "anaml_feature" "total_data_usage" {
-  for_each       = toset( ["7", "14", "28", "56"] )
+  for_each       = toset( ["1", "3", "7", "14", "28", "56", "84"] )
   name           = "total_plan_data_usage_${each.key}_days"
   description    = "Total data usage over the last ${each.key} days"
   table          = anaml_table.data_usage.id
@@ -18,7 +18,7 @@ resource "anaml_feature" "total_data_usage" {
 }
 
 resource "anaml_feature" "total_data_usage_video" {
-  for_each       = toset( ["7", "14", "28", "56"] )
+  for_each       = toset( ["1", "3", "7", "14", "28", "56", "84"] )
   name           = "total_plan_video_data_usage_${each.key}_days"
   description    = "Total data usage for video over the last ${each.key} days"
   table          = anaml_table.data_usage.id
@@ -29,7 +29,7 @@ resource "anaml_feature" "total_data_usage_video" {
 }
 
 resource "anaml_feature" "total_data_usage_music" {
-  for_each       = toset( ["7", "14", "28", "56"] )
+  for_each       = toset( ["1", "3", "7", "14", "28", "56", "84"] )
   name           = "total_plan_music_data_usage_${each.key}_days"
   description    = "Total data usage for music over the last ${each.key} days"
   table          = anaml_table.data_usage.id
@@ -40,7 +40,7 @@ resource "anaml_feature" "total_data_usage_music" {
 }
 
 resource "anaml_feature" "total_data_usage_sport" {
-  for_each       = toset( ["7", "14", "28", "56"] )
+  for_each       = toset( ["1", "3", "7", "14", "28", "56", "84"] )
   name           = "total_plan_sport_data_usage_${each.key}_days"
   description    = "Total data usage for sport over the last ${each.key} days"
   table          = anaml_table.data_usage.id
@@ -50,9 +50,8 @@ resource "anaml_feature" "total_data_usage_sport" {
   days           = parseint(each.key, 10)
 }
 
-
 resource "anaml_feature" "count_slow_data_usage" {
-  for_each       = toset( ["7", "14", "28", "56"] )
+  for_each       = toset( ["1", "3", "7", "14", "28", "56", "84"] )
   name           = "count_slow_data_usage_${each.key}_days"
   description    = "Count of data usage issues over the last ${each.key} days"
   table          = anaml_table.data_usage.id
@@ -63,7 +62,7 @@ resource "anaml_feature" "count_slow_data_usage" {
 }
 
 resource "anaml_feature" "count_data_loss" {
-  for_each       = toset( ["7", "14", "28", "56"] )
+  for_each       = toset( ["1", "3", "7", "14", "28", "56", "84"] )
   name           = "count_data_loss_${each.key}_days"
   description    = "Count of data lost packets past ${each.key} days"
   table          = anaml_table.data_usage.id
@@ -73,10 +72,8 @@ resource "anaml_feature" "count_data_loss" {
   days           = parseint(each.key, 10)
 }
 
-
-
 resource "anaml_feature" "count_data_packets" {
-  for_each       = toset( ["7", "14", "28", "56"] )
+  for_each       = toset( ["1", "3", "7", "14", "28", "56", "84"] )
   name           = "count_data_packets_${each.key}_days"
   description    = "Count of data usage issues over the last ${each.key} days"
   table          = anaml_table.data_usage.id
@@ -84,4 +81,3 @@ resource "anaml_feature" "count_data_packets" {
   aggregation    = "count"
   days           = parseint(each.key, 10)
 }
-

@@ -20,7 +20,7 @@ resource "anaml_feature" "plan_roaming_enabled" {
   name           = "roaming_enabled"
   description    = "Whether roaming is enabled"
   table          = anaml_table.plans.id
-  select         = "roaming = 'on'"
+  select         = "roaming"
   aggregation    = "last"
   open           = true
 }
@@ -29,7 +29,7 @@ resource "anaml_feature" "plan_free_sport_enabled" {
   name           = "free_sport_enabled"
   description    = "Whether free sport is enabled"
   table          = anaml_table.plans.id
-  select         = "free_sport = 'on'"
+  select         = "free_sport"
   aggregation    = "last"
   open           = true
 }
@@ -38,7 +38,7 @@ resource "anaml_feature" "plan_free_music_enabled" {
   name           = "free_music_enabled"
   description    = "Whether free music is enabled"
   table          = anaml_table.plans.id
-  select         = "free_music = 'on'"
+  select         = "free_music"
   aggregation    = "last"
   open           = true
 }
@@ -47,7 +47,7 @@ resource "anaml_feature" "plan_is_business" {
   name           = "is_business_plan"
   description    = "Whether the plan is a business plan"
   table          = anaml_table.plans.id
-  select         = "is_business = 'on'"
+  select         = "on_is_business"
   aggregation    = "last"
   open           = true
 }
