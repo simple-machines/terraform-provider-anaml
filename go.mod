@@ -1,4 +1,4 @@
-module anaml.io/terraform-provider-anaml
+module anaml.io/terraform
 
 go 1.14
 

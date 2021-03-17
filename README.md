@@ -4,11 +4,11 @@ A terraform provider for [anaml](https://anaml.io/) installations.
 
 With this provider you can do things like:
 
-- Declartively specify tables, and features.
+- Declaratively specify tables, and features.
 - Operate on different branches.
 
 
-## Quickstart
+## Quick start
 
 ```
 nix-shell tf-shell.nix
@@ -19,5 +19,4 @@ terraform apply
 
 ## Debugging
 
-To view commands being run, set the env variable TF_LOG=debug.
-
+To view commands being run, set the environment variable `TF_LOG=debug`.

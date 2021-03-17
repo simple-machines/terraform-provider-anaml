@@ -1,3 +1,6 @@
 with import <nixpkgs> {};
 
-callPackage ./build.nix {}
+{
+  anaml = callPackage ./build-anaml.nix {};
+  anaml-operations = callPackage ./build-anaml-operations.nix {};
+}
