@@ -38,6 +38,7 @@ func Provider() *schema.Provider {
 			"anaml-operations_cluster":     anaml.ResourceCluster(),
 			"anaml-operations_destination": anaml.ResourceDestination(),
 			"anaml-operations_source":      anaml.ResourceSource(),
+			"anaml-operations_user":				anaml.ResourceUser(),
 		},
 
 		ConfigureFunc: providerConfigure,

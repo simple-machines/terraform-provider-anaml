@@ -369,7 +369,7 @@ resource "anaml-operations_user" "jane" {
   given_name = "Jane"
   surname    = "Doe"
   password   = "hunter2"
-  role       = ["viewer", "operator", "author"]
+  roles      = ["viewer", "operator", "author"]
 }
 
 resource "anaml-operations_user" "john" {
@@ -378,5 +378,5 @@ resource "anaml-operations_user" "john" {
   given_name = "John"
   surname    = "Doe"
   password   = "hunter2"
-  role       = ["super_user"]
+  roles      = ["super_user"]
 }
