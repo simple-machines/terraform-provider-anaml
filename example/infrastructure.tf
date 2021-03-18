@@ -145,8 +145,8 @@ resource "anaml-operations_source" "kafka" {
   description = "An Kafka source created by Terraform"
 
   kafka {
-    bootstrap_servers = "http://bootstrap"
-    schema_registry_url = "http://schema-registry"
+    bootstrap_servers = "broker:9092"
+    schema_registry_url = "http://schema_registry:8081"
   }
 }
 
@@ -265,8 +265,8 @@ resource "anaml-operations_destination" "kafka" {
   description = "An Kafka destination created by Terraform"
 
   kafka {
-    bootstrap_servers = "http://bootstrap"
-    schema_registry_url = "http://schema-registry"
+    bootstrap_servers = "broker:9092"
+    schema_registry_url = "http://schema_registry:8081"
   }
 }
 
