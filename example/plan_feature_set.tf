@@ -46,5 +46,10 @@ resource "anaml_feature_set" "plan_information" {
    , anaml_feature.count_data_loss["14"].id
    , anaml_feature.count_data_loss["28"].id
    , anaml_feature.count_data_loss["56"].id
+
+   , anaml_feature.average_bill_amount.id
+   , anaml_feature.latest_bill_amount.id
+   , anaml_feature.bill_shock.id
+   , anaml_feature.number_of_bills_received.id
    ]
 }

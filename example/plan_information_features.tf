@@ -47,7 +47,7 @@ resource "anaml_feature" "plan_is_business" {
   name           = "is_business_plan"
   description    = "Whether the plan is a business plan"
   table          = anaml_table.plans.id
-  select         = "on_is_business"
+  select         = "is_business"
   aggregation    = "last"
   open           = true
 }

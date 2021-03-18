@@ -7,6 +7,14 @@
 # | News
 # | Video
 
+resource "anaml_feature_template" "total_data_usage" {
+  name           = "total_plan_data_usage_n_days"
+  description    = "Total data usage over the last n days"
+  table          = anaml_table.data_usage.id
+  select         = "megabytes"
+  aggregation    = "sum"
+}
+
 resource "anaml_feature" "total_data_usage" {
   for_each       = toset( ["1", "3", "7", "14", "28", "56", "84"] )
   name           = "total_plan_data_usage_${each.key}_days"
@@ -15,6 +23,16 @@ resource "anaml_feature" "total_data_usage" {
   select         = "megabytes"
   aggregation    = "sum"
   days           = parseint(each.key, 10)
+  template       = anaml_feature_template.total_data_usage.id
+}
+
+resource "anaml_feature_template" "total_data_usage_video" {
+  name           = "total_plan_video_data_usage_n_days"
+  description    = "Total data usage for video over the last n days"
+  table          = anaml_table.data_usage.id
+  select         = "megabytes"
+  filter         = "domain = 'video'"
+  aggregation    = "sum"
 }
 
 resource "anaml_feature" "total_data_usage_video" {
@@ -26,7 +44,19 @@ resource "anaml_feature" "total_data_usage_video" {
   filter         = "domain = 'video'"
   aggregation    = "sum"
   days           = parseint(each.key, 10)
+  template       = anaml_feature_template.total_data_usage_video.id
 }
+
+
+resource "anaml_feature_template" "total_data_usage_music" {
+  name           = "total_plan_music_data_usage_n_days"
+  description    = "Total data usage for music over the last n days"
+  table          = anaml_table.data_usage.id
+  select         = "megabytes"
+  filter         = "domain = 'music'"
+  aggregation    = "sum"
+}
+
 
 resource "anaml_feature" "total_data_usage_music" {
   for_each       = toset( ["1", "3", "7", "14", "28", "56", "84"] )
@@ -37,6 +67,16 @@ resource "anaml_feature" "total_data_usage_music" {
   filter         = "domain = 'music'"
   aggregation    = "sum"
   days           = parseint(each.key, 10)
+  template       = anaml_feature_template.total_data_usage_music.id
+}
+
+resource "anaml_feature_template" "total_data_usage_sport" {
+  name           = "total_plan_sport_data_usage_n_days"
+  description    = "Total data usage for sport over the last n days"
+  table          = anaml_table.data_usage.id
+  select         = "megabytes"
+  filter         = "domain = 'sport'"
+  aggregation    = "sum"
 }
 
 resource "anaml_feature" "total_data_usage_sport" {
@@ -48,6 +88,7 @@ resource "anaml_feature" "total_data_usage_sport" {
   filter         = "domain = 'sport'"
   aggregation    = "sum"
   days           = parseint(each.key, 10)
+  template       = anaml_feature_template.total_data_usage_sport.id
 }
 
 resource "anaml_feature" "count_slow_data_usage" {
