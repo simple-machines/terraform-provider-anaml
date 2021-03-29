@@ -1,9 +1,11 @@
 package anaml
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -89,24 +91,42 @@ func (c *Client) doRequest(req *http.Request) ([]byte, error) {
 		req.URL.RawQuery = q.Encode()
 	}
 
+	log.Printf("[DEBUG] Request: %v\n", req)
+
+	if req.Body != nil {
+		requestBody, err := ioutil.ReadAll(req.Body)
+		if err == nil {
+			reader0 := ioutil.NopCloser(bytes.NewBuffer(requestBody))
+			reader1 := ioutil.NopCloser(bytes.NewBuffer(requestBody))
+			log.Printf("[DEBUG] Request body: %q", reader0)
+			req.Body = reader1
+		}
+	}
+
 	res, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
+
+	log.Printf("[DEBUG] Response: %v\n", res)
+
 	defer res.Body.Close()
 
-	body, err := ioutil.ReadAll(res.Body)
+	responseBody, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
+
+	reader := ioutil.NopCloser(bytes.NewBuffer(responseBody))
+	log.Printf("[DEBUG] Request body: %q", reader)
 
 	if res.StatusCode == 404 {
 		return nil, nil
 	}
 
 	if res.StatusCode >= 300 {
-		return nil, fmt.Errorf("status: %d, body: %s", res.StatusCode, body)
+		return nil, fmt.Errorf("status: %d, body: %s", res.StatusCode, responseBody)
 	}
 
-	return body, err
+	return responseBody, err
 }

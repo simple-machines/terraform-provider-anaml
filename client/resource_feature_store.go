@@ -1,8 +1,8 @@
 package anaml
 
 import (
+	"errors"
 	"strconv"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -36,15 +36,19 @@ func ResourceFeatureStore() *schema.Resource {
 				Type:     schema.TypeBool,
 				Required: true,
 			},
-			"mode": {
-				Type:     schema.TypeString,
-				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					"daily", "historical",
-				}, true),
-				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-					return strings.ToTitle(old) == strings.ToTitle(new)
-				},
+			"daily_schedule": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				MaxItems:      1,
+				Elem:          dailyScheduleSchema(),
+				ConflictsWith: []string{"cron_schedule"},
+			},
+			"cron_schedule": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				MaxItems:      1,
+				Elem:          cronScheduleSchema(),
+				ConflictsWith: []string{"daily_schedule"},
 			},
 			"destination": {
 				Type:     schema.TypeList,
@@ -82,6 +86,59 @@ func destinationSchema() *schema.Resource {
 	}
 }
 
+func dailyScheduleSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"start_time_of_day": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+			"fixed_retry_policy": {
+				Type:         schema.TypeList,
+				Optional:     true,
+				MaxItems:     1,
+				Elem:         fixedRetryPolicySchema(),
+			},
+		},
+	}
+}
+
+func cronScheduleSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"cron_string": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+			"fixed_retry_policy": {
+				Type:         schema.TypeList,
+				Optional:     true,
+				MaxItems:     1,
+				Elem:         fixedRetryPolicySchema(),
+			},
+		},
+	}
+}
+
+func fixedRetryPolicySchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"backoff": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+			"max_attempts": {
+				Type:         schema.TypeInt,
+				Required:     true,
+				ValidateFunc: validation.IntAtLeast(1),
+			},
+		},
+	}
+}
+
 func resourceFeatureStoreRead(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
 	FeatureStoreID := d.Id()
@@ -107,34 +164,44 @@ func resourceFeatureStoreRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("enabled", FeatureStore.Enabled); err != nil {
 		return err
 	}
-	if err := d.Set("mode", FeatureStore.Mode); err != nil {
-		return err
-	}
 	if err := d.Set("destination", flattenDestinationReferences(FeatureStore.Destinations)); err != nil {
 		return err
 	}
 	if err := d.Set("cluster", strconv.Itoa(FeatureStore.Cluster)); err != nil {
 		return err
 	}
+
+	if FeatureStore.Schedule.Type == "daily" {
+		dailySchedules, err := parseDailySchedule(FeatureStore.Schedule)
+		if err != nil {
+			return err
+		}
+		if err := d.Set("daily_schedule", dailySchedules); err != nil {
+			return err
+		}
+	}
+
+	if FeatureStore.Schedule.Type == "cron" {
+		cronSchedules, err := parseCronSchedule(FeatureStore.Schedule)
+		if err != nil {
+			return err
+		}
+		if err := d.Set("cron_schedule", cronSchedules); err != nil {
+			return err
+		}
+	}
+
 	return err
 }
 
 func resourceFeatureStoreCreate(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
-	featureSet, _ := strconv.Atoi(d.Get("feature_set").(string))
-	cluster, _ := strconv.Atoi(d.Get("cluster").(string))
-
-	FeatureStore := FeatureStore{
-		Name:         d.Get("name").(string),
-		Description:  d.Get("description").(string),
-		FeatureSet:   featureSet,
-		Enabled:      d.Get("enabled").(bool),
-		Mode:         strings.ToTitle(d.Get("mode").(string)),
-		Destinations: expandDestinationReferences(d),
-		Cluster:      cluster,
+	FeatureStore, err := composeFeatureStore(d)
+	if err != nil {
+		return err
 	}
 
-	e, err := c.CreateFeatureStore(FeatureStore)
+	e, err := c.CreateFeatureStore(*FeatureStore)
 	if err != nil {
 		return err
 	}
@@ -145,26 +212,115 @@ func resourceFeatureStoreCreate(d *schema.ResourceData, m interface{}) error {
 
 func resourceFeatureStoreUpdate(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
-	featureSet, _ := strconv.Atoi(d.Get("feature_set").(string))
-	cluster, _ := strconv.Atoi(d.Get("cluster").(string))
 	FeatureStoreID := d.Id()
-
-	FeatureStore := FeatureStore{
-		Name:         d.Get("name").(string),
-		Description:  d.Get("description").(string),
-		FeatureSet:   featureSet,
-		Enabled:      d.Get("enabled").(bool),
-		Mode:         strings.ToTitle(d.Get("mode").(string)),
-		Destinations: expandDestinationReferences(d),
-		Cluster:      cluster,
+	FeatureStore, err := composeFeatureStore(d)
+	if err != nil {
+		return err
 	}
 
-	err := c.UpdateFeatureStore(FeatureStoreID, FeatureStore)
+	err = c.UpdateFeatureStore(FeatureStoreID, *FeatureStore)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
+	featureSet, err := strconv.Atoi(d.Get("feature_set").(string))
+	if err != nil {
+		return nil, err
+	}
+
+	cluster, err := strconv.Atoi(d.Get("cluster").(string))
+	if err != nil {
+		return nil, err
+	}
+
+	if dailySchedule, _ := expandSingleMap(d.Get("daily_schedule")); dailySchedule != nil {
+		schedule, err := composeDailySchedule(dailySchedule)
+		if err != nil {
+			return nil, err
+		}
+		return &FeatureStore{
+			Name:         d.Get("name").(string),
+			Description:  d.Get("description").(string),
+			FeatureSet:   featureSet,
+			Enabled:      d.Get("enabled").(bool),
+			Destinations: expandDestinationReferences(d),
+			Cluster:      cluster,
+			Schedule:     schedule,
+		}, nil
+	}
+
+	if cronSchedule, _ := expandSingleMap(d.Get("cron_schedule")); cronSchedule != nil {
+		schedule, err := composeCronSchedule(cronSchedule)
+		if err != nil {
+			return nil, err
+		}
+		return &FeatureStore{
+			Name:         d.Get("name").(string),
+			Description:  d.Get("description").(string),
+			FeatureSet:   featureSet,
+			Enabled:      d.Get("enabled").(bool),
+			Destinations: expandDestinationReferences(d),
+			Cluster:      cluster,
+			Schedule:     schedule,
+		}, nil
+	}
+
+	return nil, errors.New("Invalid schedule type")
+}
+
+func composeDailySchedule(d map[string]interface{}) (*Schedule, error) {
+	var startTimeOfDay *string = nil
+	startTimeOfDayRaw, ok := d["start_time_of_day"]
+	if ok {
+		startTimeOfDayString := startTimeOfDayRaw.(string)
+		startTimeOfDay = &startTimeOfDayString
+	}
+
+	var retryPolicy *RetryPolicy
+	if fixedRetryPolicy, _ := expandSingleMap(d["fixed_retry_policy"]); fixedRetryPolicy != nil {
+		retryPolicy = composeFixedRetryPolicy(fixedRetryPolicy)
+	} else {
+		retryPolicy = composeNeverRetryPolicy()
+	}
+
+	return &Schedule{
+		Type:           "daily",
+		StartTimeOfDay: startTimeOfDay,
+		RetryPolicy:    retryPolicy,
+	}, nil
+}
+
+func composeCronSchedule(d map[string]interface{}) (*Schedule, error) {
+	var retryPolicy *RetryPolicy
+	if fixedRetryPolicy, _ := expandSingleMap(d["fixed_retry_policy"]); fixedRetryPolicy != nil {
+		retryPolicy = composeFixedRetryPolicy(fixedRetryPolicy)
+	} else {
+		retryPolicy = composeNeverRetryPolicy()
+	}
+
+	return &Schedule{
+		Type:        "cron",
+		CronString:  d["cron_string"].(string),
+		RetryPolicy: retryPolicy,
+	}, nil
+}
+
+func composeFixedRetryPolicy(d map[string]interface{}) *RetryPolicy {
+	return &RetryPolicy{
+		Type:        "fixed",
+		Backoff:     d["backoff"].(string),
+		MaxAttempts: d["max_attempts"].(int),
+	}
+}
+
+func composeNeverRetryPolicy() *RetryPolicy {
+	return &RetryPolicy {
+		Type: "never",
+	}
 }
 
 func resourceFeatureStoreDelete(d *schema.ResourceData, m interface{}) error {
@@ -210,4 +366,58 @@ func flattenDestinationReferences(destinations []DestinationReference) []map[str
 	}
 
 	return res
+}
+
+func parseDailySchedule(schedule *Schedule) ([]map[string]interface{}, error) {
+	if schedule == nil {
+		return nil, errors.New("Schedule is null")
+	}
+
+	dailySchedule := make(map[string]interface{})
+	if schedule.StartTimeOfDay != nil {
+		dailySchedule["start_time_of_day"] = *schedule.StartTimeOfDay
+	}
+
+	if schedule.RetryPolicy.Type == "fixed" {
+		fixedRetryPolicy, err := parseFixedRetryPolicy(schedule.RetryPolicy)
+		if err != nil {
+			return nil, err
+		}
+
+		dailySchedule["fixed_retry_policy"] = fixedRetryPolicy
+	}
+
+	return []map[string]interface{}{dailySchedule}, nil
+}
+
+func parseCronSchedule(schedule *Schedule) ([]map[string]interface{}, error) {
+	if schedule == nil {
+		return nil, errors.New("Schedule is null")
+	}
+
+	cronSchedule := make(map[string]interface{})
+	cronSchedule["cron_string"] = schedule.CronString
+
+	if schedule.RetryPolicy.Type == "fixed" {
+		fixedRetryPolicy, err := parseFixedRetryPolicy(schedule.RetryPolicy)
+		if err != nil {
+			return nil, err
+		}
+
+		cronSchedule["fixed_retry_policy"] = fixedRetryPolicy
+	}
+
+	return []map[string]interface{}{cronSchedule}, nil
+}
+
+func parseFixedRetryPolicy(retryPolicy *RetryPolicy) ([]map[string]interface{}, error) {
+	if retryPolicy == nil {
+		return nil, errors.New("RetryPolicy is null")
+	}
+
+	fixedRetryPolicy := make(map[string]interface{})
+	fixedRetryPolicy["backoff"] = retryPolicy.Backoff
+	fixedRetryPolicy["max_attempts"] = retryPolicy.MaxAttempts
+
+	return []map[string]interface{}{fixedRetryPolicy}, nil
 }

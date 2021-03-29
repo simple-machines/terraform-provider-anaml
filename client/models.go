@@ -112,9 +112,22 @@ type FeatureStore struct {
 	Description  string                 `json:"description"`
 	FeatureSet   int                    `json:"featureSet"`
 	Enabled      bool                   `json:"enabled"`
-	Mode         string                 `json:"mode"`
+	Schedule     *Schedule              `json:"schedule"`
 	Destinations []DestinationReference `json:"destinations"`
 	Cluster      int                    `json:"cluster"`
+}
+
+type Schedule struct {
+	Type           string       `json:"adt_type"`
+	StartTimeOfDay *string      `json:"startTimeOfDay,omitempty"`
+	CronString     string       `json:"cronString,omitempty"`
+	RetryPolicy    *RetryPolicy `json:"retryPolicy,omitempty"`
+}
+
+type RetryPolicy struct {
+	Type        string `json:"adt_type"`
+	Backoff     string `json:"backoff,omitempty"`
+	MaxAttempts int    `json:"maxAttempts,omitempty"`
 }
 
 // Source ...

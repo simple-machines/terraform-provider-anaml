@@ -85,16 +85,73 @@ resource "anaml_feature_set" "household" {
     ]
 }
 
-resource "anaml_feature_store" "household" {
-  name           = "household"
+resource "anaml_feature_store" "household_daily" {
+  name           = "household_daily"
   description    = "Daily view of households"
   feature_set    = anaml_feature_set.household.id
-  mode           = "daily"
   enabled        = true
   cluster        = data.anaml_cluster.local.id
   destination {
     destination = data.anaml_destination.s3a.id
     folder = "household_results"
+  }
+  daily_schedule {
+    start_time_of_day = "00:00:00"
+  }
+}
+
+resource "anaml_feature_store" "household_cron" {
+  name           = "household_cron"
+  description    = "Daily view of households"
+  feature_set    = anaml_feature_set.household.id
+  enabled        = true
+  cluster        = data.anaml_cluster.local.id
+  destination {
+    destination = data.anaml_destination.s3a.id
+    folder = "household_results"
+  }
+  cron_schedule {
+    cron_string = "* * * * *"
+  }
+}
+
+resource "anaml_feature_store" "household_daily_retry" {
+  name           = "household_daily_retry"
+  description    = "Daily view of households"
+  feature_set    = anaml_feature_set.household.id
+  enabled        = true
+  cluster        = data.anaml_cluster.local.id
+  destination {
+    destination = data.anaml_destination.s3a.id
+    folder = "household_results"
+  }
+  daily_schedule {
+    start_time_of_day = "00:00:00"
+
+    fixed_retry_policy {
+      backoff = "PT1H30M"
+      max_attempts = 3
+    }
+  }
+}
+
+resource "anaml_feature_store" "household_cron_retry" {
+  name           = "household_cron_retry"
+  description    = "Daily view of households"
+  feature_set    = anaml_feature_set.household.id
+  enabled        = true
+  cluster        = data.anaml_cluster.local.id
+  destination {
+    destination = data.anaml_destination.s3a.id
+    folder = "household_results"
+  }
+  cron_schedule {
+    cron_string = "* * * * *"
+
+    fixed_retry_policy {
+      backoff = "PT1H30M"
+      max_attempts = 3
+    }
   }
 }
 
