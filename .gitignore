@@ -5,3 +5,6 @@ example/terraform.tfstate.backup
 example/pinned_nixpkgs
 example/nixosimage
 example/*-generated.nix
+/terraform-provider-anaml
+/terraform-provider-anaml-operations
+/terraform-provider-anaml-install.run
