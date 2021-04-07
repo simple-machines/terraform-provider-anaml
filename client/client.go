@@ -2,12 +2,11 @@ package anaml
 
 import (
 	"bytes"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -18,7 +17,7 @@ const HostURL string = "http://localhost:8080"
 type Client struct {
 	HostURL    string
 	HTTPClient *http.Client
-	Token      string
+	Auth       *AuthStruct
 	Branch     *string
 }
 
@@ -49,41 +48,16 @@ func NewClient(host, username, password, branch *string) (*Client, error) {
 	}
 
 	if (username != nil) && (password != nil) {
-		// form request body
-		rb, err := json.Marshal(AuthStruct{
-			Username: *username,
-			Password: *password,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		// authenticate
-		req, err := http.NewRequest("POST", fmt.Sprintf("%s/login", c.HostURL), strings.NewReader(string(rb)))
-		if err != nil {
-			return nil, err
-		}
-
-		body, err := c.doRequest(req)
-		if err != nil {
-			return nil, err
-		}
-
-		// parse response body
-		ar := AuthResponse{}
-		err = json.Unmarshal(body, &ar)
-		if err != nil {
-			return nil, err
-		}
-
-		c.Token = ar.Token
+		c.Auth = &AuthStruct{Username: *username, Password: *password}
+	} else {
+		return nil, errors.New("No username or password set")
 	}
 
 	return &c, nil
 }
 
 func (c *Client) doRequest(req *http.Request) ([]byte, error) {
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
+	req.SetBasicAuth(c.Auth.Username, c.Auth.Password)
 
 	if c.Branch != nil {
 		q := req.URL.Query()
