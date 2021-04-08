@@ -168,12 +168,9 @@ resource "anaml-operations_cluster" "local" {
 
   local {
     anaml_server_url = "http://localhost:8080"
-    jwt_token_provider {
-      login_server_url = "http://localhost:8080"
-      basic {
-        username = "admin"
-        password = "test password"
-      }
+    basic {
+      username = "admin"
+      password = "test password"
     }
   }
 

@@ -11,12 +11,12 @@ import (
 
 func ResourceCluster() *schema.Resource {
 	return &schema.Resource{
-		Create:   resourceClusterCreate,
-		Read:     resourceClusterRead,
-		Update:   resourceClusterUpdate,
-		Delete:   resourceClusterDelete,
+		Create: resourceClusterCreate,
+		Read:   resourceClusterRead,
+		Update: resourceClusterUpdate,
+		Delete: resourceClusterDelete,
 		Importer: &schema.ResourceImporter{
-			State:  schema.ImportStatePassthrough,
+			State: schema.ImportStatePassthrough,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -68,11 +68,11 @@ func sparkConfigSchema() *schema.Resource {
 				Optional: true,
 			},
 			"additional_spark_properties": {
-				Type:   schema.TypeMap,
-				Elem:   &schema.Schema {
+				Type: schema.TypeMap,
+				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				Optional:    true,
+				Optional: true,
 				DefaultFunc: func() (interface{}, error) {
 					return make(map[string]interface{}), nil
 				},
@@ -82,21 +82,14 @@ func sparkConfigSchema() *schema.Resource {
 }
 
 func localSchema() *schema.Resource {
+	schemaMap := loginCredentialsProviderConfigSchema().Schema
+	schemaMap["anaml_server_url"] = &schema.Schema{
+		Type:         schema.TypeString,
+		Required:     true,
+		ValidateFunc: validation.StringIsNotWhiteSpace,
+	}
 	return &schema.Resource{
-		Schema: map[string]*schema.Schema{
-			"anaml_server_url": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringIsNotWhiteSpace,
-			},
-			"jwt_token_provider": {
-				Type:     schema.TypeList,
-				Required: true,
-				MinItems: 1,
-				MaxItems: 1,
-				Elem:     jwtTokenProviderSchema(),
-			},
-		},
+		Schema: schemaMap,
 	}
 }
 
@@ -134,18 +127,6 @@ func loginCredentialsProviderConfigSchema() *schema.Resource {
 				Elem:     gcpCredentialsProviderConfigSchema(),
 			},
 		},
-	}
-}
-
-func jwtTokenProviderSchema() *schema.Resource {
-	schemaMap := loginCredentialsProviderConfigSchema().Schema
-	schemaMap["login_server_url"] = &schema.Schema{
-		Type:         schema.TypeString,
-		Required:     true,
-		ValidateFunc: validation.StringIsNotWhiteSpace,
-	}
-	return &schema.Resource{
-		Schema: schemaMap,
 	}
 }
 
@@ -307,35 +288,15 @@ func parseLocal(cluster *Cluster) ([]map[string]interface{}, error) {
 		return nil, errors.New("Cluster is null")
 	}
 
-	local := make(map[string]interface{})
-	local["anaml_server_url"] = cluster.AnamlServerURL
-
-	credentialsProvider, err := parseJWTTokenProviderConfig(cluster.CredentialsProvider)
-	if credentialsProvider == nil || err != nil {
+	local, err := parseLoginCredentialsProviderConfig(cluster.CredentialsProvider)
+	if local == nil || err != nil {
 		return nil, err
 	}
-	local["jwt_token_provider"] = credentialsProvider
+	local["anaml_server_url"] = cluster.AnamlServerURL
 
 	locals := make([]map[string]interface{}, 0, 1)
 	locals = append(locals, local)
 	return locals, nil
-}
-
-func parseJWTTokenProviderConfig(config *JWTTokenProviderConfig) ([]map[string]interface{}, error) {
-	if config == nil {
-		return nil, errors.New("JWTTokenProviderConfig is null")
-	}
-
-	provider, err := parseLoginCredentialsProviderConfig(config.LoginCredentialsProviderConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	provider["login_server_url"] = config.LoginServerURL
-
-	providers := make([]map[string]interface{}, 0, 1)
-	providers = append(providers, provider)
-	return providers, nil
 }
 
 func parseLoginCredentialsProviderConfig(credentials *LoginCredentialsProviderConfig) (map[string]interface{}, error) {
@@ -413,11 +374,7 @@ func composeCluster(d *schema.ResourceData) (*Cluster, error) {
 	sparkConfig := composeSparkConfig(sparkConfigMap)
 
 	if local, _ := expandSingleMap(d.Get("local")); local != nil {
-		credentialsProviderMap, err := expandSingleMap(local["jwt_token_provider"])
-		if err != nil {
-			return nil, err
-		}
-		credentialsProvider, err := composeJWTTokenProviderConfig(credentialsProviderMap)
+		credentialsProvider, err := composeLoginCredentialsProviderConfig(local)
 		if credentialsProvider == nil || err != nil {
 			return nil, err
 		}
@@ -447,21 +404,6 @@ func composeCluster(d *schema.ResourceData) (*Cluster, error) {
 	}
 
 	return nil, errors.New("Invalid cluster type")
-}
-
-func composeJWTTokenProviderConfig(d map[string]interface{}) (*JWTTokenProviderConfig, error) {
-	loginProvider, err := composeLoginCredentialsProviderConfig(d)
-	if loginProvider == nil || err != nil {
-		return nil, err
-	}
-
-	provider := JWTTokenProviderConfig{
-		Type:                           "jwtlogin",
-		LoginServerURL:                 d["login_server_url"].(string),
-		LoginCredentialsProviderConfig: loginProvider,
-	}
-
-	return &provider, nil
 }
 
 func composeLoginCredentialsProviderConfig(d map[string]interface{}) (*LoginCredentialsProviderConfig, error) {

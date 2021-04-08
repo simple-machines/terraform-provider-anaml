@@ -199,22 +199,15 @@ type DestinationReference struct {
 
 // Cluster ...
 type Cluster struct {
-	ID                  int                     `json:"id,omitempty"`
-	Name                string                  `json:"name"`
-	Description         string                  `json:"description"`
-	Type                string                  `json:"adt_type"`
-	IsPreviewCluster    bool                    `json:"isPreviewCluster"`
-	AnamlServerURL      string                  `json:"anamlServerUrl,omitempty"`
-	SparkServerURL      string                  `json:"sparkServerUrl,omitempty"`
-	CredentialsProvider *JWTTokenProviderConfig `json:"credentialsProvider,omitempty"`
-	SparkConfig         *SparkConfig            `json:"sparkConfig,omitempty"`
-}
-
-// JWTTokenProviderConfig ...
-type JWTTokenProviderConfig struct {
-	Type                           string                          `json:"adt_type"`
-	LoginServerURL                 string                          `json:"loginServerUrl"`
-	LoginCredentialsProviderConfig *LoginCredentialsProviderConfig `json:"loginCredentialsProviderConfig"`
+	ID                  int                             `json:"id,omitempty"`
+	Name                string                          `json:"name"`
+	Description         string                          `json:"description"`
+	Type                string                          `json:"adt_type"`
+	IsPreviewCluster    bool                            `json:"isPreviewCluster"`
+	AnamlServerURL      string                          `json:"anamlServerUrl,omitempty"`
+	SparkServerURL      string                          `json:"sparkServerUrl,omitempty"`
+	CredentialsProvider *LoginCredentialsProviderConfig `json:"credentialsProvider,omitempty"`
+	SparkConfig         *SparkConfig                    `json:"sparkConfig,omitempty"`
 }
 
 // LoginCredentialsProviderConfig  ...
