@@ -58,6 +58,7 @@ func NewClient(host, username, password, branch *string) (*Client, error) {
 
 func (c *Client) doRequest(req *http.Request) ([]byte, error) {
 	req.SetBasicAuth(c.Auth.Username, c.Auth.Password)
+	req.Header.Set("Content-Type", "application/json")
 
 	if c.Branch != nil {
 		q := req.URL.Query()
