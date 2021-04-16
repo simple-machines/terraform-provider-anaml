@@ -80,7 +80,7 @@ func ResourceFeature() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ValidateFunc: validation.StringInSlice([]string{
-					"sum", "count", "countdistinct", "avg", "std", "last", "percentagechange", "absolutechange", "standardscore",
+					"sum", "count", "countdistinct", "avg", "std", "last", "percentagechange", "absolutechange", "standardscore", "basketsum", "basketlast",
 				}, true),
 				ConflictsWith: []string{"over"},
 			},
