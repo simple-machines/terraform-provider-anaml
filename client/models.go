@@ -115,6 +115,8 @@ type FeatureStore struct {
 	Schedule     *Schedule              `json:"schedule"`
 	Destinations []DestinationReference `json:"destinations"`
 	Cluster      int                    `json:"cluster"`
+	StartDate    *string                `json:"startDate,omitempty"`
+	EndDate      *string                `json:"endDate,omitempty"`
 }
 
 type Schedule struct {

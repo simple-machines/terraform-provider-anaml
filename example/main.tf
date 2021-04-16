@@ -1,7 +1,7 @@
 provider "anaml" {
   host     = "http://127.0.0.1:8080/api"
-  username = "admin"
-  password = "test password"
+  username = "03d147fe-0fa8-4aef-bce6-e6fbcd1cd000"
+  password = "test secret"
   branch   = "official"
 }
 
@@ -88,6 +88,8 @@ resource "anaml_feature_set" "household" {
 resource "anaml_feature_store" "household_daily" {
   name           = "household_daily"
   description    = "Daily view of households"
+  start_date     = "2020-01-01"
+  end_date       = "2021-01-01"
   feature_set    = anaml_feature_set.household.id
   enabled        = true
   cluster        = data.anaml_cluster.local.id
@@ -112,6 +114,20 @@ resource "anaml_feature_store" "household_cron" {
   }
   cron_schedule {
     cron_string = "* * * * *"
+  }
+}
+
+resource "anaml_feature_store" "household_never" {
+  name           = "household_never"
+  description    = "Manually scheduled view of households"
+  start_date     = "2020-01-01"
+  end_date       = "2021-01-01"
+  feature_set    = anaml_feature_set.household.id
+  enabled        = true
+  cluster        = data.anaml_cluster.local.id
+  destination {
+    destination = data.anaml_destination.s3a.id
+    folder = "household_results"
   }
 }
 
@@ -157,8 +173,8 @@ resource "anaml_feature_store" "household_cron_retry" {
 
 provider "anaml-operations" {
   host     = "http://127.0.0.1:8080/api"
-  username = "admin"
-  password = "test password"
+  username = "03d147fe-0fa8-4aef-bce6-e6fbcd1cd000"
+  password = "test secret"
 }
 
 resource "anaml-operations_cluster" "local" {
