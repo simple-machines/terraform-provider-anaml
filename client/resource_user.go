@@ -81,18 +81,6 @@ func resourceUserRead(d *schema.ResourceData, m interface{}) error {
 	return err
 }
 
-func getNullableString(d *schema.ResourceData, key string) (*string) {
-	value, ok := d.GetOk(key)
-	if !ok {
-		return nil
-	}
-	stringValue, ok := value.(string)
-	if !ok {
-		return nil
-	}
-	return &stringValue
-}
-
 func resourceUserCreate(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
 	user := User{

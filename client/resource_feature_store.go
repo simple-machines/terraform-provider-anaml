@@ -27,6 +27,14 @@ func ResourceFeatureStore() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"start_date": {
+				Type:					schema.TypeString,
+				Optional:			true,
+			},
+			"end_date": {
+				Type:					schema.TypeString,
+				Optional:			true,
+			},
 			"feature_set": {
 				Type:         schema.TypeString,
 				Required:     true,
@@ -158,6 +166,16 @@ func resourceFeatureStoreRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("description", FeatureStore.Description); err != nil {
 		return err
 	}
+	if FeatureStore.StartDate != nil {
+		if err := d.Set("start_date", *FeatureStore.StartDate); err != nil {
+			return err
+		}
+	}
+	if FeatureStore.EndDate != nil {
+		if err := d.Set("end_date", *FeatureStore.EndDate); err != nil {
+			return err
+		}
+	}
 	if err := d.Set("feature_set", strconv.Itoa(FeatureStore.FeatureSet)); err != nil {
 		return err
 	}
@@ -245,6 +263,8 @@ func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
 		return &FeatureStore{
 			Name:         d.Get("name").(string),
 			Description:  d.Get("description").(string),
+			StartDate:		getNullableString(d, "start_date"),
+			EndDate:			getNullableString(d, "end_date"),
 			FeatureSet:   featureSet,
 			Enabled:      d.Get("enabled").(bool),
 			Destinations: expandDestinationReferences(d),
@@ -261,6 +281,8 @@ func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
 		return &FeatureStore{
 			Name:         d.Get("name").(string),
 			Description:  d.Get("description").(string),
+			StartDate:		getNullableString(d, "start_date"),
+			EndDate:			getNullableString(d, "end_date"),
 			FeatureSet:   featureSet,
 			Enabled:      d.Get("enabled").(bool),
 			Destinations: expandDestinationReferences(d),
@@ -269,17 +291,30 @@ func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
 		}, nil
 	}
 
+	schedule := composeNeverSchedule()
+
+	return &FeatureStore{
+		Name:					d.Get("name").(string),
+		Description:	d.Get("description").(string),
+		StartDate:		getNullableString(d, "start_date"),
+		EndDate:			getNullableString(d, "end_date"),
+		FeatureSet:		featureSet,
+		Enabled:			d.Get("enabled").(bool),
+		Destinations: expandDestinationReferences(d),
+		Cluster:			cluster,
+		Schedule:			schedule,
+	}, nil
+
 	return nil, errors.New("Invalid schedule type")
 }
 
-func composeDailySchedule(d map[string]interface{}) (*Schedule, error) {
-	var startTimeOfDay *string = nil
-	startTimeOfDayRaw, ok := d["start_time_of_day"]
-	if ok {
-		startTimeOfDayString := startTimeOfDayRaw.(string)
-		startTimeOfDay = &startTimeOfDayString
+func composeNeverSchedule() *Schedule {
+	return &Schedule{
+		Type: "never",
 	}
+}
 
+func composeDailySchedule(d map[string]interface{}) (*Schedule, error) {
 	var retryPolicy *RetryPolicy
 	if fixedRetryPolicy, _ := expandSingleMap(d["fixed_retry_policy"]); fixedRetryPolicy != nil {
 		retryPolicy = composeFixedRetryPolicy(fixedRetryPolicy)
@@ -289,7 +324,7 @@ func composeDailySchedule(d map[string]interface{}) (*Schedule, error) {
 
 	return &Schedule{
 		Type:           "daily",
-		StartTimeOfDay: startTimeOfDay,
+		StartTimeOfDay: getNullableMapString(d, "start_time_of_day"),
 		RetryPolicy:    retryPolicy,
 	}, nil
 }
