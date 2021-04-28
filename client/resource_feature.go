@@ -136,12 +136,16 @@ func resourceFeatureRead(d *schema.ResourceData, m interface{}) error {
 		if err := d.Set("filter", feature.Filter.SQL); err != nil {
 			return err
 		}
+	} else {
+		d.Set("filter", nil)
 	}
 
 	if feature.TemplateID != nil {
 		if err := d.Set("template", strconv.Itoa(*feature.TemplateID)); err != nil {
 			return err
 		}
+	} else {
+		d.Set("template", nil)
 	}
 
 	if feature.Type == "event" {
