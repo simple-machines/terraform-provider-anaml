@@ -1,5 +1,17 @@
+terraform {
+  required_version = "~> 0.14"
+  required_providers {
+    anaml = {
+      source  = "registry.anaml.io/anaml/anaml"
+    }
+    anaml-operations = {
+      source  = "registry.anaml.io/anaml/anaml-operations"
+    }
+  }
+}
+
 provider "anaml" {
-  host     = "http://127.0.0.1:8080/api"
+  host     = "http://localhost:8080/api"
   username = "03d147fe-0fa8-4aef-bce6-e6fbcd1cd000"
   password = "test secret"
   branch   = "official"
@@ -438,7 +450,7 @@ resource "anaml-operations_user" "jane" {
   email      = "jane@example.com"
   given_name = "Jane"
   surname    = "Doe"
-  password   = "hunter2"
+  password   = "hunter23"
   roles      = ["viewer", "operator", "author"]
 }
 
@@ -447,6 +459,19 @@ resource "anaml-operations_user" "john" {
   email      = "john@example.com"
   given_name = "John"
   surname    = "Doe"
-  password   = "hunter2"
+  password   = "hunter23"
   roles      = ["super_user"]
+}
+
+resource "anaml-operations_monitoring" "monitoring" {
+  name           = "household_monitoring"
+  description    = "Monitoring of tables for households"
+  enabled        = true
+  tables         = [
+      anaml_table.household.id
+    ]
+  cluster        = data.anaml_cluster.local.id
+  daily_schedule {
+    start_time_of_day = "00:00:00"
+  }
 }

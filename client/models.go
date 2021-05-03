@@ -242,3 +242,14 @@ type User struct {
 type ChangeOtherPasswordRequest struct {
 	Password string `json:"password"`
 }
+
+// TableMonitoring ...
+type TableMonitoring struct {
+	ID          int       `json:"id,omitempty"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Tables      []int     `json:"tables"`
+	Schedule    *Schedule `json:"schedule"`
+	Cluster     int       `json:"cluster"`
+	Enabled     bool      `json:"enabled"`
+}
