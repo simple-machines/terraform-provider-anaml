@@ -34,11 +34,10 @@ func ResourceFeature() *schema.Resource {
 				Default:  "string",
 			},
 			"table": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Description:   "A reference to a Table ID the feature is derived from",
-				ValidateFunc:  validateAnamlIdentifier(),
-				ConflictsWith: []string{"over"},
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "A reference to a Table ID the feature is derived from",
+				ValidateFunc: validateAnamlIdentifier(),
 			},
 			"select": {
 				Type:        schema.TypeString,
@@ -51,30 +50,18 @@ func ResourceFeature() *schema.Resource {
 				Description: "An SQL column expression to filter with",
 			},
 			"days": {
-				Type:         schema.TypeInt,
-				Optional:     true,
-				Description:  "An event window",
-				ExactlyOneOf: []string{"days", "rows", "open", "over"},
-				ValidateFunc: validation.IntAtLeast(1),
+				Type:          schema.TypeInt,
+				Optional:      true,
+				Description:   "An event window",
+				ConflictsWith: []string{"rows"},
+				ValidateFunc:  validation.IntAtLeast(1),
 			},
 			"rows": {
-				Type:         schema.TypeInt,
-				Optional:     true,
-				Description:  "An event window",
-				ExactlyOneOf: []string{"days", "rows", "open", "over"},
-				ValidateFunc: validation.IntAtLeast(1),
-			},
-			"open": {
-				Type:         schema.TypeBool,
-				Optional:     true,
-				Description:  "An event window",
-				ExactlyOneOf: []string{"days", "rows", "open", "over"},
-				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
-					if !val.(bool) {
-						errs = append(errs, errors.New("Open must be set to true"))
-					}
-					return
-				},
+				Type:          schema.TypeInt,
+				Optional:      true,
+				Description:   "An event window",
+				ConflictsWith: []string{"days"},
+				ValidateFunc:  validation.IntAtLeast(1),
 			},
 			"aggregation": {
 				Type:     schema.TypeString,
@@ -82,13 +69,13 @@ func ResourceFeature() *schema.Resource {
 				ValidateFunc: validation.StringInSlice([]string{
 					"sum", "count", "countdistinct", "avg", "std", "last", "percentagechange", "absolutechange", "standardscore", "basketsum", "basketlast",
 				}, true),
-				ConflictsWith: []string{"over"},
+				RequiredWith: []string{"table"},
 			},
 			"over": {
-				Type:          schema.TypeList,
-				Optional:      true,
-				Description:   "A list of Features this row feature depends on",
-				ConflictsWith: []string{"table"},
+				Type:         schema.TypeList,
+				Optional:     true,
+				Description:  "A list of Features this row feature depends on",
+				AtLeastOneOf: []string{"table", "over"},
 
 				Elem: &schema.Schema{
 					Type:         schema.TypeString,
@@ -96,10 +83,10 @@ func ResourceFeature() *schema.Resource {
 				},
 			},
 			"entity": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ValidateFunc:  validateAnamlIdentifier(),
-				ConflictsWith: []string{"table"},
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validateAnamlIdentifier(),
+				RequiredWith: []string{"over"},
 			},
 			"template": {
 				Type:         schema.TypeString,
@@ -150,18 +137,24 @@ func resourceFeatureRead(d *schema.ResourceData, m interface{}) error {
 
 	if feature.Type == "event" {
 		if feature.Window.Type == "daywindow" {
-			err := d.Set("days", feature.Window.Days)
-			if err != nil {
+			if err := d.Set("days", feature.Window.Days); err != nil {
+				return err
+			}
+			if err = d.Set("rows", nil); err != nil {
 				return err
 			}
 		} else if feature.Window.Type == "rowwindow" {
-			err := d.Set("rows", feature.Window.Rows)
-			if err != nil {
+			if err := d.Set("rows", feature.Window.Rows); err != nil {
+				return err
+			}
+			if err = d.Set("days", nil); err != nil {
 				return err
 			}
 		} else if feature.Window.Type == "openwindow" {
-			err := d.Set("open", true)
-			if err != nil {
+			if err = d.Set("days", nil); err != nil {
+				return err
+			}
+			if err = d.Set("rows", nil); err != nil {
 				return err
 			}
 		}
@@ -173,6 +166,15 @@ func resourceFeatureRead(d *schema.ResourceData, m interface{}) error {
 		if err := d.Set("aggregation", feature.Aggregate.Type); err != nil {
 			return err
 		}
+	} else if feature.Type == "row" {
+		if err := d.Set("over", identifierList(feature.Over)); err != nil {
+			return err
+		}
+		if err := d.Set("entity", strconv.Itoa(feature.EntityID)); err != nil {
+			return err
+		}
+	} else {
+		return errors.New("Unrecognised ADT type for feature")
 	}
 
 	return nil
@@ -226,9 +228,6 @@ func buildFeature(d *schema.ResourceData) (*Feature, error) {
 	feature := Feature{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-		DataType: DataType{
-			Type: d.Get("data_type").(string),
-		},
 		Select: SQLExpression{
 			SQL: d.Get("select").(string),
 		},
@@ -262,10 +261,8 @@ func buildFeature(d *schema.ResourceData) (*Feature, error) {
 		} else if d.Get("rows").(int) != 0 {
 			window.Type = "rowwindow"
 			window.Rows = d.Get("rows").(int)
-		} else if d.Get("open").(bool) {
-			window.Type = "openwindow"
 		} else {
-			return nil, errors.New("Open window not set to true")
+			window.Type = "openwindow"
 		}
 
 		feature.Type = "event"

@@ -65,35 +65,40 @@ type DataType struct {
 }
 
 // Feature ... again, completely normalised.
+// Note
+// Go is a bad language, We can't use omitempty for over, because both [] and 'nil' are empty.
+// Empty list is appropriate, especially for templates. But unfortunately, we will be sending
+// a really dumb `null` where it doesn't make sense to do so.
 type Feature struct {
 	ID          int                  `json:"id,omitempty"`
 	Name        string               `json:"name"`
 	Description string               `json:"description"`
 	Type        string               `json:"adt_type"`
-	DataType    DataType             `json:"dataType"`
 	Table       int                  `json:"table,omitempty"`
 	Window      *EventWindow         `json:"window,omitempty"`
 	Select      SQLExpression        `json:"select"`
 	Filter      *SQLExpression       `json:"filter"`
 	Aggregate   *AggregateExpression `json:"aggregate,omitempty"`
 	PostExpr    *SQLExpression       `json:"postAggregateExpr,omitempty"`
-	Over        []int                `json:"over,omitempty"`
+	Over        []int                `json:"over"`
 	EntityID    int                  `json:"entityId,omitempty"`
 	TemplateID  *int                 `json:"template,omitempty"`
 }
 
-// FeatureTemplate ... Again, completely normalised.
+// FeatureTemplate ... again, completely normalised.
 type FeatureTemplate struct {
 	ID          int                  `json:"id,omitempty"`
 	Name        string               `json:"name"`
 	Description string               `json:"description"`
 	Type        string               `json:"adt_type"`
-	DataType    DataType             `json:"dataType"`
 	Table       int                  `json:"table"`
+	Window      *EventWindow         `json:"window,omitempty"`
 	Select      SQLExpression        `json:"select"`
 	Filter      *SQLExpression       `json:"filter"`
 	Aggregate   *AggregateExpression `json:"aggregate,omitempty"`
 	PostExpr    SQLExpression        `json:"postAggregateExpr"`
+	Over        []int                `json:"over"`
+	EntityID    int                  `json:"entityId,omitempty"`
 }
 
 // FeatureSet ...
