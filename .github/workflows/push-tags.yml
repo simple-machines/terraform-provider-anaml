@@ -1,0 +1,18 @@
+name: Build and publish Anaml Terraform provider
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    tags:
+      - 'v*'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+      - name: Push tags to terraform-provider-anaml-operations
+        run: |
+          git remote add operations git@github.com:simple-machines/terraform-provider-anaml-operations.git
+          git push operations --tags
