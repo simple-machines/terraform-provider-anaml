@@ -57,14 +57,31 @@ level logging.
 
 ### Releasing
 
+Terraform assumes that providers follows [Semantic Versioning](https://semver.org/).
+
+The versioning semantics are used to select the latest version of a Terraform
+provider when no exact version number is specified in the provider
+configuration, such as if no version number is specified, or if version
+constraints are specified instead.
+
+#### Private Release
+
+A private release publishes a self-extracting archive as a GitHub release, that
+can be downloaded and run to install the Terraform provider locally. The
+provider isn't published to the public Terraform registry, so each version must
+be downloaded and installed manually.
+
 To release a new version of the Terraform provider, create a new GitHub release
 with a tag that matches the regular expression: `^release-v[0-9]+\.[0-9]+\.[0-9]+$`.
 
 For example, to release version 1.0.0, create a GitHub release with the tag `release-v1.0.0`. 
 
-Terraform assumes that providers follows [Semantic Versioning](https://semver.org/).
+#### Public Release
 
-The versioning semantics are used, to select the latest version of a Terraform
-provider when no exact version number is specified in the provider
-configuration, such as if no version number is specified, or if version
-constraints are specified instead.
+A public release publishes to the public Terraform registry, so each version
+can be installed automatically through Terraform configuration and `terraform
+init`.
+
+CI/CD configuration for publishing to the Terraform registry is based on the
+documentation from the Terraform website on
+[Publishing Providers](https://www.terraform.io/docs/registry/providers/publishing.html).

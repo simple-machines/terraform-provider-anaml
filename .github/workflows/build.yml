@@ -1,0 +1,18 @@
+name: Build
+on:
+  pull_request:
+    branches: [ master ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+      - name: Configure Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.14"
+      - name: Build Terraform providers
+        run: |
+          GOOS=darwin go build ./providers/terraform-provider-anaml
+          GOOS=darwin go build ./providers/terraform-provider-anaml-operations
