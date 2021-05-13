@@ -4,14 +4,38 @@ A Terraform provider for [anaml](https://anaml.io/) resources, such as entities,
 
 ## Installation
 
-Download the latest [release on GitHub](https://github.com/simple-machines/terraform-provider-anaml/releases).
+Configure the `anaml` and/or the `anaml-operations` Terraform providers through
+your Terraform manifest:
 
-Run the installer script:
+```terraform
+terraform {
+  required_version = "~> 0.14"
+  required_providers {
+    anaml = {
+      source  = "simple-machines/anaml"
+    }
+    anaml-operations = {
+      source  = "simple-machines/anaml-operations"
+    }
+  }
+}
 
+provider "anaml" {
+  host       = "http://localhost:8080"
+  username   = "admin"
+  password   = "admin-password"
+  branch     = "official"
+}
+
+provider "anaml-operations" {
+  host       = "http://localhost:8080"
+  username   = "admin"
+  password   = "admin-password"
+}
 ```
-ANAML_TERRAFORM_PROVIDER_VERSION=1.2.3
-./terraform-provider-anaml-install-$ANAML_TERRAFORM_PROVIDER_VERSION.run
-```
+
+When there is a new release, run `terraform init -upgrade` to upgrade to the
+latest version.
 
 ## Development
 
@@ -57,6 +81,13 @@ level logging.
 
 ### Releasing
 
+To release a new version of the Terraform provider, create a new _Git tag_ with
+a tag that matches the regular expression: `^v[0-9]+\.[0-9]+\.[0-9]+$`. Do not
+create a GitHub release, the build process will automatically create a GitHub
+release when the build is successful.
+
+For example, to release version 1.0.0, create a GitHub release with the tag `v1.0.0`. 
+
 Terraform assumes that providers follows [Semantic Versioning](https://semver.org/).
 
 The versioning semantics are used to select the latest version of a Terraform
@@ -64,24 +95,8 @@ provider when no exact version number is specified in the provider
 configuration, such as if no version number is specified, or if version
 constraints are specified instead.
 
-#### Private Release
+The Terraform providers are publshed to the public Terraform Registry.
 
-A private release publishes a self-extracting archive as a GitHub release, that
-can be downloaded and run to install the Terraform provider locally. The
-provider isn't published to the public Terraform registry, so each version must
-be downloaded and installed manually.
-
-To release a new version of the Terraform provider, create a new GitHub release
-with a tag that matches the regular expression: `^release-v[0-9]+\.[0-9]+\.[0-9]+$`.
-
-For example, to release version 1.0.0, create a GitHub release with the tag `release-v1.0.0`. 
-
-#### Public Release
-
-A public release publishes to the public Terraform registry, so each version
-can be installed automatically through Terraform configuration and `terraform
-init`.
-
-CI/CD configuration for publishing to the Terraform registry is based on the
+CI/CD configuration for publishing to the Terraform Registry is based on the
 documentation from the Terraform website on
 [Publishing Providers](https://www.terraform.io/docs/registry/providers/publishing.html).
