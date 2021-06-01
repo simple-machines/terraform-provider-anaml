@@ -258,3 +258,19 @@ type TableMonitoring struct {
 	Cluster     int       `json:"cluster"`
 	Enabled     bool      `json:"enabled"`
 }
+
+// TableCaching ...
+type TableCaching struct {
+	ID          int                `json:"id,omitempty"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	Specs       []TableCachingSpec `json:"specs"`
+  PrefixURI   string             `json:"prefixURI"`
+	Schedule    *Schedule          `json:"schedule"`
+	Cluster     int                `json:"cluster"`
+}
+
+type TableCachingSpec struct {
+	Table   int  `json:"table"`
+	Entity  int  `json:"entity"`
+}
