@@ -2,10 +2,10 @@ terraform {
   required_version = "~> 0.14"
   required_providers {
     anaml = {
-      source  = "registry.anaml.io/anaml/anaml"
+      source = "simple-machines/anaml"
     }
     anaml-operations = {
-      source  = "registry.anaml.io/anaml/anaml-operations"
+      source = "simple-machines/anaml-operations"
     }
   }
 }
@@ -461,6 +461,19 @@ resource "anaml-operations_user" "john" {
   surname    = "Doe"
   password   = "hunter23"
   roles      = ["super_user"]
+}
+
+resource "anaml-operations_caching" "caching" {
+  name           = "household_caching"
+  description    = "Caching of tables for households"
+  spec {
+    table  = anaml_table.household.id
+    entity = anaml_entity.household.id
+  }
+  cluster        = data.anaml_cluster.local.id
+  daily_schedule {
+    start_time_of_day = "00:00:00"
+  }
 }
 
 resource "anaml-operations_monitoring" "monitoring" {
