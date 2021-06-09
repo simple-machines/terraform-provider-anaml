@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func (c *Client) GetUserGroup(userGroupID string) (*UserGroup, error) {
+func (c *Client) GetUserGroup(userGroupId string) (*UserGroup, error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/user-group/%s", c.HostURL, userGroupId), nil)
 	if err != nil {
 		return nil, err
@@ -56,7 +56,7 @@ func (c *Client) CreateUserGroup(creationRequest UserGroup) (*UserGroup, error) 
 	return &creationRequest, nil
 }
 
-func (c *Client) UpdateUserGroup(userGroupID string, creationRequest UserGroup) error {
+func (c *Client) UpdateUserGroup(userGroupId string, creationRequest UserGroup) error {
 	rb, err := json.Marshal(creationRequest)
 	if err != nil {
 		return err
@@ -75,7 +75,7 @@ func (c *Client) UpdateUserGroup(userGroupID string, creationRequest UserGroup) 
 	return nil
 }
 
-func (c *Client) DeleteUserGroup(userGroupID string) error {
+func (c *Client) DeleteUserGroup(userGroupId string) error {
 	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/user-group/%s", c.HostURL, userGroupId), nil)
 	if err != nil {
 		return err

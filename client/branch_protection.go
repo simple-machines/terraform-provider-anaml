@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func (c *Client) GetBranchProtection(branchProtectionID string) (*BranchProtection, error) {
+func (c *Client) GetBranchProtection(branchProtectionId string) (*BranchProtection, error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/branch-protection/%s", c.HostURL, branchProtectionId), nil)
 	if err != nil {
 		return nil, err
@@ -56,7 +56,7 @@ func (c *Client) CreateBranchProtection(creationRequest BranchProtection) (*Bran
 	return &creationRequest, nil
 }
 
-func (c *Client) UpdateBranchProtection(branchProtectionID string, creationRequest BranchProtection) error {
+func (c *Client) UpdateBranchProtection(branchProtectionId string, creationRequest BranchProtection) error {
 	rb, err := json.Marshal(creationRequest)
 	if err != nil {
 		return err
@@ -75,7 +75,7 @@ func (c *Client) UpdateBranchProtection(branchProtectionID string, creationReque
 	return nil
 }
 
-func (c *Client) DeleteBranchProtection(branchProtectionID string) error {
+func (c *Client) DeleteBranchProtection(branchProtectionId string) error {
 	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/branch-protection/%s", c.HostURL, branchProtectionId), nil)
 	if err != nil {
 		return err

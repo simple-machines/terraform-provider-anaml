@@ -12,8 +12,8 @@ terraform {
 
 provider "anaml" {
   host     = "http://localhost:8080/api"
-  username = "03d147fe-0fa8-4aef-bce6-e6fbcd1cd000"
-  password = "test secret"
+  username = "admin"
+  password = "test password"
   branch   = "official"
 }
 
@@ -185,8 +185,8 @@ resource "anaml_feature_store" "household_cron_retry" {
 
 provider "anaml-operations" {
   host     = "http://127.0.0.1:8080/api"
-  username = "03d147fe-0fa8-4aef-bce6-e6fbcd1cd000"
-  password = "test secret"
+  username = "admin"
+  password = "test password"
 }
 
 resource "anaml-operations_cluster" "local" {
