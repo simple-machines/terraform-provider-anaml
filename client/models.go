@@ -248,6 +248,37 @@ type ChangeOtherPasswordRequest struct {
 	Password string `json:"password"`
 }
 
+// UserGroup ..
+type UserGroup struct {
+	ID          int     `json:"id,omitempty"`
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	Members     []int   `json:"members"`
+}
+
+// BranchProtection
+type BranchProtection struct {
+	ID                  int            `json:"id,omitempty"`
+	ProtectionPattern   string         `json:"protectionPattern"`
+	MergeApprovalRules  []ApprovalRule `json:"mergeApprovalRules"`
+	PushWhitelist       []PrincipalId  `json:"pushWhitelist"`
+	ApplyToAdmins       bool           `json:"applyToAdmins"`
+	AllowBranchDeletion bool           `json:"allowBranchDeletion"`
+}
+
+// ApprovalRule
+type ApprovalRule struct {
+	Approvers            []PrincipalId `json:"approvers,omitempty"`
+	NumRequiredApprovals int           `json:"numRequiredApprovals"`
+	Type                 string        `json:"adt_type"`
+}
+
+// PrincipalId
+type PrincipalId struct {
+	ID   int    `json:"id"`
+	Type string `json:"adt_type"`
+}
+
 // TableMonitoring ...
 type TableMonitoring struct {
 	ID          int       `json:"id,omitempty"`

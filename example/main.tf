@@ -488,3 +488,38 @@ resource "anaml-operations_monitoring" "monitoring" {
     start_time_of_day = "00:00:00"
   }
 }
+
+resource "anaml-operations_user_group" "engineering" {
+  name        = "Engineering"
+  description = "A user group with engineering members."
+  members     = [
+    anaml-operations_user.jane.id,
+    anaml-operations_user.john.id,
+  ]
+}
+
+resource "anaml-operations_branch_protection" "official" {
+  protection_pattern    = "official"
+  merge_approval_rules  { 
+    restricted {
+      num_required_approvals = 1
+      approvers {
+        user_group {
+          id = anaml-operations_user_group.engineering.id
+        }
+      }
+    }
+  }
+  merge_approval_rules  {
+    open {
+      num_required_approvals = 2
+    }
+  }
+  push_whitelist {
+    user {
+      id = anaml-operations_user.john.id
+    }
+  }
+  apply_to_admins       = true
+  allow_branch_deletion = false
+}

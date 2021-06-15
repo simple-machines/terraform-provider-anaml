@@ -1,6 +1,7 @@
 package anaml
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
@@ -97,4 +98,28 @@ func validateAnamlIdentifier() schema.SchemaValidateFunc {
 
 func validateMapKeysAnamlIdentifier() schema.SchemaValidateDiagFunc {
 	return validation.MapKeyMatch(identifierPattern, "Map keys must be parsable as an integer")
+}
+
+type IdAndVersion struct {
+	ID  int
+	Version string
+}
+
+func (n *IdAndVersion) UnmarshalJSON(buf []byte) error {
+	tmp := []interface{}{&n.ID, &n.Version}
+	expectedLen := len(tmp)
+	if err := json.Unmarshal(buf, &tmp); err != nil {
+		return err
+	}
+	if g, e := len(tmp), expectedLen; g != e {
+		return fmt.Errorf("Wrong number of fields in response tuple: %d != %d", g, e)
+	}
+	return nil
+}
+
+func unmarshalIdAndVersion(input []byte, idAndVersion *IdAndVersion) error {
+	if err := json.Unmarshal(input, idAndVersion); err != nil {
+		return err
+	}
+	return nil
 }
