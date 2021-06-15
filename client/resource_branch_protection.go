@@ -24,7 +24,7 @@ func ResourceBranchProtection() *schema.Resource {
 			},
 			"merge_approval_rules": {
 				Type:     schema.TypeList,
-				Optional: true,
+				Required: true,
 				Elem:     approvalRuleSchema(),
 			},
 			"push_whitelist": {
@@ -148,7 +148,7 @@ func resourceBranchProtectionRead(d *schema.ResourceData, m interface{}) error {
 		return nil
 	}
 
-	approvalRules, err := composeBranchProtection(d)
+	approvalRules, err := flattenApprovalRules(BranchProtection.MergeApprovalRules)
 	if err != nil {
 		return err
 	}
@@ -310,18 +310,18 @@ func expandPrincipalIds(principalIds []interface{}) ([]PrincipalId, error) {
 func composeUserId(d map[string]interface{}) (*PrincipalId, error) {
     return &PrincipalId {
         ID: d["id"].(int),
-        Type: "user",
+        Type: "userid",
     }, nil
 }
 
 func composeUserGroupId(d map[string]interface{}) (*PrincipalId, error) {
     return &PrincipalId {
         ID: d["id"].(int),
-        Type: "usergroup",
+        Type: "usergroupid",
     }, nil
 }
 
-func flattenApprovalRule(rules []ApprovalRule) ([]map[string]interface{}, error) {
+func flattenApprovalRules(rules []ApprovalRule) ([]map[string]interface{}, error) {
 	res := make([]map[string]interface{}, 0, len(rules))
 
 	for _, rule := range rules {
@@ -362,11 +362,11 @@ func flattenPrincipalIds(principalIds []PrincipalId) []map[string]interface{} {
 	for _, principalId := range principalIds {
 		single := make(map[string]interface{})
 
-        if principalId.Type == "user" {
+        if principalId.Type == "userid" {
             single["user"] = parseUserId(principalId)
         }
 
-        if principalId.Type == "usergroup" {
+        if principalId.Type == "usergroupid" {
             single["user_group"] = parseUserGroupId(principalId)
         }
 

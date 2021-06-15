@@ -12,8 +12,8 @@ terraform {
 
 provider "anaml" {
   host     = "http://localhost:8080/api"
-  username = "admin"
-  password = "test password"
+  username = "03d147fe-0fa8-4aef-bce6-e6fbcd1cd000"
+  password = "test secret"
   branch   = "official"
 }
 
@@ -185,8 +185,8 @@ resource "anaml_feature_store" "household_cron_retry" {
 
 provider "anaml-operations" {
   host     = "http://127.0.0.1:8080/api"
-  username = "admin"
-  password = "test password"
+  username = "03d147fe-0fa8-4aef-bce6-e6fbcd1cd000"
+  password = "test secret"
 }
 
 resource "anaml-operations_cluster" "local" {
@@ -493,39 +493,33 @@ resource "anaml-operations_user_group" "engineering" {
   name        = "Engineering"
   description = "A user group with engineering members."
   members     = [
-    anaml-operations_user.jane,
-    anaml-operations_user.john,
+    anaml-operations_user.jane.id,
+    anaml-operations_user.john.id,
   ]
 }
 
 resource "anaml-operations_branch_protection" "official" {
   protection_pattern    = "official"
-  merge_approval_rules  = [
-    {
-      restricted = {
-        num_required_approvals = 1
-        approvers =[
-          {
-            user_group = {
-              id = anaml-operations_user_group.engineering.id
-            }
-          }
-        ]
-      }
-    },
-    {
-      open = {
-        num_required_approvals = 2
-      }
-    },
-  ]
-  push_whitelist        = [
-    {
-      user = {
-        id = anaml-operations_user.john.id
+  merge_approval_rules  { 
+    restricted {
+      num_required_approvals = 1
+      approvers {
+        user_group {
+          id = anaml-operations_user_group.engineering.id
+        }
       }
     }
-  ]
+  }
+  merge_approval_rules  {
+    open {
+      num_required_approvals = 2
+    }
+  }
+  push_whitelist {
+    user {
+      id = anaml-operations_user.john.id
+    }
+  }
   apply_to_admins       = true
   allow_branch_deletion = false
 }

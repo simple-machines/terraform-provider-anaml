@@ -46,13 +46,13 @@ func (c *Client) CreateUserGroup(creationRequest UserGroup) (*UserGroup, error) 
 		return nil, err
 	}
 
-	var V int
-	err = json.Unmarshal(body, &V)
+	var idAndVersion IdAndVersion
+	err = unmarshalIdAndVersion(body, &idAndVersion)
 	if err != nil {
 		return nil, err
 	}
 
-	creationRequest.ID = V
+	creationRequest.ID = idAndVersion.ID
 	return &creationRequest, nil
 }
 
