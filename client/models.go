@@ -137,6 +137,18 @@ type RetryPolicy struct {
 	MaxAttempts int    `json:"maxAttempts,omitempty"`
 }
 
+type SensitiveAttribute struct {
+	Key         string             `json:"key"`
+	ValueConfig *SecretValueConfig `json:"valueConfig"`
+}
+
+type SecretValueConfig struct {
+	Type          string `json:"adt_type"`
+	Secret        string `json:"secret,omitempty"`
+	SecretProject string `json:"secretProject,omitempty"`
+	SecretId      string `json:"secretId,omitempty"`
+}
+
 // Source ...
 type Source struct {
 	ID                  int                             `json:"id,omitempty"`
@@ -155,6 +167,7 @@ type Source struct {
 	Database            string                          `json:"database,omitempty"`
 	BootstrapServers    string                          `json:"bootstrapServers,omitempty"`
 	SchemaRegistryURL   string                          `json:"schemaRegistryUrl,omitempty"`
+	KafkaProperties     []SensitiveAttribute            `json:"kafkaPropertiesProviders"`
 }
 
 type FileFormat struct {
@@ -187,6 +200,7 @@ type Destination struct {
 	Database            string                          `json:"database,omitempty"`
 	BootstrapServers    string                          `json:"bootstrapServers,omitempty"`
 	SchemaRegistryURL   string                          `json:"schemaRegistryUrl,omitempty"`
+	KafkaProperties     []SensitiveAttribute            `json:"kafkaPropertiesProviders"`
 	StagingArea         *GCSStagingArea                 `json:"stagingArea,omitempty"`
 }
 

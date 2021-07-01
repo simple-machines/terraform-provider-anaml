@@ -17,6 +17,13 @@ provider "anaml" {
   branch   = "official"
 }
 
+provider "anaml-operations" {
+  host     = "http://127.0.0.1:8080/api"
+  username = "03d147fe-0fa8-4aef-bce6-e6fbcd1cd000"
+  password = "test secret"
+}
+
+
 data "anaml_source" "s3a" {
   name = anaml-operations_source.s3a.name
 }
@@ -183,12 +190,6 @@ resource "anaml_feature_store" "household_cron_retry" {
   }
 }
 
-provider "anaml-operations" {
-  host     = "http://127.0.0.1:8080/api"
-  username = "03d147fe-0fa8-4aef-bce6-e6fbcd1cd000"
-  password = "test secret"
-}
-
 resource "anaml-operations_cluster" "local" {
   name               = "Terraform Local Cluster"
   description        = "A local cluster created by Terraform"
@@ -322,6 +323,13 @@ resource "anaml-operations_source" "kafka" {
   kafka {
     bootstrap_servers = "http://bootstrap"
     schema_registry_url = "http://schema-registry"
+    property {
+      key = "jamf"
+      gcp {
+        secret_project = "example"
+        secret_id = "sid"
+      }
+    }
   }
 }
 
@@ -442,6 +450,16 @@ resource "anaml-operations_destination" "kafka" {
   kafka {
     bootstrap_servers = "http://bootstrap"
     schema_registry_url = "http://schema-registry"
+    property {
+      key = "username"
+      value = "fred"
+    }
+    property {
+      key = "password"
+      aws {
+        secret_id = "secret_number_3"
+      }
+    }
   }
 }
 
@@ -501,7 +519,7 @@ resource "anaml-operations_user_group" "engineering" {
 
 resource "anaml-operations_branch_protection" "official" {
   protection_pattern    = "official"
-  merge_approval_rules  { 
+  merge_approval_rules  {
     restricted {
       num_required_approvals = 1
       approvers {
