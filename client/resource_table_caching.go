@@ -25,6 +25,10 @@ func ResourceTableCaching() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"prefix_url": {
+				Type:     schema.TypeString,
+				Required: true,
+			},
 			"spec": {
 				Type:        schema.TypeList,
 				Description: "Table and entity specifications to cache with this job",
@@ -58,12 +62,12 @@ func specSchema() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"table": {
-				Type:         schema.TypeInt,
-				Required:     true,
+				Type:     schema.TypeInt,
+				Required: true,
 			},
 			"entity": {
-				Type:         schema.TypeInt,
-				Required:     true,
+				Type:     schema.TypeInt,
+				Required: true,
 			},
 		},
 	}
@@ -92,6 +96,9 @@ func resourceTableCachingRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 	if err := d.Set("cluster", strconv.Itoa(TableCaching.Cluster)); err != nil {
+		return err
+	}
+	if err := d.Set("prefix_url", TableCaching.PrefixURI); err != nil {
 		return err
 	}
 
@@ -164,7 +171,7 @@ func composeTableCaching(d *schema.ResourceData) (*TableCaching, error) {
 		return &TableCaching{
 			Name:        d.Get("name").(string),
 			Description: d.Get("description").(string),
-      Specs:       expandTableCachingSpecs(d),
+			Specs:       expandTableCachingSpecs(d),
 			Cluster:     cluster,
 			Schedule:    schedule,
 		}, nil
@@ -178,7 +185,7 @@ func composeTableCaching(d *schema.ResourceData) (*TableCaching, error) {
 		return &TableCaching{
 			Name:        d.Get("name").(string),
 			Description: d.Get("description").(string),
-      Specs:       expandTableCachingSpecs(d),
+			Specs:       expandTableCachingSpecs(d),
 			Cluster:     cluster,
 			Schedule:    schedule,
 		}, nil
@@ -189,7 +196,8 @@ func composeTableCaching(d *schema.ResourceData) (*TableCaching, error) {
 	return &TableCaching{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-    Specs:       expandTableCachingSpecs(d),
+		PrefixURI:   d.Get("prefix_url").(string),
+		Specs:       expandTableCachingSpecs(d),
 		Cluster:     cluster,
 		Schedule:    schedule,
 	}, nil
@@ -213,12 +221,12 @@ func expandTableCachingSpecs(d *schema.ResourceData) []TableCachingSpec {
 
 	for _, dr := range drs {
 		val, _ := dr.(map[string]interface{})
-		table, _  := val["table"].(int)
+		table, _ := val["table"].(int)
 		entity, _ := val["entity"].(int)
 
 		parsed := TableCachingSpec{
 			Table:  table,
-      Entity: entity,
+			Entity: entity,
 		}
 		res = append(res, parsed)
 	}
