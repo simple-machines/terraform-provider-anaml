@@ -250,10 +250,10 @@ type ChangeOtherPasswordRequest struct {
 
 // UserGroup ..
 type UserGroup struct {
-	ID          int     `json:"id,omitempty"`
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Members     []int   `json:"members"`
+	ID          int    `json:"id,omitempty"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Members     []int  `json:"members"`
 }
 
 // BranchProtection
@@ -296,12 +296,12 @@ type TableCaching struct {
 	Name        string             `json:"name"`
 	Description string             `json:"description"`
 	Specs       []TableCachingSpec `json:"specs"`
-  PrefixURI   string             `json:"prefixURI"`
+	PrefixURI   string             `json:"prefixURI"`
 	Schedule    *Schedule          `json:"schedule"`
 	Cluster     int                `json:"cluster"`
 }
 
 type TableCachingSpec struct {
-	Table   int  `json:"table"`
-	Entity  int  `json:"entity"`
+	Table  int `json:"table"`
+	Entity int `json:"entity"`
 }

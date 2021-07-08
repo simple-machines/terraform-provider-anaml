@@ -466,6 +466,7 @@ resource "anaml-operations_user" "john" {
 resource "anaml-operations_caching" "caching" {
   name           = "household_caching"
   description    = "Caching of tables for households"
+  prefix_uri     = "file:///tmp/anaml/caching
   spec {
     table  = anaml_table.household.id
     entity = anaml_entity.household.id
