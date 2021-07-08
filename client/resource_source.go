@@ -2,6 +2,7 @@ package anaml
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -281,6 +282,11 @@ func kafkaSourceDestinationSchema() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
+			"property": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem:     sensitiveAttributeSchema(),
+			},
 		},
 	}
 }
@@ -558,6 +564,18 @@ func parseKafkaSource(source *Source) ([]map[string]interface{}, error) {
 	kafka["bootstrap_servers"] = source.BootstrapServers
 	kafka["schema_registry_url"] = source.SchemaRegistryURL
 
+	sensitives := make([]map[string]interface{}, len(source.KafkaProperties))
+	for i, v := range source.KafkaProperties {
+		sa, err := parseSensitiveAttribute(&v)
+		if err != nil {
+			return nil, err
+		}
+
+		sensitives[i] = sa
+	}
+
+	kafka["property"] = sensitives
+
 	kafkas := make([]map[string]interface{}, 0, 1)
 	kafkas = append(kafkas, kafka)
 	return kafkas, nil
@@ -673,12 +691,34 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 	}
 
 	if kafka, _ := expandSingleMap(d.Get("kafka")); kafka != nil {
+		value := kafka["property"]
+
+		array, ok := kafka["property"].([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("Kafka Properties Value is not an array. Value: %v", value)
+		}
+
+		sensitives := make([]SensitiveAttribute, len(array))
+		for i, v := range array {
+
+			prop, ok := v.(map[string]interface{})
+			if !ok {
+				return nil, fmt.Errorf("Kafka Properties Value is not a map interfaces. Value: %v.", v)
+			}
+			sa, err := composeSensitiveAttribute(prop)
+			if err != nil {
+				return nil, err
+			}
+			sensitives[i] = *sa
+		}
+
 		source := Source{
 			Name:              d.Get("name").(string),
 			Description:       d.Get("description").(string),
 			Type:              "kafka",
 			BootstrapServers:  kafka["bootstrap_servers"].(string),
 			SchemaRegistryURL: kafka["schema_registry_url"].(string),
+			KafkaProperties:   sensitives,
 		}
 		return &source, nil
 	}
