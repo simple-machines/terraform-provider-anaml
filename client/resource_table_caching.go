@@ -171,6 +171,7 @@ func composeTableCaching(d *schema.ResourceData) (*TableCaching, error) {
 		return &TableCaching{
 			Name:        d.Get("name").(string),
 			Description: d.Get("description").(string),
+			PrefixURI:   d.Get("prefix_url").(string),
 			Specs:       expandTableCachingSpecs(d),
 			Cluster:     cluster,
 			Schedule:    schedule,
@@ -185,6 +186,7 @@ func composeTableCaching(d *schema.ResourceData) (*TableCaching, error) {
 		return &TableCaching{
 			Name:        d.Get("name").(string),
 			Description: d.Get("description").(string),
+			PrefixURI:   d.Get("prefix_url").(string),
 			Specs:       expandTableCachingSpecs(d),
 			Cluster:     cluster,
 			Schedule:    schedule,
