@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
+var namePattern = regexp.MustCompile(`^[a-z][a-z0-9_]*$`)
 var identifierPattern = regexp.MustCompile(`^[0-9]+$`)
 
 // Takes the result of flatmap.Expand for an array of strings
@@ -92,6 +93,10 @@ func identifierList(ints []int) []string {
 	return vs
 }
 
+func validateAnamlName() schema.SchemaValidateFunc {
+	return validation.StringMatch(namePattern, "Names must start with a lowercase a-z and contain only a-z, underscores, and digits.")
+}
+
 func validateAnamlIdentifier() schema.SchemaValidateFunc {
 	return validation.StringMatch(identifierPattern, "Must be parsable as an integer")
 }
@@ -101,7 +106,7 @@ func validateMapKeysAnamlIdentifier() schema.SchemaValidateDiagFunc {
 }
 
 type IdAndVersion struct {
-	ID  int
+	ID      int
 	Version string
 }
 
