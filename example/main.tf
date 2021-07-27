@@ -515,6 +515,9 @@ resource "anaml-operations_user_group" "engineering" {
     anaml-operations_user.jane.id,
     anaml-operations_user.john.id,
   ]
+  roles = [
+    "run_monitoring"
+  ]
 }
 
 resource "anaml-operations_branch_protection" "official" {

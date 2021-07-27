@@ -101,7 +101,7 @@ func validateMapKeysAnamlIdentifier() schema.SchemaValidateDiagFunc {
 }
 
 type IdAndVersion struct {
-	ID  int
+	ID      int
 	Version string
 }
 
