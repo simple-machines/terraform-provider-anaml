@@ -191,7 +191,7 @@ resource "anaml_feature_store" "household_cron_retry" {
 }
 
 resource "anaml-operations_cluster" "local" {
-  name               = "Terraform Local Cluster"
+  name               = "terraform_local_cluster"
   description        = "A local cluster created by Terraform"
   is_preview_cluster = true
 
@@ -209,7 +209,7 @@ resource "anaml-operations_cluster" "local" {
 }
 
 resource "anaml-operations_cluster" "spark_server" {
-  name               = "Terraform Spark Server Cluster"
+  name               = "terraform_spark_server_cluster"
   description        = "A Spark server cluster created by Terraform"
   is_preview_cluster = false
 
@@ -223,7 +223,7 @@ resource "anaml-operations_cluster" "spark_server" {
 }
 
 resource "anaml-operations_source" "s3" {
-  name        = "Terraform S3 Source"
+  name        = "terraform_s3_source"
   description = "An S3 source created by Terraform"
 
   s3 {
@@ -235,7 +235,7 @@ resource "anaml-operations_source" "s3" {
 }
 
 resource "anaml-operations_source" "s3a" {
-  name        = "Terraform S3A Source"
+  name        = "terraform_s3a_source"
   description = "An S3A source created by Terraform"
 
   s3a {
@@ -249,7 +249,7 @@ resource "anaml-operations_source" "s3a" {
 }
 
 resource "anaml-operations_source" "hive" {
-  name        = "Terraform Hive Source"
+  name        = "terraform_hive_source"
   description = "An Hive source created by Terraform"
 
   hive {
@@ -258,7 +258,7 @@ resource "anaml-operations_source" "hive" {
 }
 
 resource "anaml-operations_source" "jdbc" {
-  name        = "Terraform JDBC Source"
+  name        = "terraform_jdbc_source"
   description = "An JDBC source created by Terraform"
 
   jdbc {
@@ -275,7 +275,7 @@ resource "anaml-operations_source" "jdbc" {
 }
 
 resource "anaml-operations_source" "big_query" {
-  name        = "Terraform BigQuery Source"
+  name        = "terraform_bigquery_source"
   description = "An BigQuery source created by Terraform"
 
   big_query {
@@ -284,7 +284,7 @@ resource "anaml-operations_source" "big_query" {
 }
 
 resource "anaml-operations_source" "gcs" {
-  name        = "Terraform GCS Source"
+  name        = "terraform_gcs_source"
   description = "An GCS source created by Terraform"
 
   gcs {
@@ -295,7 +295,7 @@ resource "anaml-operations_source" "gcs" {
 }
 
 resource "anaml-operations_source" "local" {
-  name        = "Terraform Local Source"
+  name        = "terraform_local_source"
   description = "An Local source created by Terraform"
 
   local {
@@ -306,7 +306,7 @@ resource "anaml-operations_source" "local" {
 }
 
 resource "anaml-operations_source" "hdfs" {
-  name        = "Terraform HDFS Source"
+  name        = "terraform_hdfs_source"
   description = "An HDFS source created by Terraform"
 
   hdfs {
@@ -317,7 +317,7 @@ resource "anaml-operations_source" "hdfs" {
 }
 
 resource "anaml-operations_source" "kafka" {
-  name        = "Terraform Kafka Source"
+  name        = "terraform_kafka_source"
   description = "An Kafka source created by Terraform"
 
   kafka {
@@ -334,7 +334,7 @@ resource "anaml-operations_source" "kafka" {
 }
 
 resource "anaml-operations_destination" "s3" {
-  name        = "Terraform S3 Destination"
+  name        = "terraform_s3_destination"
   description = "An S3 destination created by Terraform"
 
   s3 {
@@ -346,7 +346,7 @@ resource "anaml-operations_destination" "s3" {
 }
 
 resource "anaml-operations_destination" "s3a" {
-  name        = "Terraform S3A Destination"
+  name        = "terraform_s3a_destination"
   description = "An S3A destination created by Terraform"
 
   s3a {
@@ -360,7 +360,7 @@ resource "anaml-operations_destination" "s3a" {
 }
 
 resource "anaml-operations_destination" "hive" {
-  name        = "Terraform Hive Destination"
+  name        = "terraform_hive_destination"
   description = "An Hive destination created by Terraform"
 
   hive {
@@ -369,7 +369,7 @@ resource "anaml-operations_destination" "hive" {
 }
 
 resource "anaml-operations_destination" "jdbc" {
-  name        = "Terraform JDBC Destination"
+  name        = "terraform_jdbc_destination"
   description = "An JDBC destination created by Terraform"
 
   jdbc {
@@ -386,7 +386,7 @@ resource "anaml-operations_destination" "jdbc" {
 }
 
 resource "anaml-operations_destination" "big_query_temporary" {
-  name        = "Terraform BigQuery Destination with Temporary Staging Area"
+  name        = "terraform_bigquery_destination_with_temporary_staging_area"
   description = "An BigQuery destination created by Terraform"
 
   big_query {
@@ -398,7 +398,7 @@ resource "anaml-operations_destination" "big_query_temporary" {
 }
 
 resource "anaml-operations_destination" "big_query_persistent" {
-  name        = "Terraform BigQuery Destination with Persistent Staging Area"
+  name        = "terraform_bigquery_destination_with_persistent_staging_area"
   description = "An BigQuery destination created by Terraform"
 
   big_query {
@@ -411,7 +411,7 @@ resource "anaml-operations_destination" "big_query_persistent" {
 }
 
 resource "anaml-operations_destination" "gcs" {
-  name        = "Terraform GCS Destination"
+  name        = "terraform_gcs_destination"
   description = "An GCS destination created by Terraform"
 
   gcs {
@@ -422,7 +422,7 @@ resource "anaml-operations_destination" "gcs" {
 }
 
 resource "anaml-operations_destination" "local" {
-  name        = "Terraform Local Destination"
+  name        = "terraform_local_destination"
   description = "An Local destination created by Terraform"
 
   local {
@@ -433,7 +433,7 @@ resource "anaml-operations_destination" "local" {
 }
 
 resource "anaml-operations_destination" "hdfs" {
-  name        = "Terraform HDFS Destination"
+  name        = "terraform_hdfs_destination"
   description = "An HDFS destination created by Terraform"
 
   hdfs {
@@ -444,7 +444,7 @@ resource "anaml-operations_destination" "hdfs" {
 }
 
 resource "anaml-operations_destination" "kafka" {
-  name        = "Terraform Kafka Destination"
+  name        = "terraform_kafka_destination"
   description = "An Kafka destination created by Terraform"
 
   kafka {
@@ -469,7 +469,7 @@ resource "anaml-operations_user" "jane" {
   given_name = "Jane"
   surname    = "Doe"
   password   = "hunter23"
-  roles      = ["viewer", "operator", "author"]
+  roles      = ["author"]
 }
 
 resource "anaml-operations_user" "john" {
@@ -484,7 +484,7 @@ resource "anaml-operations_user" "john" {
 resource "anaml-operations_caching" "caching" {
   name           = "household_caching"
   description    = "Caching of tables for households"
-  prefix_uri     = "file:///tmp/anaml/caching"
+  prefix_url     = "file:///tmp/anaml/caching"
   spec {
     table  = anaml_table.household.id
     entity = anaml_entity.household.id
