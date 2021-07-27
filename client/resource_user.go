@@ -9,10 +9,10 @@ import (
 
 func ResourceUser() *schema.Resource {
 	return &schema.Resource{
-		Create:   resourceUserCreate,
-		Read:     resourceUserRead,
-		Update:   resourceUserUpdate,
-		Delete:   resourceUserDelete,
+		Create: resourceUserCreate,
+		Read:   resourceUserRead,
+		Update: resourceUserUpdate,
+		Delete: resourceUserDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -41,11 +41,11 @@ func ResourceUser() *schema.Resource {
 				Sensitive: true,
 			},
 			"roles": {
-				Type:           schema.TypeList,
-				Optional:       true,
-				Elem:           &schema.Schema{
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
 					Type:         schema.TypeString,
-					ValidateFunc: validation.StringInSlice([]string{"super_user", "operator", "author", "viewer"}, false),
+					ValidateFunc: validation.StringInSlice(validRoles(), false),
 				},
 			},
 		},
@@ -75,6 +75,9 @@ func resourceUserRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 	if err := d.Set("surname", user.Surname); err != nil {
+		return err
+	}
+	if err := d.Set("roles", user.Roles); err != nil {
 		return err
 	}
 

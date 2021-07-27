@@ -264,10 +264,11 @@ type ChangeOtherPasswordRequest struct {
 
 // UserGroup ..
 type UserGroup struct {
-	ID          int    `json:"id,omitempty"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Members     []int  `json:"members"`
+	ID          int      `json:"id,omitempty"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Roles       []string `json:"roles"`
+	Members     []int    `json:"members"`
 }
 
 // BranchProtection
@@ -318,4 +319,11 @@ type TableCaching struct {
 type TableCachingSpec struct {
 	Table  int `json:"table"`
 	Entity int `json:"entity"`
+}
+
+func validRoles() []string {
+	return []string{
+		"super_user", "author", "run_caching", "run_features", "run_monitoring",
+		"admin_user", "admin_group", "admin_branch_perms", "admin_system", "admin_webhooks",
+	}
 }
