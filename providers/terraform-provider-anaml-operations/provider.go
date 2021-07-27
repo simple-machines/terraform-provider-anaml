@@ -43,6 +43,7 @@ func Provider() *schema.Provider {
 			"anaml-operations_monitoring":        anaml.ResourceTableMonitoring(),
 			"anaml-operations_user_group":        anaml.ResourceUserGroup(),
 			"anaml-operations_branch_protection": anaml.ResourceBranchProtection(),
+			"anaml-operations_webhook":           anaml.ResourceWebhook(),
 		},
 
 		ConfigureFunc: providerConfigure,
