@@ -321,6 +321,16 @@ type TableCachingSpec struct {
 	Entity int `json:"entity"`
 }
 
+type Webhook struct {
+	ID                   int       `json:"id,omitempty"`
+	Name                 string    `json:"name"`
+	Description          string    `json:"description"`
+	URL                  string    `json:"url"`
+	MergeRequests        *struct{} `json:"mergeRequests,omitempty"`
+	MergeRequestComments *struct{} `json:"mergeRequestComments,omitempty"`
+	Commits              *struct{} `json:"commits,omitempty"`
+}
+
 func validRoles() []string {
 	return []string{
 		"super_user", "author", "run_caching", "run_features", "run_monitoring",

@@ -545,3 +545,10 @@ resource "anaml-operations_branch_protection" "official" {
   apply_to_admins       = true
   allow_branch_deletion = false
 }
+
+resource "anaml-operations_webhook" "merge_hook" {
+  name        = "merge_request_hook"
+  description = "A hook for new merge requests"
+  url         = "http://localhost:8095/hook"
+  merge_requests {}
+}
