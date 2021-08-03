@@ -329,6 +329,7 @@ type Webhook struct {
 	MergeRequests        *struct{} `json:"mergeRequests,omitempty"`
 	MergeRequestComments *struct{} `json:"mergeRequestComments,omitempty"`
 	Commits              *struct{} `json:"commits,omitempty"`
+	FeatureRuns          *struct{} `json:"featureRuns,omitempty"`
 }
 
 func validRoles() []string {

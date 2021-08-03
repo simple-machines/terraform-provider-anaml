@@ -49,6 +49,12 @@ func ResourceWebhook() *schema.Resource {
 				MaxItems: 1,
 				Elem:     &schema.Resource{},
 			},
+			"feature_runs": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem:     &schema.Resource{},
+			},
 		},
 	}
 }
@@ -84,6 +90,9 @@ func resourceWebhookRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("commits", flattenEmpty(webhook.Commits)); err != nil {
 		return err
 	}
+	if err := d.Set("feature_runs", flattenEmpty(webhook.FeatureRuns)); err != nil {
+		return err
+	}
 	return err
 }
 
@@ -96,6 +105,7 @@ func resourceWebhookCreate(d *schema.ResourceData, m interface{}) error {
 		MergeRequests:        expandEmpty(d.Get("merge_requests").([]interface{})),
 		MergeRequestComments: expandEmpty(d.Get("merge_request_comments").([]interface{})),
 		Commits:              expandEmpty(d.Get("commits").([]interface{})),
+		FeatureRuns:          expandEmpty(d.Get("feature_runs").([]interface{})),
 	}
 
 	e, err := c.CreateWebhook(webhook)
@@ -117,6 +127,7 @@ func resourceWebhookUpdate(d *schema.ResourceData, m interface{}) error {
 		MergeRequests:        expandEmpty(d.Get("merge_requests").([]interface{})),
 		MergeRequestComments: expandEmpty(d.Get("merge_request_comments").([]interface{})),
 		Commits:              expandEmpty(d.Get("commits").([]interface{})),
+		FeatureRuns:          expandEmpty(d.Get("feature_runs").([]interface{})),
 	}
 
 	err := c.UpdateWebhook(webhookID, webhook)
