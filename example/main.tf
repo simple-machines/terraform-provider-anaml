@@ -542,7 +542,7 @@ resource "anaml-operations_branch_protection" "official" {
       id = anaml-operations_user.john.id
     }
   }
-  apply_to_admins       = true
+  apply_to_admins       = false
   allow_branch_deletion = false
 }
 
