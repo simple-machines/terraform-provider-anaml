@@ -69,7 +69,8 @@ func ResourceFeatureTemplate() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ValidateFunc: validation.StringInSlice([]string{
-					"sum", "count", "countdistinct", "avg", "std", "last", "percentagechange", "absolutechange", "standardscore", "basketsum", "basketlast",
+					"sum", "count", "countdistinct", "avg", "std", "last", "percentagechange", "absolutechange",
+					"standardscore", "basketsum", "basketlast", "collectlist", "collectset",
 				}, true),
 			},
 			"over": {
