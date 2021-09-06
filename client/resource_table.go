@@ -76,6 +76,21 @@ func ResourceTable() *schema.Resource {
 					ValidateFunc: validateAnamlIdentifier(),
 				},
 			},
+			"labels": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Labels to attach to the object",
+
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"attribute": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Attributes (key value pairs) to attach to the object",
+				Elem:        attributeSchema(),
+			},
 		},
 	}
 }
@@ -175,6 +190,12 @@ func resourceTableRead(d *schema.ResourceData, m interface{}) error {
 		}
 	}
 
+	if err := d.Set("labels", table.Labels); err != nil {
+		return err
+	}
+	if err := d.Set("attribute", flattenAttributes(table.Attributes)); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -220,6 +241,8 @@ func buildTable(d *schema.ResourceData) *Table {
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		EventInfo:   expandEntityDescription(d),
+		Labels:      expandStringList(d.Get("labels").([]interface{})),
+		Attributes:  expandAttributes(d),
 	}
 
 	if d.Get("expression").(string) != "" {

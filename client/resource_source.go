@@ -84,6 +84,21 @@ func ResourceSource() *schema.Resource {
 				MaxItems: 1,
 				Elem:     kafkaSourceDestinationSchema(),
 			},
+			"labels": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Labels to attach to the object",
+
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"attribute": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Attributes (key value pairs) to attach to the object",
+				Elem:        attributeSchema(),
+			},
 		},
 	}
 }
@@ -402,6 +417,12 @@ func resourceSourceRead(d *schema.ResourceData, m interface{}) error {
 		}
 	}
 
+	if err := d.Set("labels", source.Labels); err != nil {
+		return err
+	}
+	if err := d.Set("attribute", flattenAttributes(source.Attributes)); err != nil {
+		return err
+	}
 	return err
 }
 
@@ -592,6 +613,8 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			Bucket:      s3["bucket"].(string),
 			Path:        s3["path"].(string),
 			FileFormat:  fileFormat,
+			Labels:      expandStringList(d.Get("labels").([]interface{})),
+			Attributes:  expandAttributes(d),
 		}
 		return &source, nil
 	}
@@ -608,6 +631,8 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			AccessKey:   s3a["access_key"].(string),
 			SecretKey:   s3a["secret_key"].(string),
 			FileFormat:  fileFormat,
+			Labels:      expandStringList(d.Get("labels").([]interface{})),
+			Attributes:  expandAttributes(d),
 		}
 		return &source, nil
 	}
@@ -630,6 +655,8 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			URL:                 jdbc["url"].(string),
 			Schema:              jdbc["schema"].(string),
 			CredentialsProvider: credentialsProvider,
+			Labels:              expandStringList(d.Get("labels").([]interface{})),
+			Attributes:          expandAttributes(d),
 		}
 		return &source, nil
 	}
@@ -640,6 +667,8 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			Description: d.Get("description").(string),
 			Type:        "hive",
 			Database:    hive["database"].(string),
+			Labels:      expandStringList(d.Get("labels").([]interface{})),
+			Attributes:  expandAttributes(d),
 		}
 		return &source, nil
 	}
@@ -650,6 +679,8 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			Description: d.Get("description").(string),
 			Type:        "bigquery",
 			Path:        bigQuery["path"].(string),
+			Labels:      expandStringList(d.Get("labels").([]interface{})),
+			Attributes:  expandAttributes(d),
 		}
 		return &source, nil
 	}
@@ -663,6 +694,8 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			Bucket:      gcs["bucket"].(string),
 			Path:        gcs["path"].(string),
 			FileFormat:  fileFormat,
+			Labels:      expandStringList(d.Get("labels").([]interface{})),
+			Attributes:  expandAttributes(d),
 		}
 		return &source, nil
 	}
@@ -675,6 +708,8 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			Type:        "local",
 			Path:        local["path"].(string),
 			FileFormat:  fileFormat,
+			Labels:      expandStringList(d.Get("labels").([]interface{})),
+			Attributes:  expandAttributes(d),
 		}
 		return &source, nil
 	}
@@ -687,6 +722,8 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			Type:        "hdfs",
 			Path:        hdfs["path"].(string),
 			FileFormat:  fileFormat,
+			Labels:      expandStringList(d.Get("labels").([]interface{})),
+			Attributes:  expandAttributes(d),
 		}
 		return &source, nil
 	}
@@ -720,6 +757,8 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			BootstrapServers:  kafka["bootstrap_servers"].(string),
 			SchemaRegistryURL: kafka["schema_registry_url"].(string),
 			KafkaProperties:   sensitives,
+			Labels:            expandStringList(d.Get("labels").([]interface{})),
+			Attributes:        expandAttributes(d),
 		}
 		return &source, nil
 	}

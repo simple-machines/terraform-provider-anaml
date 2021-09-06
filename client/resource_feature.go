@@ -29,11 +29,6 @@ func ResourceFeature() *schema.Resource {
 				Optional: true,
 				Default:  "root",
 			},
-			"data_type": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "string",
-			},
 			"table": {
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -74,7 +69,7 @@ func ResourceFeature() *schema.Resource {
 				}, true),
 				RequiredWith: []string{"table"},
 			},
-			"post-aggregation": {
+			"post_aggregation": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "An SQL expression to apply to the result of the feature aggregation.",
@@ -100,6 +95,21 @@ func ResourceFeature() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validateAnamlIdentifier(),
+			},
+			"labels": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Labels to attach to the object",
+
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"attribute": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Attributes (key value pairs) to attach to the object",
+				Elem:        attributeSchema(),
 			},
 		},
 	}
@@ -140,7 +150,7 @@ func resourceFeatureRead(d *schema.ResourceData, m interface{}) error {
 			return err
 		}
 	} else {
-		d.Set("post-aggregation", nil)
+		d.Set("post_aggregation", nil)
 	}
 
 	if feature.TemplateID != nil {
@@ -193,6 +203,12 @@ func resourceFeatureRead(d *schema.ResourceData, m interface{}) error {
 		return errors.New("Unrecognised ADT type for feature")
 	}
 
+	if err := d.Set("labels", feature.Labels); err != nil {
+		return err
+	}
+	if err := d.Set("attribute", flattenAttributes(feature.Attributes)); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -250,6 +266,8 @@ func buildFeature(d *schema.ResourceData) (*Feature, error) {
 		Aggregate: &AggregateExpression{
 			Type: d.Get("aggregation").(string),
 		},
+		Labels:     expandStringList(d.Get("labels").([]interface{})),
+		Attributes: expandAttributes(d),
 	}
 
 	if d.Get("template").(string) != "" {

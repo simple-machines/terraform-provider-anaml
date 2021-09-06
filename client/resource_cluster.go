@@ -53,6 +53,21 @@ func ResourceCluster() *schema.Resource {
 				MaxItems: 1,
 				Elem:     sparkServerSchema(),
 			},
+			"labels": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Labels to attach to the object",
+
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"attribute": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Attributes (key value pairs) to attach to the object",
+				Elem:        attributeSchema(),
+			},
 		},
 	}
 }
@@ -237,6 +252,12 @@ func resourceClusterRead(d *schema.ResourceData, m interface{}) error {
 		}
 	}
 
+	if err := d.Set("labels", cluster.Labels); err != nil {
+		return err
+	}
+	if err := d.Set("attribute", flattenAttributes(cluster.Attributes)); err != nil {
+		return err
+	}
 	return err
 }
 
@@ -388,6 +409,8 @@ func composeCluster(d *schema.ResourceData) (*Cluster, error) {
 			AnamlServerURL:      local["anaml_server_url"].(string),
 			CredentialsProvider: credentialsProvider,
 			SparkConfig:         &sparkConfig,
+			Labels:              expandStringList(d.Get("labels").([]interface{})),
+			Attributes:          expandAttributes(d),
 		}
 		return &cluster, nil
 	}
@@ -400,6 +423,8 @@ func composeCluster(d *schema.ResourceData) (*Cluster, error) {
 			IsPreviewCluster: d.Get("is_preview_cluster").(bool),
 			SparkServerURL:   sparkServer["spark_server_url"].(string),
 			SparkConfig:      &sparkConfig,
+			Labels:           expandStringList(d.Get("labels").([]interface{})),
+			Attributes:       expandAttributes(d),
 		}
 		return &cluster, nil
 	}

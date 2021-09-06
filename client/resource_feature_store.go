@@ -68,6 +68,21 @@ func ResourceFeatureStore() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validateAnamlIdentifier(),
 			},
+			"labels": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Labels to attach to the object",
+
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"attribute": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Attributes (key value pairs) to attach to the object",
+				Elem:        attributeSchema(),
+			},
 		},
 	}
 }
@@ -133,6 +148,12 @@ func resourceFeatureStoreRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 	if err := d.Set("cluster", strconv.Itoa(FeatureStore.Cluster)); err != nil {
+		return err
+	}
+	if err := d.Set("labels", FeatureStore.Labels); err != nil {
+		return err
+	}
+	if err := d.Set("attribute", flattenAttributes(FeatureStore.Attributes)); err != nil {
 		return err
 	}
 
@@ -217,6 +238,8 @@ func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
 			Destinations: expandDestinationReferences(d),
 			Cluster:      cluster,
 			Schedule:     schedule,
+			Labels:       expandStringList(d.Get("labels").([]interface{})),
+			Attributes:   expandAttributes(d),
 		}, nil
 	}
 
@@ -235,6 +258,8 @@ func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
 			Destinations: expandDestinationReferences(d),
 			Cluster:      cluster,
 			Schedule:     schedule,
+			Labels:       expandStringList(d.Get("labels").([]interface{})),
+			Attributes:   expandAttributes(d),
 		}, nil
 	}
 
@@ -250,6 +275,8 @@ func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
 		Destinations: expandDestinationReferences(d),
 		Cluster:      cluster,
 		Schedule:     schedule,
+		Labels:       expandStringList(d.Get("labels").([]interface{})),
+		Attributes:   expandAttributes(d),
 	}, nil
 }
 
