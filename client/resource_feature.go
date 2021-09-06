@@ -68,10 +68,16 @@ func ResourceFeature() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ValidateFunc: validation.StringInSlice([]string{
-					"sum", "count", "countdistinct", "avg", "std", "last", "percentagechange", "absolutechange",
-					"standardscore", "basketsum", "basketlast", "collectlist", "collectset",
+					"sum", "count", "countdistinct", "avg", "std", "min", "max", "minby", "maxby",
+					"last", "percentagechange", "absolutechange", "standardscore", "basketsum",
+					"basketlast", "collectlist", "collectset",
 				}, true),
 				RequiredWith: []string{"table"},
+			},
+			"post-aggregation": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "An SQL expression to apply to the result of the feature aggregation.",
 			},
 			"over": {
 				Type:         schema.TypeList,
@@ -127,6 +133,14 @@ func resourceFeatureRead(d *schema.ResourceData, m interface{}) error {
 		}
 	} else {
 		d.Set("filter", nil)
+	}
+
+	if feature.PostAggExpr != nil {
+		if err := d.Set("post_aggregation", feature.PostAggExpr.SQL); err != nil {
+			return err
+		}
+	} else {
+		d.Set("post-aggregation", nil)
 	}
 
 	if feature.TemplateID != nil {
@@ -246,6 +260,12 @@ func buildFeature(d *schema.ResourceData) (*Feature, error) {
 	if d.Get("filter").(string) != "" {
 		feature.Filter = &SQLExpression{
 			SQL: d.Get("filter").(string),
+		}
+	}
+
+	if d.Get("post_aggregation").(string) != "" {
+		feature.PostAggExpr = &SQLExpression{
+			SQL: d.Get("post_aggregation").(string),
 		}
 	}
 

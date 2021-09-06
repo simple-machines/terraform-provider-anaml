@@ -79,7 +79,7 @@ type Feature struct {
 	Select      SQLExpression        `json:"select"`
 	Filter      *SQLExpression       `json:"filter"`
 	Aggregate   *AggregateExpression `json:"aggregate,omitempty"`
-	PostExpr    *SQLExpression       `json:"postAggregateExpr,omitempty"`
+	PostAggExpr *SQLExpression       `json:"postAggregateExpr,omitempty"`
 	Over        []int                `json:"over"`
 	EntityID    int                  `json:"entityId,omitempty"`
 	TemplateID  *int                 `json:"template,omitempty"`
@@ -96,7 +96,7 @@ type FeatureTemplate struct {
 	Select      SQLExpression        `json:"select"`
 	Filter      *SQLExpression       `json:"filter"`
 	Aggregate   *AggregateExpression `json:"aggregate,omitempty"`
-	PostExpr    SQLExpression        `json:"postAggregateExpr"`
+	PostAggExpr *SQLExpression       `json:"postAggregateExpr"`
 	Over        []int                `json:"over"`
 	EntityID    int                  `json:"entityId,omitempty"`
 }
