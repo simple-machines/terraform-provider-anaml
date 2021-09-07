@@ -191,6 +191,7 @@ type FileFormat struct {
 
 // SourceReference ...
 type SourceReference struct {
+	Type      string `json:"adt_type"`
 	SourceID  int    `json:"sourceId"`
 	Folder    string `json:"folder,omitempty"`
 	TableName string `json:"tableName,omitempty"`
@@ -229,6 +230,7 @@ type GCSStagingArea struct {
 
 // DestinationReference ...
 type DestinationReference struct {
+	Type          string `json:"adt_type"`
 	DestinationID int    `json:"destinationId"`
 	Folder        string `json:"folder,omitempty"`
 	TableName     string `json:"tableName,omitempty"`

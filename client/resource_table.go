@@ -315,7 +315,15 @@ func expandSourceReferences(d *schema.ResourceData) *SourceReference {
 		val, _ := sr.(map[string]interface{})
 		sourceID, _ := strconv.Atoi(val["source"].(string))
 
+		source_type := ""
+		if _, ok := val["folder"]; ok {
+			source_type = "folder"
+		} else if _, ok := val["table_name"]; ok {
+			source_type = "table"
+		}
+
 		parsed := SourceReference{
+			Type:      source_type,
 			SourceID:  sourceID,
 			Folder:    val["folder"].(string),
 			TableName: val["table_name"].(string),

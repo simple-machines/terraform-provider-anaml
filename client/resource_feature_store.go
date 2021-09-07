@@ -300,7 +300,15 @@ func expandDestinationReferences(d *schema.ResourceData) []DestinationReference 
 		val, _ := dr.(map[string]interface{})
 		destId, _ := strconv.Atoi(val["destination"].(string))
 
+		dest_type := ""
+		if _, ok := val["folder"]; ok {
+			dest_type = "folder"
+		} else if _, ok := val["table_name"]; ok {
+			dest_type = "table"
+		}
+
 		parsed := DestinationReference{
+			Type:          dest_type,
 			DestinationID: destId,
 			Folder:        val["folder"].(string),
 			TableName:     val["table_name"].(string),
