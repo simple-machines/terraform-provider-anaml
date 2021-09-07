@@ -41,6 +41,21 @@ func ResourceFeatureSet() *schema.Resource {
 					ValidateFunc: validateAnamlIdentifier(),
 				},
 			},
+			"labels": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Labels to attach to the object",
+
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"attribute": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Attributes (key value pairs) to attach to the object",
+				Elem:        attributeSchema(),
+			},
 		},
 	}
 }
@@ -70,6 +85,12 @@ func resourceFeatureSetRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("features", identifierList(FeatureSet.Features)); err != nil {
 		return err
 	}
+	if err := d.Set("labels", FeatureSet.Labels); err != nil {
+		return err
+	}
+	if err := d.Set("attribute", flattenAttributes(FeatureSet.Attributes)); err != nil {
+		return err
+	}
 	return err
 }
 
@@ -82,6 +103,8 @@ func resourceFeatureSetCreate(d *schema.ResourceData, m interface{}) error {
 		Description: d.Get("description").(string),
 		EntityID:    entity,
 		Features:    expandIdentifierList(d.Get("features").(*schema.Set).List()),
+		Labels:      expandStringList(d.Get("labels").([]interface{})),
+		Attributes:  expandAttributes(d),
 	}
 
 	e, err := c.CreateFeatureSet(FeatureSet)
@@ -103,6 +126,8 @@ func resourceFeatureSetUpdate(d *schema.ResourceData, m interface{}) error {
 		Description: d.Get("description").(string),
 		EntityID:    entity,
 		Features:    expandIdentifierList(d.Get("features").(*schema.Set).List()),
+		Labels:      expandStringList(d.Get("labels").([]interface{})),
+		Attributes:  expandAttributes(d),
 	}
 
 	err := c.UpdateFeatureSet(FeatureSetID, FeatureSet)

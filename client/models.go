@@ -2,10 +2,12 @@ package anaml
 
 // Entity ..
 type Entity struct {
-	ID            int    `json:"id,omitempty"`
-	Name          string `json:"name"`
-	Description   string `json:"description"`
-	DefaultColumn string `json:"defaultColumn"`
+	ID            int         `json:"id,omitempty"`
+	Name          string      `json:"name"`
+	Description   string      `json:"description"`
+	DefaultColumn string      `json:"defaultColumn"`
+	Labels        []string    `json:"labels"`
+	Attributes    []Attribute `json:"attributes"`
 }
 
 // EntityMapping ..
@@ -40,6 +42,8 @@ type Table struct {
 	EventInfo     *EventDescription `json:"eventDescription,omitempty"`
 	EntityMapping int               `json:"entityMapping,omitempty"`
 	ExtraFeatures []int             `json:"extraFeatures,omitempty"`
+	Labels        []string          `json:"labels"`
+	Attributes    []Attribute       `json:"attributes"`
 }
 
 // EventWindow ...
@@ -79,10 +83,12 @@ type Feature struct {
 	Select      SQLExpression        `json:"select"`
 	Filter      *SQLExpression       `json:"filter"`
 	Aggregate   *AggregateExpression `json:"aggregate,omitempty"`
-	PostExpr    *SQLExpression       `json:"postAggregateExpr,omitempty"`
+	PostAggExpr *SQLExpression       `json:"postAggregateExpr,omitempty"`
 	Over        []int                `json:"over"`
 	EntityID    int                  `json:"entityId,omitempty"`
 	TemplateID  *int                 `json:"template,omitempty"`
+	Labels      []string             `json:"labels"`
+	Attributes  []Attribute          `json:"attributes"`
 }
 
 // FeatureTemplate ... again, completely normalised.
@@ -96,18 +102,22 @@ type FeatureTemplate struct {
 	Select      SQLExpression        `json:"select"`
 	Filter      *SQLExpression       `json:"filter"`
 	Aggregate   *AggregateExpression `json:"aggregate,omitempty"`
-	PostExpr    SQLExpression        `json:"postAggregateExpr"`
+	PostAggExpr *SQLExpression       `json:"postAggregateExpr"`
 	Over        []int                `json:"over"`
 	EntityID    int                  `json:"entityId,omitempty"`
+	Labels      []string             `json:"labels"`
+	Attributes  []Attribute          `json:"attributes"`
 }
 
 // FeatureSet ...
 type FeatureSet struct {
-	ID          int    `json:"id,omitempty"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	EntityID    int    `json:"entity,omitempty"`
-	Features    []int  `json:"features"`
+	ID          int         `json:"id,omitempty"`
+	Name        string      `json:"name"`
+	Description string      `json:"description"`
+	EntityID    int         `json:"entity,omitempty"`
+	Features    []int       `json:"features"`
+	Labels      []string    `json:"labels"`
+	Attributes  []Attribute `json:"attributes"`
 }
 
 // FeatureStore ...
@@ -122,6 +132,8 @@ type FeatureStore struct {
 	Cluster      int                    `json:"cluster"`
 	StartDate    *string                `json:"startDate,omitempty"`
 	EndDate      *string                `json:"endDate,omitempty"`
+	Labels       []string               `json:"labels"`
+	Attributes   []Attribute            `json:"attributes"`
 }
 
 type Schedule struct {
@@ -168,6 +180,8 @@ type Source struct {
 	BootstrapServers    string                          `json:"bootstrapServers,omitempty"`
 	SchemaRegistryURL   string                          `json:"schemaRegistryUrl,omitempty"`
 	KafkaProperties     []SensitiveAttribute            `json:"kafkaPropertiesProviders"`
+	Labels              []string                        `json:"labels"`
+	Attributes          []Attribute                     `json:"attributes"`
 }
 
 type FileFormat struct {
@@ -202,6 +216,8 @@ type Destination struct {
 	SchemaRegistryURL   string                          `json:"schemaRegistryUrl,omitempty"`
 	KafkaProperties     []SensitiveAttribute            `json:"kafkaPropertiesProviders"`
 	StagingArea         *GCSStagingArea                 `json:"stagingArea,omitempty"`
+	Labels              []string                        `json:"labels"`
+	Attributes          []Attribute                     `json:"attributes"`
 }
 
 // GCSStagingArea ...
@@ -229,6 +245,8 @@ type Cluster struct {
 	SparkServerURL      string                          `json:"sparkServerUrl,omitempty"`
 	CredentialsProvider *LoginCredentialsProviderConfig `json:"credentialsProvider,omitempty"`
 	SparkConfig         *SparkConfig                    `json:"sparkConfig,omitempty"`
+	Labels              []string                        `json:"labels"`
+	Attributes          []Attribute                     `json:"attributes"`
 }
 
 // LoginCredentialsProviderConfig  ...
@@ -332,6 +350,11 @@ type Webhook struct {
 	FeatureStoreRuns     *struct{} `json:"featureStoreRuns,omitempty"`
 	MonitoringRuns       *struct{} `json:"monitoringRuns,omitempty"`
 	CachingRuns          *struct{} `json:"cachingRuns,omitempty"`
+}
+
+type Attribute struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
 
 func validRoles() []string {

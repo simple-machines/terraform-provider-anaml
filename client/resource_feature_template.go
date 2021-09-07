@@ -30,11 +30,6 @@ func ResourceFeatureTemplate() *schema.Resource {
 				Optional: true,
 				Default:  "root",
 			},
-			"data_type": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "string",
-			},
 			"table": {
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -69,9 +64,15 @@ func ResourceFeatureTemplate() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ValidateFunc: validation.StringInSlice([]string{
-					"sum", "count", "countdistinct", "avg", "std", "last", "percentagechange", "absolutechange",
-					"standardscore", "basketsum", "basketlast", "collectlist", "collectset",
+					"sum", "count", "countdistinct", "avg", "std", "min", "max", "minby", "maxby",
+					"last", "percentagechange", "absolutechange", "standardscore", "basketsum",
+					"basketlast", "collectlist", "collectset",
 				}, true),
+			},
+			"post_aggregation": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "An SQL expression to apply to the result of the feature aggregation.",
 			},
 			"over": {
 				Type:         schema.TypeList,
@@ -89,6 +90,21 @@ func ResourceFeatureTemplate() *schema.Resource {
 				Optional:     true,
 				ValidateFunc: validateAnamlIdentifier(),
 				RequiredWith: []string{"over"},
+			},
+			"labels": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Labels to attach to the object",
+
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"attribute": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Attributes (key value pairs) to attach to the object",
+				Elem:        attributeSchema(),
 			},
 		},
 	}
@@ -120,6 +136,16 @@ func resourceFeatureTemplateRead(d *schema.ResourceData, m interface{}) error {
 		if err := d.Set("filter", feature.Filter.SQL); err != nil {
 			return err
 		}
+	} else {
+		d.Set("filter", nil)
+	}
+
+	if feature.PostAggExpr != nil {
+		if err := d.Set("post_aggregation", feature.PostAggExpr.SQL); err != nil {
+			return err
+		}
+	} else {
+		d.Set("post_aggregation", nil)
 	}
 
 	if feature.Type == "event" {
@@ -153,6 +179,7 @@ func resourceFeatureTemplateRead(d *schema.ResourceData, m interface{}) error {
 		if err := d.Set("aggregation", feature.Aggregate.Type); err != nil {
 			return err
 		}
+
 	} else if feature.Type == "row" {
 		if err := d.Set("over", identifierList(feature.Over)); err != nil {
 			return err
@@ -162,6 +189,13 @@ func resourceFeatureTemplateRead(d *schema.ResourceData, m interface{}) error {
 		}
 	} else {
 		return errors.New("Unrecognised ADT type for feature")
+	}
+
+	if err := d.Set("labels", feature.Labels); err != nil {
+		return err
+	}
+	if err := d.Set("attribute", flattenAttributes(feature.Attributes)); err != nil {
+		return err
 	}
 
 	return nil
@@ -218,11 +252,19 @@ func buildFeatureTemplate(d *schema.ResourceData) (*FeatureTemplate, error) {
 		Select: SQLExpression{
 			SQL: d.Get("select").(string),
 		},
+		Labels:     expandStringList(d.Get("labels").([]interface{})),
+		Attributes: expandAttributes(d),
 	}
 
 	if d.Get("filter").(string) != "" {
 		template.Filter = &SQLExpression{
 			SQL: d.Get("filter").(string),
+		}
+	}
+
+	if d.Get("post_aggregation").(string) != "" {
+		template.PostAggExpr = &SQLExpression{
+			SQL: d.Get("post_aggregation").(string),
 		}
 	}
 

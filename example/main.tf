@@ -40,6 +40,12 @@ resource "anaml_entity" "household" {
   name           = "household"
   description    = "A household level view"
   default_column = "household"
+
+  labels = [ "testing" ]
+  attribute {
+    key = "country"
+    value = "australia"
+  }
 }
 
 resource "anaml_table" "household" {

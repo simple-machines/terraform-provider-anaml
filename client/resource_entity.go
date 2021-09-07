@@ -30,6 +30,21 @@ func ResourceEntity() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"labels": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Labels to attach to the object",
+
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"attribute": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Attributes (key value pairs) to attach to the object",
+				Elem:        attributeSchema(),
+			},
 		},
 	}
 }
@@ -56,6 +71,12 @@ func resourceEntityRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("default_column", entity.DefaultColumn); err != nil {
 		return err
 	}
+	if err := d.Set("labels", entity.Labels); err != nil {
+		return err
+	}
+	if err := d.Set("attribute", flattenAttributes(entity.Attributes)); err != nil {
+		return err
+	}
 	return err
 }
 
@@ -65,6 +86,8 @@ func resourceEntityCreate(d *schema.ResourceData, m interface{}) error {
 		Name:          d.Get("name").(string),
 		Description:   d.Get("description").(string),
 		DefaultColumn: d.Get("default_column").(string),
+		Labels:        expandStringList(d.Get("labels").([]interface{})),
+		Attributes:    expandAttributes(d),
 	}
 
 	e, err := c.CreateEntity(entity)
