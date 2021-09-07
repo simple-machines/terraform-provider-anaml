@@ -195,6 +195,7 @@ type SourceReference struct {
 	SourceID  int    `json:"sourceId"`
 	Folder    string `json:"folder,omitempty"`
 	TableName string `json:"tableName,omitempty"`
+	Topic     string `json:"topic,omitempty"`
 }
 
 // Destination ...
@@ -234,6 +235,7 @@ type DestinationReference struct {
 	DestinationID int    `json:"destinationId"`
 	Folder        string `json:"folder,omitempty"`
 	TableName     string `json:"tableName,omitempty"`
+	Topic         string `json:"topic,omitempty"`
 }
 
 // Cluster ...

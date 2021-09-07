@@ -136,6 +136,11 @@ func sourceSchema() *schema.Resource {
 				Optional:     true,
 				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
+			"topic": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
 		},
 	}
 }
@@ -316,10 +321,14 @@ func expandSourceReferences(d *schema.ResourceData) *SourceReference {
 		sourceID, _ := strconv.Atoi(val["source"].(string))
 
 		source_type := ""
-		if _, ok := val["folder"]; ok {
+		if v, ok := val["folder"].(string); ok && v != "" {
 			source_type = "folder"
-		} else if _, ok := val["table_name"]; ok {
+		}
+		if v, ok := val["table_name"].(string); ok && v != "" {
 			source_type = "table"
+		}
+		if v, ok := val["topic"].(string); ok && v != "" {
+			source_type = "topic"
 		}
 
 		parsed := SourceReference{
@@ -327,6 +336,7 @@ func expandSourceReferences(d *schema.ResourceData) *SourceReference {
 			SourceID:  sourceID,
 			Folder:    val["folder"].(string),
 			TableName: val["table_name"].(string),
+			Topic:     val["topic"].(string),
 		}
 		return &parsed
 	}
@@ -345,6 +355,7 @@ func flattenSourceReferences(source *SourceReference) []map[string]interface{} {
 	single["source"] = strconv.Itoa(source.SourceID)
 	single["folder"] = source.Folder
 	single["table_name"] = source.TableName
+	single["topic"] = source.Topic
 	res = append(res, single)
 
 	return res
