@@ -99,6 +99,7 @@ func destinationSchema() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringIsNotWhiteSpace,
+				// ExactlyOneOf: []string{"folder", "table_name", "topic"},
 			},
 			"table_name": {
 				Type:         schema.TypeString,
