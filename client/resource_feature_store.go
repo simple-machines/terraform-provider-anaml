@@ -99,8 +99,14 @@ func destinationSchema() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringIsNotWhiteSpace,
+				// ExactlyOneOf: []string{"folder", "table_name", "topic"},
 			},
 			"table_name": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+			"topic": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringIsNotWhiteSpace,
@@ -300,10 +306,23 @@ func expandDestinationReferences(d *schema.ResourceData) []DestinationReference 
 		val, _ := dr.(map[string]interface{})
 		destId, _ := strconv.Atoi(val["destination"].(string))
 
+		dest_type := ""
+		if v, ok := val["folder"].(string); ok && v != "" {
+			dest_type = "folder"
+		}
+		if v, ok := val["table_name"].(string); ok && v != "" {
+			dest_type = "table"
+		}
+		if v, ok := val["topic"].(string); ok && v != "" {
+			dest_type = "topic"
+		}
+
 		parsed := DestinationReference{
+			Type:          dest_type,
 			DestinationID: destId,
 			Folder:        val["folder"].(string),
 			TableName:     val["table_name"].(string),
+			Topic:         val["topic"].(string),
 		}
 		res = append(res, parsed)
 	}
@@ -319,6 +338,7 @@ func flattenDestinationReferences(destinations []DestinationReference) []map[str
 		single["destination"] = strconv.Itoa(destination.DestinationID)
 		single["folder"] = destination.Folder
 		single["table_name"] = destination.TableName
+		single["topic"] = destination.Topic
 		res = append(res, single)
 	}
 
