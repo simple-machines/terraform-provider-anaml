@@ -18,20 +18,35 @@ func DataSourceFeature() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"description": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
 
 func dataSourceFeatureRead(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
-	featureName := d.Get("name").(string)
+	name := d.Get("name").(string)
 
-	feature, err := c.FindFeatureByName(featureName)
+	feature, err := c.FindFeatureByName(name)
 	if err != nil {
 		return err
 	}
-	if feature != nil {
-		d.SetId(strconv.Itoa(feature.ID))
+
+	if feature == nil {
+		d.SetId("")
+		return nil
+	}
+
+	d.SetId(strconv.Itoa(feature.ID))
+
+	if err := d.Set("name", feature.Name); err != nil {
+		return err
+	}
+	if err := d.Set("description", feature.Description); err != nil {
+		return err
 	}
 	return nil
 }

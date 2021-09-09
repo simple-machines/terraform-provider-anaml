@@ -88,3 +88,31 @@ func (c *Client) DeleteEntity(entityID string) error {
 
 	return nil
 }
+
+func (c *Client) FindEntityByName(name string) (*Entity, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/entity", c.HostURL), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	q := req.URL.Query()
+	q.Add("name", name)
+	req.URL.RawQuery = q.Encode()
+
+	body, err := c.doRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if body == nil {
+		return nil, nil
+	}
+
+	item := Entity{}
+	err = json.Unmarshal(body, &item)
+	if err != nil {
+		return nil, err
+	}
+
+	return &item, nil
+}

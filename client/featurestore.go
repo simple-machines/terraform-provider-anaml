@@ -88,3 +88,31 @@ func (c *Client) DeleteFeatureStore(FeatureStoreID string) error {
 
 	return nil
 }
+
+func (c *Client) FindFeatureStoreByName(name string) (*FeatureStore, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/feature-store", c.HostURL), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	q := req.URL.Query()
+	q.Add("name", name)
+	req.URL.RawQuery = q.Encode()
+
+	body, err := c.doRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if body == nil {
+		return nil, nil
+	}
+
+	item := FeatureStore{}
+	err = json.Unmarshal(body, &item)
+	if err != nil {
+		return nil, err
+	}
+
+	return &item, nil
+}

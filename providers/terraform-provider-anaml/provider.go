@@ -1,7 +1,7 @@
 package main
 
 import (
-	"anaml.io/terraform/client"
+	anaml "anaml.io/terraform/client"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -33,10 +33,12 @@ func Provider() *schema.Provider {
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
-			"anaml_cluster":     anaml.DataSourceCluster(),
-			"anaml_destination": anaml.DataSourceDestination(),
-			"anaml_source":      anaml.DataSourceSource(),
-			"anaml_feature":     anaml.DataSourceFeature(),
+			"anaml_entity":           anaml.DataSourceEntity(),
+			"anaml_table":            anaml.DataSourceTable(),
+			"anaml_feature":          anaml.DataSourceFeature(),
+			"anaml_feature_set":      anaml.DataSourceFeatureSet(),
+			"anaml_feature_store":    anaml.DataSourceFeatureStore(),
+			"anaml_feature_template": anaml.DataSourceFeatureTemplate(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{

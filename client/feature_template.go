@@ -89,3 +89,31 @@ func (c *Client) DeleteFeatureTemplate(templateID string) error {
 
 	return nil
 }
+
+func (c *Client) FindFeatureTemplateByName(name string) (*FeatureTemplate, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/feature-template", c.HostURL), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	q := req.URL.Query()
+	q.Add("name", name)
+	req.URL.RawQuery = q.Encode()
+
+	body, err := c.doRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if body == nil {
+		return nil, nil
+	}
+
+	item := FeatureTemplate{}
+	err = json.Unmarshal(body, &item)
+	if err != nil {
+		return nil, err
+	}
+
+	return &item, nil
+}
