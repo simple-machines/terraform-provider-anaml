@@ -89,3 +89,31 @@ func (c *Client) DeleteTable(tableId string) error {
 
 	return nil
 }
+
+func (c *Client) FindTableByName(name string) (*Table, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/table", c.HostURL), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	q := req.URL.Query()
+	q.Add("name", name)
+	req.URL.RawQuery = q.Encode()
+
+	body, err := c.doRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if body == nil {
+		return nil, nil
+	}
+
+	item := Table{}
+	err = json.Unmarshal(body, &item)
+	if err != nil {
+		return nil, err
+	}
+
+	return &item, nil
+}

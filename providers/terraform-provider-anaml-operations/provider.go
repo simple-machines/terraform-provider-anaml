@@ -31,7 +31,6 @@ func Provider() *schema.Provider {
 			"anaml-operations_cluster":     anaml.DataSourceCluster(),
 			"anaml-operations_destination": anaml.DataSourceDestination(),
 			"anaml-operations_source":      anaml.DataSourceSource(),
-			"anaml-operations_feature":     anaml.DataSourceFeature(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{

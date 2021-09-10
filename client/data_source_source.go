@@ -27,26 +27,23 @@ func DataSourceSource() *schema.Resource {
 }
 
 func dataSourceSourceRead(d *schema.ResourceData, m interface{}) error {
-			 c := m.(*Client)
-			 name := d.Get("name").(string)
+	c := m.(*Client)
+	name := d.Get("name").(string)
 
-			 source, err := c.FindSource(name)
-			 if err != nil {
-							 return err
-			 }
+	source, err := c.FindSource(name)
+	if err != nil {
+		return err
+	}
 
-			 if source == nil {
-							 d.SetId("")
-							 return nil
-			 } else {
-							 d.SetId(strconv.Itoa(source.ID))
-			 }
+	if source == nil {
+		d.SetId("")
+		return nil
+	}
 
-			 if err := d.Set("name", source.Name); err != nil {
-							 return err
-			 }
-			 if err := d.Set("description", source.Description); err != nil {
-							 return err
-			 }
-			 return err
+	d.SetId(strconv.Itoa(source.ID))
+
+	if err := d.Set("description", source.Description); err != nil {
+		return err
+	}
+	return err
 }

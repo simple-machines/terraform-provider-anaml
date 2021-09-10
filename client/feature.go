@@ -51,13 +51,13 @@ func (c *Client) FindFeatureByName(featureName string) (*Feature, error) {
 		return nil, nil
 	}
 
-	feature := Feature{}
-	err = json.Unmarshal(body, &feature)
+	item := Feature{}
+	err = json.Unmarshal(body, &item)
 	if err != nil {
 		return nil, err
 	}
 
-	return &feature, nil
+	return &item, nil
 }
 
 func (c *Client) FindFeatureByTemplate(templateId int, rows int, days int) (*Feature, error) {
