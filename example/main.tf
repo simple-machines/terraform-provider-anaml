@@ -517,10 +517,14 @@ resource "anaml-operations_monitoring" "monitoring" {
 resource "anaml-operations_user_group" "engineering" {
   name        = "Engineering"
   description = "A user group with engineering members."
-  members     = [
-    anaml-operations_user.jane.id,
-    anaml-operations_user.john.id,
-  ]
+  members {
+    user_id = anaml-operations_user.jane.id
+    source  = "anaml"
+  }
+  members {
+    user_id = anaml-operations_user.john.id
+    source  = "anaml"
+  }
   roles = [
     "run_monitoring"
   ]

@@ -35,14 +35,31 @@ func ResourceUserGroup() *schema.Resource {
 				},
 			},
 			"members": {
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
 				Description: "Users to include in the user group",
 				Required:    true,
+				Elem:        userGroupMemberSchema(),
+			},
+			"external_group_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+		},
+	}
+}
 
-				Elem: &schema.Schema{
-					Type:         schema.TypeString,
-					ValidateFunc: validateAnamlIdentifier(),
-				},
+func userGroupMemberSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"user_id": {
+				Type:         schema.TypeInt,
+				Required:     true,
+				ValidateFunc: validation.IntAtLeast(1),
+			},
+			"source": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringInSlice(validGroupMemberSource(), false),
 			},
 		},
 	}
@@ -70,7 +87,10 @@ func resourceUserGroupRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("roles", UserGroup.Roles); err != nil {
 		return err
 	}
-	if err := d.Set("members", identifierList(UserGroup.Members)); err != nil {
+	if err := d.Set("members", flattenUserGroupMembers(UserGroup.Members)); err != nil {
+		return err
+	}
+	if err := d.Set("external_group_id", UserGroup.ExternalGroupID); err != nil {
 		return err
 	}
 	return err
@@ -79,11 +99,16 @@ func resourceUserGroupRead(d *schema.ResourceData, m interface{}) error {
 func resourceUserGroupCreate(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
 
+	groupMembers, err := expandUserGroupMembers(d.Get("members").([]interface{}))
+	if err != nil {
+		return err
+	}
 	UserGroup := UserGroup{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		Roles:       expandStringList(d.Get("roles").([]interface{})),
-		Members:     expandIdentifierList(d.Get("members").(*schema.Set).List()),
+		Name:            d.Get("name").(string),
+		Description:     d.Get("description").(string),
+		Roles:           expandStringList(d.Get("roles").([]interface{})),
+		Members:         groupMembers,
+		ExternalGroupID: getNullableString(d, "external_group_id"),
 	}
 
 	ug, err := c.CreateUserGroup(UserGroup)
@@ -99,14 +124,19 @@ func resourceUserGroupUpdate(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
 	UserGroupID := d.Id()
 
+	groupMembers, err := expandUserGroupMembers(d.Get("members").([]interface{}))
+	if err != nil {
+		return err
+	}
 	UserGroup := UserGroup{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		Roles:       expandStringList(d.Get("roles").([]interface{})),
-		Members:     expandIdentifierList(d.Get("members").(*schema.Set).List()),
+		Name:            d.Get("name").(string),
+		Description:     d.Get("description").(string),
+		Roles:           expandStringList(d.Get("roles").([]interface{})),
+		Members:         groupMembers,
+		ExternalGroupID: getNullableString(d, "external_group_id"),
 	}
 
-	err := c.UpdateUserGroup(UserGroupID, UserGroup)
+	err = c.UpdateUserGroup(UserGroupID, UserGroup)
 	if err != nil {
 		return err
 	}
@@ -124,4 +154,40 @@ func resourceUserGroupDelete(d *schema.ResourceData, m interface{}) error {
 	}
 
 	return nil
+}
+
+func flattenUserGroupMembers(members []UserGroupMember) []map[string]interface{} {
+	res := make([]map[string]interface{}, 0, len(members))
+	for _, member := range members {
+		single := make(map[string]interface{})
+		single["user_id"] = member.UserID
+		single["source"] = member.Source.Type
+	}
+	return res
+}
+
+func expandUserGroupMembers(members []interface{}) ([]UserGroupMember, error) {
+	res := make([]UserGroupMember, 0, len(members))
+
+	for _, member := range members {
+		val, _ := member.(map[string]interface{})
+		var source UserGroupMemberSource
+		if val["source"] == "anaml" {
+			source = UserGroupMemberSource{
+				Type: "anaml",
+			}
+		} else {
+			source = UserGroupMemberSource{
+				Type: "external",
+			}
+		}
+
+		parsed := UserGroupMember{
+			UserID: val["user_id"].(int),
+			Source: source,
+		}
+		res = append(res, parsed)
+	}
+
+	return res, nil
 }
