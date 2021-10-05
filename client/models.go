@@ -284,13 +284,23 @@ type ChangeOtherPasswordRequest struct {
 	Password string `json:"password"`
 }
 
+type UserGroupMemberSource struct {
+	Type string `json:"adt_type"`
+}
+
+type UserGroupMember struct {
+	UserID int                   `json:"userId,omitempty"`
+	Source UserGroupMemberSource `json:"source"`
+}
+
 // UserGroup ..
 type UserGroup struct {
-	ID          int      `json:"id,omitempty"`
-	Name        string   `json:"name"`
-	Description string   `json:"description"`
-	Roles       []string `json:"roles"`
-	Members     []int    `json:"members"`
+	ID              int               `json:"id,omitempty"`
+	Name            string            `json:"name"`
+	Description     string            `json:"description"`
+	Roles           []string          `json:"roles"`
+	Members         []UserGroupMember `json:"members"`
+	ExternalGroupID *string           `json:"externalGroupId,omitempty"`
 }
 
 // BranchProtection
@@ -365,5 +375,11 @@ func validRoles() []string {
 	return []string{
 		"super_user", "author", "run_caching", "run_features", "run_monitoring",
 		"admin_user", "admin_group", "admin_branch_perms", "admin_system", "admin_webhooks",
+	}
+}
+
+func validGroupMemberSource() []string {
+	return []string{
+		"anaml", "external",
 	}
 }
