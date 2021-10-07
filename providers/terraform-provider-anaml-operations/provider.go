@@ -28,15 +28,17 @@ func Provider() *schema.Provider {
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
-			"anaml-operations_cluster":     anaml.DataSourceCluster(),
-			"anaml-operations_destination": anaml.DataSourceDestination(),
-			"anaml-operations_source":      anaml.DataSourceSource(),
+			"anaml-operations_cluster":       anaml.DataSourceCluster(),
+			"anaml-operations_destination":   anaml.DataSourceDestination(),
+			"anaml-operations_source":        anaml.DataSourceSource(),
+			"anaml-operations_feature_store": anaml.DataSourceFeatureStore(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
 			"anaml-operations_cluster":           anaml.ResourceCluster(),
 			"anaml-operations_destination":       anaml.ResourceDestination(),
 			"anaml-operations_source":            anaml.ResourceSource(),
+			"anaml-operations_feature_store":     anaml.ResourceFeatureStore(),
 			"anaml-operations_user":              anaml.ResourceUser(),
 			"anaml-operations_caching":           anaml.ResourceTableCaching(),
 			"anaml-operations_monitoring":        anaml.ResourceTableMonitoring(),
