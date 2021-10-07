@@ -121,8 +121,40 @@ func s3SourceDestinationSchema() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validateFileFormat(),
 			},
+			"field_separator": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"line_separator": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"quote_all": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
 			"include_header": {
 				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"ignore_leading_whitespace": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"ignore_trailing_whitespace": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"compression": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"date_format": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"timestamp_format": {
+				Type:     schema.TypeString,
 				Optional: true,
 			},
 		},
@@ -142,15 +174,6 @@ func s3aSourceDestinationSchema() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
-			"file_format": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validateFileFormat(),
-			},
-			"include_header": {
-				Type:     schema.TypeBool,
-				Optional: true,
-			},
 			"endpoint": {
 				Type:         schema.TypeString,
 				Required:     true,
@@ -165,6 +188,47 @@ func s3aSourceDestinationSchema() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+			"file_format": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validateFileFormat(),
+			},
+			"field_separator": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"line_separator": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"quote_all": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"include_header": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"ignore_leading_whitespace": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"ignore_trailing_whitespace": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"compression": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"date_format": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"timestamp_format": {
+				Type:     schema.TypeString,
+				Optional: true,
 			},
 		},
 	}
@@ -235,8 +299,40 @@ func gcsSourceDestinationSchema() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validateFileFormat(),
 			},
+			"field_separator": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"line_separator": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"quote_all": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
 			"include_header": {
 				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"ignore_leading_whitespace": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"ignore_trailing_whitespace": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"compression": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"date_format": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"timestamp_format": {
+				Type:     schema.TypeString,
 				Optional: true,
 			},
 		},
@@ -256,8 +352,40 @@ func localSourceDestinationSchema() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validateFileFormat(),
 			},
+			"field_separator": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"line_separator": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"quote_all": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
 			"include_header": {
 				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"ignore_leading_whitespace": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"ignore_trailing_whitespace": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"compression": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"date_format": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"timestamp_format": {
+				Type:     schema.TypeString,
 				Optional: true,
 			},
 		},
@@ -277,8 +405,40 @@ func hdfsSourceDestinationSchema() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validateFileFormat(),
 			},
+			"field_separator": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"line_separator": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"quote_all": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
 			"include_header": {
 				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"ignore_leading_whitespace": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"ignore_trailing_whitespace": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"compression": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"date_format": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"timestamp_format": {
+				Type:     schema.TypeString,
 				Optional: true,
 			},
 		},
@@ -770,17 +930,45 @@ func parseFileFormat(fileFormat *FileFormat) map[string]interface{} {
 	fileFormatMap := make(map[string]interface{})
 	fileFormatMap["file_format"] = fileFormat.Type
 	if fileFormat.Type == "csv" {
+		fileFormatMap["compression"] = fileFormat.Compression
+		fileFormatMap["date_format"] = fileFormat.DateFormat
+		fileFormatMap["empty_value"] = fileFormat.EmptyValue
+		fileFormatMap["field_separator"] = fileFormat.Sep
+		fileFormatMap["ignore_leading_whitespace"] = fileFormat.IgnoreLeadingWhiteSpace
+		fileFormatMap["ignore_trailing_whitespace"] = fileFormat.IgnoreTrailingWhiteSpace
 		fileFormatMap["include_header"] = fileFormat.IncludeHeader
+		fileFormatMap["line_separator"] = fileFormat.LineSep
+		fileFormatMap["quote_all"] = fileFormat.QuoteAll
+		fileFormatMap["timestamp_format"] = fileFormat.TimestampFormat
 	}
 	return fileFormatMap
 }
 
 func composeFileFormat(d map[string]interface{}) *FileFormat {
 	if d["file_format"] == "csv" {
+		compression := d["compression"].(string)
+		dateFormat := d["date_format"].(string)
+		emptyValue := d["empty_value"].(string)
+		ignoreLeadingWhiteSpace := bool(d["ignore_leading_whitespace"].(bool))
+		ignoreTrailingWhiteSpace := bool(d["ignore_trailing_whitespace"].(bool))
 		includeHeader := bool(d["include_header"].(bool))
+		lineSep := d["line_separator"].(string)
+		quoteAll := bool(d["quote_all"].(bool))
+		sep := d["field_separator"].(string)
+		timestampFormat := d["timestamp_format"].(string)
+
 		fileFormat := FileFormat{
-			Type:          "csv",
-			IncludeHeader: &includeHeader,
+			Type:                     "csv",
+			Compression:              &compression,
+			DateFormat:               &dateFormat,
+			EmptyValue:               &emptyValue,
+			IgnoreLeadingWhiteSpace:  &ignoreLeadingWhiteSpace,
+			IgnoreTrailingWhiteSpace: &ignoreTrailingWhiteSpace,
+			IncludeHeader:            &includeHeader,
+			LineSep:                  &lineSep,
+			QuoteAll:                 &quoteAll,
+			Sep:                      &sep,
+			TimestampFormat:          &timestampFormat,
 		}
 		return &fileFormat
 	}

@@ -41,16 +41,16 @@ resource "anaml_entity" "household" {
   description    = "A household level view"
   default_column = "household"
 
-  labels = [ "testing" ]
+  labels = ["testing"]
   attribute {
-    key = "country"
+    key   = "country"
     value = "australia"
   }
 }
 
 resource "anaml_table" "household" {
-  name           = "household"
-  description    = "A household level view"
+  name        = "household"
+  description = "A household level view"
 
   source {
     source = data.anaml_source.s3a.id
@@ -66,11 +66,11 @@ resource "anaml_table" "household" {
 }
 
 resource "anaml_table" "household_normalised" {
-  name           = "household_normalised"
-  description    = "A household level view"
+  name        = "household_normalised"
+  description = "A household level view"
 
-  expression     = "SELECT * FROM household"
-  sources        = [ anaml_table.household.id ]
+  expression = "SELECT * FROM household"
+  sources    = [anaml_table.household.id]
 
   event {
     entities = {
@@ -81,46 +81,46 @@ resource "anaml_table" "household_normalised" {
 }
 
 resource "anaml_feature_template" "household_count" {
-  name           = "household_count"
-  description    = "Count of household items"
-  table          = anaml_table.household.id
-  select         = "count"
-  aggregation    = "sum"
+  name        = "household_count"
+  description = "Count of household items"
+  table       = anaml_table.household.id
+  select      = "count"
+  aggregation = "sum"
 }
 
 resource "anaml_feature" "household_count" {
-  for_each       = toset(["1", "2", "4"])
-  days           = parseint(each.key, 10)
+  for_each = toset(["1", "2", "4"])
+  days     = parseint(each.key, 10)
 
-  name           = "household_count_${each.key}_days"
-  description    = "Count of household items"
-  table          = anaml_table.household.id
-  select         = "count"
-  aggregation    = "sum"
-  template       = anaml_feature_template.household_count.id
+  name        = "household_count_${each.key}_days"
+  description = "Count of household items"
+  table       = anaml_table.household.id
+  select      = "count"
+  aggregation = "sum"
+  template    = anaml_feature_template.household_count.id
 }
 
 resource "anaml_feature_set" "household" {
-  name           = "household"
-  entity         = anaml_entity.household.id
-  features       = [
-      anaml_feature.household_count["1"].id
+  name   = "household"
+  entity = anaml_entity.household.id
+  features = [
+    anaml_feature.household_count["1"].id
     , anaml_feature.household_count["2"].id
     , anaml_feature.household_count["4"].id
-    ]
+  ]
 }
 
 resource "anaml_feature_store" "household_daily" {
-  name           = "household_daily"
-  description    = "Daily view of households"
-  start_date     = "2020-01-01"
-  end_date       = "2021-01-01"
-  feature_set    = anaml_feature_set.household.id
-  enabled        = true
-  cluster        = data.anaml_cluster.local.id
+  name        = "household_daily"
+  description = "Daily view of households"
+  start_date  = "2020-01-01"
+  end_date    = "2021-01-01"
+  feature_set = anaml_feature_set.household.id
+  enabled     = true
+  cluster     = data.anaml_cluster.local.id
   destination {
     destination = data.anaml_destination.s3a.id
-    folder = "household_results"
+    folder      = "household_results"
   }
   daily_schedule {
     start_time_of_day = "00:00:00"
@@ -128,14 +128,14 @@ resource "anaml_feature_store" "household_daily" {
 }
 
 resource "anaml_feature_store" "household_cron" {
-  name           = "household_cron"
-  description    = "Daily view of households"
-  feature_set    = anaml_feature_set.household.id
-  enabled        = true
-  cluster        = data.anaml_cluster.local.id
+  name        = "household_cron"
+  description = "Daily view of households"
+  feature_set = anaml_feature_set.household.id
+  enabled     = true
+  cluster     = data.anaml_cluster.local.id
   destination {
     destination = data.anaml_destination.s3a.id
-    folder = "household_results"
+    folder      = "household_results"
   }
   cron_schedule {
     cron_string = "* * * * *"
@@ -143,54 +143,54 @@ resource "anaml_feature_store" "household_cron" {
 }
 
 resource "anaml_feature_store" "household_never" {
-  name           = "household_never"
-  description    = "Manually scheduled view of households"
-  start_date     = "2020-01-01"
-  end_date       = "2021-01-01"
-  feature_set    = anaml_feature_set.household.id
-  enabled        = true
-  cluster        = data.anaml_cluster.local.id
+  name        = "household_never"
+  description = "Manually scheduled view of households"
+  start_date  = "2020-01-01"
+  end_date    = "2021-01-01"
+  feature_set = anaml_feature_set.household.id
+  enabled     = true
+  cluster     = data.anaml_cluster.local.id
   destination {
     destination = data.anaml_destination.s3a.id
-    folder = "household_results"
+    folder      = "household_results"
   }
 }
 
 resource "anaml_feature_store" "household_daily_retry" {
-  name           = "household_daily_retry"
-  description    = "Daily view of households"
-  feature_set    = anaml_feature_set.household.id
-  enabled        = true
-  cluster        = data.anaml_cluster.local.id
+  name        = "household_daily_retry"
+  description = "Daily view of households"
+  feature_set = anaml_feature_set.household.id
+  enabled     = true
+  cluster     = data.anaml_cluster.local.id
   destination {
     destination = data.anaml_destination.s3a.id
-    folder = "household_results"
+    folder      = "household_results"
   }
   daily_schedule {
     start_time_of_day = "00:00:00"
 
     fixed_retry_policy {
-      backoff = "PT1H30M"
+      backoff      = "PT1H30M"
       max_attempts = 3
     }
   }
 }
 
 resource "anaml_feature_store" "household_cron_retry" {
-  name           = "household_cron_retry"
-  description    = "Daily view of households"
-  feature_set    = anaml_feature_set.household.id
-  enabled        = true
-  cluster        = data.anaml_cluster.local.id
+  name        = "household_cron_retry"
+  description = "Daily view of households"
+  feature_set = anaml_feature_set.household.id
+  enabled     = true
+  cluster     = data.anaml_cluster.local.id
   destination {
     destination = data.anaml_destination.s3a.id
-    folder = "household_results"
+    folder      = "household_results"
   }
   cron_schedule {
     cron_string = "* * * * *"
 
     fixed_retry_policy {
-      backoff = "PT1H30M"
+      backoff      = "PT1H30M"
       max_attempts = 3
     }
   }
@@ -233,10 +233,20 @@ resource "anaml-operations_source" "s3" {
   description = "An S3 source created by Terraform"
 
   s3 {
-    bucket         = "my-bucket"
-    path           = "/path/to/file"
-    file_format    = "csv"
-    include_header = true
+    bucket = "my-bucket"
+    path   = "/path/to/file"
+
+    file_format                = "csv"
+    compression                = "gzip"
+    include_header             = true
+    field_separator            = ","
+    line_separator             = "\n"
+    quote_all                  = true
+    date_format                = "yyyy-MM-dd"
+    timestamp_format           = "yyyy-MM-dd HH:MM:SS"
+    ignore_leading_whitespace  = false
+    ignore_trailing_whitespace = false
+    empty_value                = ""
   }
 }
 
@@ -294,9 +304,9 @@ resource "anaml-operations_source" "gcs" {
   description = "An GCS source created by Terraform"
 
   gcs {
-    bucket         = "my-bucket"
-    path           = "/path/to/file"
-    file_format    = "parquet"
+    bucket      = "my-bucket"
+    path        = "/path/to/file"
+    file_format = "parquet"
   }
 }
 
@@ -327,13 +337,13 @@ resource "anaml-operations_source" "kafka" {
   description = "An Kafka source created by Terraform"
 
   kafka {
-    bootstrap_servers = "http://bootstrap"
+    bootstrap_servers   = "http://bootstrap"
     schema_registry_url = "http://schema-registry"
     property {
       key = "jamf"
       gcp {
         secret_project = "example"
-        secret_id = "sid"
+        secret_id      = "sid"
       }
     }
   }
@@ -411,7 +421,7 @@ resource "anaml-operations_destination" "big_query_persistent" {
     path = "/path/to/file"
     persistent_staging_area {
       bucket = "my-bucket"
-      path = "/path/to/file"
+      path   = "/path/to/file"
     }
   }
 }
@@ -421,9 +431,9 @@ resource "anaml-operations_destination" "gcs" {
   description = "An GCS destination created by Terraform"
 
   gcs {
-    bucket         = "my-bucket"
-    path           = "/path/to/file"
-    file_format    = "parquet"
+    bucket      = "my-bucket"
+    path        = "/path/to/file"
+    file_format = "parquet"
   }
 }
 
@@ -454,10 +464,10 @@ resource "anaml-operations_destination" "kafka" {
   description = "An Kafka destination created by Terraform"
 
   kafka {
-    bootstrap_servers = "http://bootstrap"
+    bootstrap_servers   = "http://bootstrap"
     schema_registry_url = "http://schema-registry"
     property {
-      key = "username"
+      key   = "username"
       value = "fred"
     }
     property {
@@ -488,27 +498,27 @@ resource "anaml-operations_user" "john" {
 }
 
 resource "anaml-operations_caching" "caching" {
-  name           = "household_caching"
-  description    = "Caching of tables for households"
-  prefix_url     = "file:///tmp/anaml/caching"
+  name        = "household_caching"
+  description = "Caching of tables for households"
+  prefix_url  = "file:///tmp/anaml/caching"
   spec {
     table  = anaml_table.household.id
     entity = anaml_entity.household.id
   }
-  cluster        = data.anaml_cluster.local.id
+  cluster = data.anaml_cluster.local.id
   daily_schedule {
     start_time_of_day = "00:00:00"
   }
 }
 
 resource "anaml-operations_monitoring" "monitoring" {
-  name           = "household_monitoring"
-  description    = "Monitoring of tables for households"
-  enabled        = true
-  tables         = [
-      anaml_table.household.id
-    ]
-  cluster        = data.anaml_cluster.local.id
+  name        = "household_monitoring"
+  description = "Monitoring of tables for households"
+  enabled     = true
+  tables = [
+    anaml_table.household.id
+  ]
+  cluster = data.anaml_cluster.local.id
   daily_schedule {
     start_time_of_day = "00:00:00"
   }
@@ -531,8 +541,8 @@ resource "anaml-operations_user_group" "engineering" {
 }
 
 resource "anaml-operations_branch_protection" "official" {
-  protection_pattern    = "official"
-  merge_approval_rules  {
+  protection_pattern = "official"
+  merge_approval_rules {
     restricted {
       num_required_approvals = 1
       approvers {
@@ -542,7 +552,7 @@ resource "anaml-operations_branch_protection" "official" {
       }
     }
   }
-  merge_approval_rules  {
+  merge_approval_rules {
     open {
       num_required_approvals = 2
     }
