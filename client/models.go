@@ -185,8 +185,17 @@ type Source struct {
 }
 
 type FileFormat struct {
-	Type          string `json:"adt_type"`
-	IncludeHeader *bool  `json:"includeHeader,omitempty"`
+	Type                     string  `json:"adt_type"`
+	Sep                      *string `json:"sep,omitempty"`
+	QuoteAll                 *bool   `json:"quoteAll,omitempty"`
+	IncludeHeader            *bool   `json:"includeHeader,omitempty"`
+	EmptyValue               *string `json:"emptyValue,omitempty"`
+	Compression              *string `json:"compression,omitempty"`
+	DateFormat               *string `json:"dateFormat,omitempty"`
+	TimestampFormat          *string `json:"timestampFormat,omitempty"`
+	IgnoreLeadingWhiteSpace  *bool   `json:"ignoreLeadingWhiteSpace,omitempty"`
+	IgnoreTrailingWhiteSpace *bool   `json:"ignoreTrailingWhiteSpace,omitempty"`
+	LineSep                  *string `json:"lineSep,omitempty"`
 }
 
 // SourceReference ...
