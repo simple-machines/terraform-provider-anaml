@@ -37,7 +37,6 @@ func Provider() *schema.Provider {
 			"anaml_table":            anaml.DataSourceTable(),
 			"anaml_feature":          anaml.DataSourceFeature(),
 			"anaml_feature_set":      anaml.DataSourceFeatureSet(),
-			"anaml_feature_store":    anaml.DataSourceFeatureStore(),
 			"anaml_feature_template": anaml.DataSourceFeatureTemplate(),
 		},
 
@@ -47,7 +46,6 @@ func Provider() *schema.Provider {
 			"anaml_table":            anaml.ResourceTable(),
 			"anaml_feature":          anaml.ResourceFeature(),
 			"anaml_feature_set":      anaml.ResourceFeatureSet(),
-			"anaml_feature_store":    anaml.ResourceFeatureStore(),
 			"anaml_feature_template": anaml.ResourceFeatureTemplate(),
 		},
 

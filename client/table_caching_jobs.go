@@ -8,7 +8,7 @@ import (
 )
 
 func (c *Client) GetTableCaching(TableCachingId string) (*TableCaching, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/table-caching/job/%s", c.HostURL, TableCachingId), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/table-caching/%s", c.HostURL, TableCachingId), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +36,7 @@ func (c *Client) CreateTableCaching(creationRequest TableCaching) (*TableCaching
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/table-caching/job", c.HostURL), strings.NewReader(string(rb)))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/table-caching", c.HostURL), strings.NewReader(string(rb)))
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +62,7 @@ func (c *Client) UpdateTableCaching(TableCachingId string, creationRequest Table
 		return err
 	}
 
-	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/table-caching/job/%s", c.HostURL, TableCachingId), strings.NewReader(string(rb)))
+	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/table-caching/%s", c.HostURL, TableCachingId), strings.NewReader(string(rb)))
 	if err != nil {
 		return err
 	}
@@ -76,7 +76,7 @@ func (c *Client) UpdateTableCaching(TableCachingId string, creationRequest Table
 }
 
 func (c *Client) DeleteTableCaching(TableCachingId string) error {
-	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/table-caching/job/%s", c.HostURL, TableCachingId), nil)
+	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/table-caching/%s", c.HostURL, TableCachingId), nil)
 	if err != nil {
 		return err
 	}
