@@ -278,15 +278,19 @@ type SparkConfig struct {
 	AdditionalSparkProperties map[string]string `json:"additionalSparkProperties"`
 }
 
-// User ..
+// User ...
+type Role struct {
+	Type string `json:"adt_type"`
+}
+
 type User struct {
-	ID        int      `json:"id,omitempty"`
-	Name      string   `json:"name"`
-	Email     *string  `json:"email,omitempty"`
-	GivenName *string  `json:"givenName,omitempty"`
-	Surname   *string  `json:"surname,omitempty"`
-	Password  *string  `json:"password,omitempty"`
-	Roles     []string `json:"roles"`
+	ID        int     `json:"id,omitempty"`
+	Name      string  `json:"name"`
+	Email     *string `json:"email,omitempty"`
+	GivenName *string `json:"givenName,omitempty"`
+	Surname   *string `json:"surname,omitempty"`
+	Password  *string `json:"password,omitempty"`
+	Roles     []Role  `json:"roles"`
 }
 
 type ChangeOtherPasswordRequest struct {
@@ -307,7 +311,7 @@ type UserGroup struct {
 	ID              int               `json:"id,omitempty"`
 	Name            string            `json:"name"`
 	Description     string            `json:"description"`
-	Roles           []string          `json:"roles"`
+	Roles           []Role            `json:"roles"`
 	Members         []UserGroupMember `json:"members"`
 	ExternalGroupID *string           `json:"externalGroupId,omitempty"`
 }
@@ -382,9 +386,75 @@ type Attribute struct {
 
 func validRoles() []string {
 	return []string{
-		"super_user", "author", "run_caching", "run_features", "run_monitoring",
-		"admin_user", "admin_group", "admin_branch_perms", "admin_system", "admin_webhooks",
+		"admin_branch_perms",
+		"admin_groups",
+		"admin_system",
+		"admin_users",
+		"admin_webhooks",
+		"author",
+		"run_caching",
+		"run_featuregen",
+		"run_monitoring",
+		"super_user",
 	}
+}
+
+func mapRolesToBackend(frontend []string) []Role {
+	vs := make([]Role, 0, len(frontend))
+	for _, v := range frontend {
+		if v == "admin_branch_perms" {
+			vs = append(vs, Role{"adminbranchperms"})
+		} else if v == "admin_groups" {
+			vs = append(vs, Role{"admingroups"})
+		} else if v == "admin_system" {
+			vs = append(vs, Role{"adminsystem"})
+		} else if v == "admin_users" {
+			vs = append(vs, Role{"adminusers"})
+		} else if v == "admin_webhooks" {
+			vs = append(vs, Role{"adminwebhooks"})
+		} else if v == "author" {
+			vs = append(vs, Role{"author"})
+		} else if v == "run_caching" {
+			vs = append(vs, Role{"runcaching"})
+		} else if v == "run_featuregen" {
+			vs = append(vs, Role{"runfeaturegen"})
+		} else if v == "run_monitoring" {
+			vs = append(vs, Role{"runmonitoring"})
+		} else if v == "super_user" {
+			vs = append(vs, Role{"superuser"})
+		}
+		// TODO: We should raise an error if we fall through the cases.
+	}
+	return vs
+}
+
+func mapRolesToFrontend(backend []Role) []string {
+	vs := make([]string, 0, len(backend))
+	for _, v := range backend {
+		if v.Type == "adminbranchperms" {
+			vs = append(vs, "admin_branch_perms")
+		} else if v.Type == "admingroups" {
+			vs = append(vs, "admin_groups")
+		} else if v.Type == "adminsystem" {
+			vs = append(vs, "admin_system")
+		} else if v.Type == "adminusers" {
+			vs = append(vs, "admin_users")
+		} else if v.Type == "adminwebhooks" {
+			vs = append(vs, "admin_webhooks")
+		} else if v.Type == "author" {
+			vs = append(vs, "author")
+		} else if v.Type == "runcaching" {
+			vs = append(vs, "run_caching")
+		} else if v.Type == "runfeaturegen" {
+			vs = append(vs, "run_featuregen")
+		} else if v.Type == "runmonitoring" {
+			vs = append(vs, "run_monitoring")
+		} else if v.Type == "superuser" {
+			vs = append(vs, "super_user")
+		}
+		// TODO: We should raise an error if we fall through the cases.
+	}
+	return vs
 }
 
 func validGroupMemberSource() []string {

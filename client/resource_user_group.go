@@ -84,7 +84,7 @@ func resourceUserGroupRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("description", UserGroup.Description); err != nil {
 		return err
 	}
-	if err := d.Set("roles", UserGroup.Roles); err != nil {
+	if err := d.Set("roles", mapRolesToFrontend(UserGroup.Roles)); err != nil {
 		return err
 	}
 	if err := d.Set("members", flattenUserGroupMembers(UserGroup.Members)); err != nil {
@@ -106,7 +106,7 @@ func resourceUserGroupCreate(d *schema.ResourceData, m interface{}) error {
 	UserGroup := UserGroup{
 		Name:            d.Get("name").(string),
 		Description:     d.Get("description").(string),
-		Roles:           expandStringList(d.Get("roles").([]interface{})),
+		Roles:           mapRolesToBackend(expandStringList(d.Get("roles").([]interface{}))),
 		Members:         groupMembers,
 		ExternalGroupID: getNullableString(d, "external_group_id"),
 	}
@@ -131,7 +131,7 @@ func resourceUserGroupUpdate(d *schema.ResourceData, m interface{}) error {
 	UserGroup := UserGroup{
 		Name:            d.Get("name").(string),
 		Description:     d.Get("description").(string),
-		Roles:           expandStringList(d.Get("roles").([]interface{})),
+		Roles:           mapRolesToBackend(expandStringList(d.Get("roles").([]interface{}))),
 		Members:         groupMembers,
 		ExternalGroupID: getNullableString(d, "external_group_id"),
 	}

@@ -77,7 +77,7 @@ func resourceUserRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("surname", user.Surname); err != nil {
 		return err
 	}
-	if err := d.Set("roles", user.Roles); err != nil {
+	if err := d.Set("roles", mapRolesToFrontend(user.Roles)); err != nil {
 		return err
 	}
 
@@ -92,7 +92,7 @@ func resourceUserCreate(d *schema.ResourceData, m interface{}) error {
 		GivenName: getNullableString(d, "given_name"),
 		Surname:   getNullableString(d, "surname"),
 		Password:  getNullableString(d, "password"),
-		Roles:     expandStringList(d.Get("roles").([]interface{})),
+		Roles:     mapRolesToBackend(expandStringList(d.Get("roles").([]interface{}))),
 	}
 
 	e, err := c.CreateUser(user)
@@ -112,7 +112,7 @@ func resourceUserUpdate(d *schema.ResourceData, m interface{}) error {
 		Email:     getNullableString(d, "email"),
 		GivenName: getNullableString(d, "given_name"),
 		Surname:   getNullableString(d, "surname"),
-		Roles:     expandStringList(d.Get("roles").([]interface{})),
+		Roles:     mapRolesToBackend(expandStringList(d.Get("roles").([]interface{}))),
 	}
 
 	err := c.UpdateUser(userID, user)
