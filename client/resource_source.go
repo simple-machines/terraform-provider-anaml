@@ -125,10 +125,6 @@ func s3SourceDestinationSchema() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"line_separator": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
 			"quote_all": {
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -195,10 +191,6 @@ func s3aSourceDestinationSchema() *schema.Resource {
 				ValidateFunc: validateFileFormat(),
 			},
 			"field_separator": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"line_separator": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
@@ -303,10 +295,6 @@ func gcsSourceDestinationSchema() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"line_separator": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
 			"quote_all": {
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -356,10 +344,6 @@ func localSourceDestinationSchema() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"line_separator": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
 			"quote_all": {
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -406,10 +390,6 @@ func hdfsSourceDestinationSchema() *schema.Resource {
 				ValidateFunc: validateFileFormat(),
 			},
 			"field_separator": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"line_separator": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
@@ -930,52 +910,72 @@ func parseFileFormat(fileFormat *FileFormat) map[string]interface{} {
 	fileFormatMap := make(map[string]interface{})
 	fileFormatMap["file_format"] = fileFormat.Type
 	if fileFormat.Type == "csv" {
-		fileFormatMap["compression"] = fileFormat.Compression
-		fileFormatMap["date_format"] = fileFormat.DateFormat
-		fileFormatMap["empty_value"] = fileFormat.EmptyValue
-		fileFormatMap["field_separator"] = fileFormat.Sep
-		fileFormatMap["ignore_leading_whitespace"] = fileFormat.IgnoreLeadingWhiteSpace
-		fileFormatMap["ignore_trailing_whitespace"] = fileFormat.IgnoreTrailingWhiteSpace
-		fileFormatMap["include_header"] = fileFormat.IncludeHeader
-		fileFormatMap["line_separator"] = fileFormat.LineSep
-		fileFormatMap["quote_all"] = fileFormat.QuoteAll
-		fileFormatMap["timestamp_format"] = fileFormat.TimestampFormat
+		if fileFormat.Compression != nil {
+			fileFormatMap["compression"] = fileFormat.Compression
+		}
+		if fileFormat.DateFormat != nil {
+			fileFormatMap["date_format"] = fileFormat.DateFormat
+		}
+		if fileFormat.EmptyValue != nil {
+			fileFormatMap["empty_value"] = fileFormat.EmptyValue
+		}
+		if fileFormat.Sep != nil {
+			fileFormatMap["field_separator"] = fileFormat.Sep
+		}
+		if fileFormat.IgnoreLeadingWhiteSpace != nil {
+			fileFormatMap["ignore_leading_whitespace"] = fileFormat.IgnoreLeadingWhiteSpace
+		}
+		if fileFormat.IgnoreTrailingWhiteSpace != nil {
+			fileFormatMap["ignore_trailing_whitespace"] = fileFormat.IgnoreTrailingWhiteSpace
+		}
+		if fileFormat.IncludeHeader != nil {
+			fileFormatMap["include_header"] = fileFormat.IncludeHeader
+		}
+		if fileFormat.QuoteAll != nil {
+			fileFormatMap["quote_all"] = fileFormat.QuoteAll
+		}
+		if fileFormat.TimestampFormat != nil {
+			fileFormatMap["timestamp_format"] = fileFormat.TimestampFormat
+		}
 	}
 	return fileFormatMap
 }
 
 func composeFileFormat(d map[string]interface{}) *FileFormat {
-	if d["file_format"] == "csv" {
-		compression := d["compression"].(string)
-		dateFormat := d["date_format"].(string)
-		emptyValue := d["empty_value"].(string)
-		ignoreLeadingWhiteSpace := bool(d["ignore_leading_whitespace"].(bool))
-		ignoreTrailingWhiteSpace := bool(d["ignore_trailing_whitespace"].(bool))
-		includeHeader := bool(d["include_header"].(bool))
-		lineSep := d["line_separator"].(string)
-		quoteAll := bool(d["quote_all"].(bool))
-		sep := d["field_separator"].(string)
-		timestampFormat := d["timestamp_format"].(string)
-
-		fileFormat := FileFormat{
-			Type:                     "csv",
-			Compression:              &compression,
-			DateFormat:               &dateFormat,
-			EmptyValue:               &emptyValue,
-			IgnoreLeadingWhiteSpace:  &ignoreLeadingWhiteSpace,
-			IgnoreTrailingWhiteSpace: &ignoreTrailingWhiteSpace,
-			IncludeHeader:            &includeHeader,
-			LineSep:                  &lineSep,
-			QuoteAll:                 &quoteAll,
-			Sep:                      &sep,
-			TimestampFormat:          &timestampFormat,
-		}
-		return &fileFormat
-	}
-
 	fileFormat := FileFormat{
 		Type: d["file_format"].(string),
 	}
+
+	if d["file_format"] == "csv" {
+		if compression, ok := d["compression"].(string); ok {
+			fileFormat.Compression = &compression
+		}
+		if dateFormat, ok := d["date_format"].(string); ok {
+			fileFormat.DateFormat = &dateFormat
+		}
+		if emptyValue, ok := d["empty_value"].(string); ok {
+			fileFormat.EmptyValue = &emptyValue
+		}
+		if ignoreLeadingWhiteSpace, ok := d["ignore_leading_whitespace"].(bool); ok {
+			fileFormat.IgnoreLeadingWhiteSpace = &ignoreLeadingWhiteSpace
+		}
+		if ignoreTrailingWhiteSpace, ok := d["ignore_trailing_whitespace"].(bool); ok {
+			fileFormat.IgnoreTrailingWhiteSpace = &ignoreTrailingWhiteSpace
+		}
+		if includeHeader, ok := d["include_header"].(bool); ok {
+			fileFormat.IncludeHeader = &includeHeader
+		}
+		if quoteAll, ok := d["quote_all"].(bool); ok {
+			fileFormat.QuoteAll = &quoteAll
+		}
+		if sep, ok := d["field_separator"].(string); ok {
+			fileFormat.Sep = &sep
+		}
+		if timestampFormat, ok := d["timestamp_format"].(string); ok {
+			fileFormat.TimestampFormat = &timestampFormat
+		}
+	}
+
 	return &fileFormat
 }
 

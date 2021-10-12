@@ -195,7 +195,6 @@ type FileFormat struct {
 	TimestampFormat          *string `json:"timestampFormat,omitempty"`
 	IgnoreLeadingWhiteSpace  *bool   `json:"ignoreLeadingWhiteSpace,omitempty"`
 	IgnoreTrailingWhiteSpace *bool   `json:"ignoreTrailingWhiteSpace,omitempty"`
-	LineSep                  *string `json:"lineSep,omitempty"`
 }
 
 // SourceReference ...
