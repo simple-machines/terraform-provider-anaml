@@ -240,7 +240,6 @@ resource "anaml-operations_source" "s3" {
     compression                = "gzip"
     include_header             = true
     field_separator            = ","
-    line_separator             = "\n"
     quote_all                  = true
     date_format                = "yyyy-MM-dd"
     timestamp_format           = "yyyy-MM-dd HH:MM:SS"
