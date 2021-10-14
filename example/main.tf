@@ -24,15 +24,15 @@ provider "anaml-operations" {
 }
 
 
-data "anaml_source" "s3a" {
+data "anaml-operations_source" "s3a" {
   name = anaml-operations_source.s3a.name
 }
 
-data "anaml_cluster" "local" {
+data "anaml-operations_cluster" "local" {
   name = anaml-operations_cluster.local.name
 }
 
-data "anaml_destination" "s3a" {
+data "anaml-operations_destination" "s3a" {
   name = anaml-operations_destination.s3a.name
 }
 
@@ -41,7 +41,7 @@ resource "anaml_entity" "household" {
   description    = "A household level view"
   default_column = "household"
 
-  labels = ["testing"]
+  labels = []
   attribute {
     key   = "country"
     value = "australia"
@@ -53,7 +53,7 @@ resource "anaml_table" "household" {
   description = "A household level view"
 
   source {
-    source = data.anaml_source.s3a.id
+    source = data.anaml-operations_source.s3a.id
     folder = "household"
   }
 
@@ -110,16 +110,16 @@ resource "anaml_feature_set" "household" {
   ]
 }
 
-resource "anaml_feature_store" "household_daily" {
+resource "anaml-operations_feature_store" "household_daily" {
   name        = "household_daily"
   description = "Daily view of households"
   start_date  = "2020-01-01"
   end_date    = "2021-01-01"
   feature_set = anaml_feature_set.household.id
   enabled     = true
-  cluster     = data.anaml_cluster.local.id
+  cluster     = data.anaml-operations_cluster.local.id
   destination {
-    destination = data.anaml_destination.s3a.id
+    destination = data.anaml-operations_destination.s3a.id
     folder      = "household_results"
   }
   daily_schedule {
@@ -127,14 +127,14 @@ resource "anaml_feature_store" "household_daily" {
   }
 }
 
-resource "anaml_feature_store" "household_cron" {
+resource "anaml-operations_feature_store" "household_cron" {
   name        = "household_cron"
   description = "Daily view of households"
   feature_set = anaml_feature_set.household.id
   enabled     = true
-  cluster     = data.anaml_cluster.local.id
+  cluster     = data.anaml-operations_cluster.local.id
   destination {
-    destination = data.anaml_destination.s3a.id
+    destination = data.anaml-operations_destination.s3a.id
     folder      = "household_results"
   }
   cron_schedule {
@@ -142,28 +142,28 @@ resource "anaml_feature_store" "household_cron" {
   }
 }
 
-resource "anaml_feature_store" "household_never" {
+resource "anaml-operations_feature_store" "household_never" {
   name        = "household_never"
   description = "Manually scheduled view of households"
   start_date  = "2020-01-01"
   end_date    = "2021-01-01"
   feature_set = anaml_feature_set.household.id
   enabled     = true
-  cluster     = data.anaml_cluster.local.id
+  cluster     = data.anaml-operations_cluster.local.id
   destination {
-    destination = data.anaml_destination.s3a.id
+    destination = data.anaml-operations_destination.s3a.id
     folder      = "household_results"
   }
 }
 
-resource "anaml_feature_store" "household_daily_retry" {
+resource "anaml-operations_feature_store" "household_daily_retry" {
   name        = "household_daily_retry"
   description = "Daily view of households"
   feature_set = anaml_feature_set.household.id
   enabled     = true
-  cluster     = data.anaml_cluster.local.id
+  cluster     = data.anaml-operations_cluster.local.id
   destination {
-    destination = data.anaml_destination.s3a.id
+    destination = data.anaml-operations_destination.s3a.id
     folder      = "household_results"
   }
   daily_schedule {
@@ -176,14 +176,14 @@ resource "anaml_feature_store" "household_daily_retry" {
   }
 }
 
-resource "anaml_feature_store" "household_cron_retry" {
+resource "anaml-operations_feature_store" "household_cron_retry" {
   name        = "household_cron_retry"
   description = "Daily view of households"
   feature_set = anaml_feature_set.household.id
   enabled     = true
-  cluster     = data.anaml_cluster.local.id
+  cluster     = data.anaml-operations_cluster.local.id
   destination {
-    destination = data.anaml_destination.s3a.id
+    destination = data.anaml-operations_destination.s3a.id
     folder      = "household_results"
   }
   cron_schedule {
@@ -245,7 +245,6 @@ resource "anaml-operations_source" "s3" {
     timestamp_format           = "yyyy-MM-dd HH:MM:SS"
     ignore_leading_whitespace  = false
     ignore_trailing_whitespace = false
-    empty_value                = ""
   }
 }
 
@@ -504,7 +503,7 @@ resource "anaml-operations_caching" "caching" {
     table  = anaml_table.household.id
     entity = anaml_entity.household.id
   }
-  cluster = data.anaml_cluster.local.id
+  cluster = data.anaml-operations_cluster.local.id
   daily_schedule {
     start_time_of_day = "00:00:00"
   }
@@ -517,7 +516,7 @@ resource "anaml-operations_monitoring" "monitoring" {
   tables = [
     anaml_table.household.id
   ]
-  cluster = data.anaml_cluster.local.id
+  cluster = data.anaml-operations_cluster.local.id
   daily_schedule {
     start_time_of_day = "00:00:00"
   }

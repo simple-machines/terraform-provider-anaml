@@ -36,10 +36,10 @@ func ResourceBranchProtection() *schema.Resource {
 				Type:     schema.TypeBool,
 				Required: true,
 			},
-            "allow_branch_deletion": {
-                Type:     schema.TypeBool,
-                Required: true,
-            },
+			"allow_branch_deletion": {
+				Type:     schema.TypeBool,
+				Required: true,
+			},
 		},
 	}
 }
@@ -162,12 +162,12 @@ func resourceBranchProtectionRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("push_whitelist", flattenPrincipalIds(BranchProtection.PushWhitelist)); err != nil {
 		return err
 	}
-    if err := d.Set("apply_to_admins", BranchProtection.ApplyToAdmins); err != nil {
-        return err
-    }
-    if err := d.Set("allow_branch_deletion", BranchProtection.AllowBranchDeletion); err != nil {
-        return err
-    }
+	if err := d.Set("apply_to_admins", BranchProtection.ApplyToAdmins); err != nil {
+		return err
+	}
+	if err := d.Set("allow_branch_deletion", BranchProtection.AllowBranchDeletion); err != nil {
+		return err
+	}
 	return err
 }
 
@@ -228,10 +228,10 @@ func composeBranchProtection(d *schema.ResourceData) (*BranchProtection, error) 
 
 	return &BranchProtection{
 		ProtectionPattern:   d.Get("protection_pattern").(string),
-        MergeApprovalRules:  approvalRules,
-        PushWhitelist:       pushWhitelist,
-        ApplyToAdmins:       d.Get("apply_to_admins").(bool),
-        AllowBranchDeletion: d.Get("allow_branch_deletion").(bool),
+		MergeApprovalRules:  approvalRules,
+		PushWhitelist:       pushWhitelist,
+		ApplyToAdmins:       d.Get("apply_to_admins").(bool),
+		AllowBranchDeletion: d.Get("allow_branch_deletion").(bool),
 	}, nil
 }
 
@@ -241,21 +241,21 @@ func expandApprovalRules(approvalRules []interface{}) ([]ApprovalRule, error) {
 	for _, approvalRule := range approvalRules {
 		val, _ := approvalRule.(map[string]interface{})
 
-        if restrictedApprovalRule, _ := expandSingleMap(val["restricted"]); restrictedApprovalRule != nil {
-            parsed, err := composeRestrictedApprovalRule(restrictedApprovalRule)
-            if err != nil {
-                return nil, err
-            }
-            res = append(res, *parsed)
-        }
+		if restrictedApprovalRule, _ := expandSingleMap(val["restricted"]); restrictedApprovalRule != nil {
+			parsed, err := composeRestrictedApprovalRule(restrictedApprovalRule)
+			if err != nil {
+				return nil, err
+			}
+			res = append(res, *parsed)
+		}
 
-        if openApprovalRule, _ := expandSingleMap(val["open"]); openApprovalRule != nil {
-            parsed, err := composeOpenApprovalRule(openApprovalRule)
-            if err != nil {
-                return nil, err
-            }
-            res = append(res, *parsed)
-        }
+		if openApprovalRule, _ := expandSingleMap(val["open"]); openApprovalRule != nil {
+			parsed, err := composeOpenApprovalRule(openApprovalRule)
+			if err != nil {
+				return nil, err
+			}
+			res = append(res, *parsed)
+		}
 	}
 
 	return res, nil
@@ -267,18 +267,18 @@ func composeRestrictedApprovalRule(d map[string]interface{}) (*ApprovalRule, err
 		return nil, err
 	}
 
-    return &ApprovalRule {
-        NumRequiredApprovals: d["num_required_approvals"].(int),
-        Approvers: approvers,
-        Type: "restricted",
-    }, nil
+	return &ApprovalRule{
+		NumRequiredApprovals: d["num_required_approvals"].(int),
+		Approvers:            approvers,
+		Type:                 "restricted",
+	}, nil
 }
 
 func composeOpenApprovalRule(d map[string]interface{}) (*ApprovalRule, error) {
-    return &ApprovalRule {
-        NumRequiredApprovals: d["num_required_approvals"].(int),
-        Type: "open",
-    }, nil
+	return &ApprovalRule{
+		NumRequiredApprovals: d["num_required_approvals"].(int),
+		Type:                 "open",
+	}, nil
 }
 
 func expandPrincipalIds(principalIds []interface{}) ([]PrincipalId, error) {
@@ -287,38 +287,38 @@ func expandPrincipalIds(principalIds []interface{}) ([]PrincipalId, error) {
 	for _, principalId := range principalIds {
 		val, _ := principalId.(map[string]interface{})
 
-        if userId, _ := expandSingleMap(val["user"]); userId != nil {
-            parsed, err := composeUserId(userId)
-            if err != nil {
-                return nil, err
-            }
-            res = append(res, *parsed)
-        }
+		if userId, _ := expandSingleMap(val["user"]); userId != nil {
+			parsed, err := composeUserId(userId)
+			if err != nil {
+				return nil, err
+			}
+			res = append(res, *parsed)
+		}
 
-        if userGroupId, _ := expandSingleMap(val["user_group"]); userGroupId != nil {
-            parsed, err := composeUserGroupId(userGroupId)
-            if err != nil {
-                return nil, err
-            }
-            res = append(res, *parsed)
-        }
+		if userGroupId, _ := expandSingleMap(val["user_group"]); userGroupId != nil {
+			parsed, err := composeUserGroupId(userGroupId)
+			if err != nil {
+				return nil, err
+			}
+			res = append(res, *parsed)
+		}
 	}
 
 	return res, nil
 }
 
 func composeUserId(d map[string]interface{}) (*PrincipalId, error) {
-    return &PrincipalId {
-        ID: d["id"].(int),
-        Type: "userid",
-    }, nil
+	return &PrincipalId{
+		ID:   d["id"].(int),
+		Type: "userid",
+	}, nil
 }
 
 func composeUserGroupId(d map[string]interface{}) (*PrincipalId, error) {
-    return &PrincipalId {
-        ID: d["id"].(int),
-        Type: "usergroupid",
-    }, nil
+	return &PrincipalId{
+		ID:   d["id"].(int),
+		Type: "usergroupid",
+	}, nil
 }
 
 func flattenApprovalRules(rules []ApprovalRule) ([]map[string]interface{}, error) {
@@ -327,13 +327,13 @@ func flattenApprovalRules(rules []ApprovalRule) ([]map[string]interface{}, error
 	for _, rule := range rules {
 		single := make(map[string]interface{})
 
-        if rule.Type == "restricted" {
-            single["restricted"] = parseRestrictedApprovalRule(rule)
-        }
+		if rule.Type == "restricted" {
+			single["restricted"] = parseRestrictedApprovalRule(rule)
+		}
 
-        if rule.Type == "open" {
-            single["open"] = parseOpenApprovalRule(rule)
-        }
+		if rule.Type == "open" {
+			single["open"] = parseOpenApprovalRule(rule)
+		}
 
 		res = append(res, single)
 	}
@@ -344,7 +344,7 @@ func flattenApprovalRules(rules []ApprovalRule) ([]map[string]interface{}, error
 func parseRestrictedApprovalRule(rule ApprovalRule) []map[string]interface{} {
 	restrictedApprovalRule := make(map[string]interface{})
 	restrictedApprovalRule["num_required_approvals"] = rule.NumRequiredApprovals
-    restrictedApprovalRule["approvers"] = flattenPrincipalIds(rule.Approvers)
+	restrictedApprovalRule["approvers"] = flattenPrincipalIds(rule.Approvers)
 
 	return []map[string]interface{}{restrictedApprovalRule}
 }
@@ -362,13 +362,13 @@ func flattenPrincipalIds(principalIds []PrincipalId) []map[string]interface{} {
 	for _, principalId := range principalIds {
 		single := make(map[string]interface{})
 
-        if principalId.Type == "userid" {
-            single["user"] = parseUserId(principalId)
-        }
+		if principalId.Type == "userid" {
+			single["user"] = parseUserId(principalId)
+		}
 
-        if principalId.Type == "usergroupid" {
-            single["user_group"] = parseUserGroupId(principalId)
-        }
+		if principalId.Type == "usergroupid" {
+			single["user_group"] = parseUserGroupId(principalId)
+		}
 
 		res = append(res, single)
 	}

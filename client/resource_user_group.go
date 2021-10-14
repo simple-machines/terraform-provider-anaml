@@ -162,6 +162,7 @@ func flattenUserGroupMembers(members []UserGroupMember) []map[string]interface{}
 		single := make(map[string]interface{})
 		single["user_id"] = member.UserID
 		single["source"] = member.Source.Type
+		res = append(res, single)
 	}
 	return res
 }

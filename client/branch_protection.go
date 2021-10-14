@@ -46,13 +46,13 @@ func (c *Client) CreateBranchProtection(creationRequest BranchProtection) (*Bran
 		return nil, err
 	}
 
-	var idAndVersion IdAndVersion
-	err = unmarshalIdAndVersion(body, &idAndVersion)
+	var V int
+	err = json.Unmarshal(body, &V)
 	if err != nil {
 		return nil, err
 	}
 
-	creationRequest.ID = idAndVersion.ID
+	creationRequest.ID = V
 	return &creationRequest, nil
 }
 
