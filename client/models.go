@@ -122,18 +122,19 @@ type FeatureSet struct {
 
 // FeatureStore ...
 type FeatureStore struct {
-	ID           int                    `json:"id,omitempty"`
-	Name         string                 `json:"name"`
-	Description  string                 `json:"description"`
-	FeatureSet   int                    `json:"featureSet"`
-	Enabled      bool                   `json:"enabled"`
-	Schedule     *Schedule              `json:"schedule"`
-	Destinations []DestinationReference `json:"destinations"`
-	Cluster      int                    `json:"cluster"`
-	StartDate    *string                `json:"startDate,omitempty"`
-	EndDate      *string                `json:"endDate,omitempty"`
-	Labels       []string               `json:"labels"`
-	Attributes   []Attribute            `json:"attributes"`
+	ID            int                    `json:"id,omitempty"`
+	Name          string                 `json:"name"`
+	Description   string                 `json:"description"`
+	FeatureSet    int                    `json:"featureSet"`
+	Enabled       bool                   `json:"enabled"`
+	Schedule      *Schedule              `json:"schedule"`
+	Destinations  []DestinationReference `json:"destinations"`
+	Cluster       int                    `json:"cluster"`
+	RunDateOffset *int                   `json:"runDateOffset,omitempty"`
+	StartDate     *string                `json:"startDate,omitempty"`
+	EndDate       *string                `json:"endDate,omitempty"`
+	Labels        []string               `json:"labels"`
+	Attributes    []Attribute            `json:"attributes"`
 }
 
 type Schedule struct {

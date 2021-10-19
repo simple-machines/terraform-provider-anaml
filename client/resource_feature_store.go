@@ -27,6 +27,10 @@ func ResourceFeatureStore() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"run_date_offset": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
 			"start_date": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -139,6 +143,11 @@ func resourceFeatureStoreRead(d *schema.ResourceData, m interface{}) error {
 			return err
 		}
 	}
+	if FeatureStore.RunDateOffset != nil {
+		if err := d.Set("run_date_offset", *FeatureStore.RunDateOffset); err != nil {
+			return err
+		}
+	}
 	if FeatureStore.EndDate != nil {
 		if err := d.Set("end_date", *FeatureStore.EndDate); err != nil {
 			return err
@@ -229,60 +238,33 @@ func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
 		return nil, err
 	}
 
+	var schedule = composeNeverSchedule()
 	if dailySchedule, _ := expandSingleMap(d.Get("daily_schedule")); dailySchedule != nil {
-		schedule, err := composeDailySchedule(dailySchedule)
+		schedule, err = composeDailySchedule(dailySchedule)
 		if err != nil {
 			return nil, err
 		}
-		return &FeatureStore{
-			Name:         d.Get("name").(string),
-			Description:  d.Get("description").(string),
-			StartDate:    getNullableString(d, "start_date"),
-			EndDate:      getNullableString(d, "end_date"),
-			FeatureSet:   featureSet,
-			Enabled:      d.Get("enabled").(bool),
-			Destinations: expandDestinationReferences(d),
-			Cluster:      cluster,
-			Schedule:     schedule,
-			Labels:       expandStringList(d.Get("labels").([]interface{})),
-			Attributes:   expandAttributes(d),
-		}, nil
 	}
-
 	if cronSchedule, _ := expandSingleMap(d.Get("cron_schedule")); cronSchedule != nil {
-		schedule, err := composeCronSchedule(cronSchedule)
+		schedule, err = composeCronSchedule(cronSchedule)
 		if err != nil {
 			return nil, err
 		}
-		return &FeatureStore{
-			Name:         d.Get("name").(string),
-			Description:  d.Get("description").(string),
-			StartDate:    getNullableString(d, "start_date"),
-			EndDate:      getNullableString(d, "end_date"),
-			FeatureSet:   featureSet,
-			Enabled:      d.Get("enabled").(bool),
-			Destinations: expandDestinationReferences(d),
-			Cluster:      cluster,
-			Schedule:     schedule,
-			Labels:       expandStringList(d.Get("labels").([]interface{})),
-			Attributes:   expandAttributes(d),
-		}, nil
 	}
-
-	schedule := composeNeverSchedule()
 
 	return &FeatureStore{
-		Name:         d.Get("name").(string),
-		Description:  d.Get("description").(string),
-		StartDate:    getNullableString(d, "start_date"),
-		EndDate:      getNullableString(d, "end_date"),
-		FeatureSet:   featureSet,
-		Enabled:      d.Get("enabled").(bool),
-		Destinations: expandDestinationReferences(d),
-		Cluster:      cluster,
-		Schedule:     schedule,
-		Labels:       expandStringList(d.Get("labels").([]interface{})),
-		Attributes:   expandAttributes(d),
+		Name:          d.Get("name").(string),
+		Description:   d.Get("description").(string),
+		RunDateOffset: getNullableInt(d, "run_date_offset"),
+		StartDate:     getNullableString(d, "start_date"),
+		EndDate:       getNullableString(d, "end_date"),
+		FeatureSet:    featureSet,
+		Enabled:       d.Get("enabled").(bool),
+		Destinations:  expandDestinationReferences(d),
+		Cluster:       cluster,
+		Schedule:      schedule,
+		Labels:        expandStringList(d.Get("labels").([]interface{})),
+		Attributes:    expandAttributes(d),
 	}, nil
 }
 
