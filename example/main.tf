@@ -65,6 +65,16 @@ resource "anaml_table" "household" {
   }
 }
 
+resource "anaml_entity_population" "adults" {
+  name        = "adults"
+  description = "Adults in the household"
+
+  entity     = anaml_entity.household.id
+  labels     = []
+  expression = "SELECT customer, daily() FROM household WHERE AGE > 18"
+  sources    = [anaml_table.household.id]
+}
+
 resource "anaml_table" "household_normalised" {
   name        = "household_normalised"
   description = "A household level view"

@@ -106,6 +106,8 @@ func resourceEntityUpdate(d *schema.ResourceData, m interface{}) error {
 		Name:          d.Get("name").(string),
 		Description:   d.Get("description").(string),
 		DefaultColumn: d.Get("default_column").(string),
+		Labels:        expandStringList(d.Get("labels").([]interface{})),
+		Attributes:    expandAttributes(d),
 	}
 
 	err := c.UpdateEntity(entityID, entity)

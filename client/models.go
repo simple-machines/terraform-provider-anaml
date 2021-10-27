@@ -18,6 +18,18 @@ type EntityMapping struct {
 	Mapping int `json:"mapping"`
 }
 
+// EntityPopulation ..
+type EntityPopulation struct {
+	ID          int         `json:"id,omitempty"`
+	Name        string      `json:"name"`
+	Description string      `json:"description"`
+	Labels      []string    `json:"labels"`
+	Attributes  []Attribute `json:"attributes"`
+	Entity      int         `json:"entity"`
+	Sources     []int       `json:"sources"`
+	Expression  string      `json:"expression"`
+}
+
 // TimestampInfo ..
 type TimestampInfo struct {
 	Column string `json:"timestampColumn"`
