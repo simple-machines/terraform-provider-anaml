@@ -143,6 +143,7 @@ type FeatureStore struct {
 	Destinations  []DestinationReference `json:"destinations"`
 	Cluster       int                    `json:"cluster"`
 	RunDateOffset *int                   `json:"runDateOffset,omitempty"`
+	Population    *int                   `json:"entityPopulation,omitempty"`
 	StartDate     *string                `json:"startDate,omitempty"`
 	EndDate       *string                `json:"endDate,omitempty"`
 	Labels        []string               `json:"labels"`

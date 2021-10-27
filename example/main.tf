@@ -138,11 +138,12 @@ resource "anaml-operations_feature_store" "household_daily" {
 }
 
 resource "anaml-operations_feature_store" "household_cron" {
-  name        = "household_cron"
-  description = "Daily view of households"
-  feature_set = anaml_feature_set.household.id
-  enabled     = true
-  cluster     = data.anaml-operations_cluster.local.id
+  name              = "household_cron"
+  description       = "Daily view of households"
+  feature_set       = anaml_feature_set.household.id
+  enabled           = true
+  cluster           = data.anaml-operations_cluster.local.id
+  entity_population = anaml_entity_population.adults.id
   destination {
     destination = data.anaml-operations_destination.s3a.id
     folder      = "household_results"
