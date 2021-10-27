@@ -33,20 +33,22 @@ func Provider() *schema.Provider {
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
-			"anaml_entity":           anaml.DataSourceEntity(),
-			"anaml_table":            anaml.DataSourceTable(),
-			"anaml_feature":          anaml.DataSourceFeature(),
-			"anaml_feature_set":      anaml.DataSourceFeatureSet(),
-			"anaml_feature_template": anaml.DataSourceFeatureTemplate(),
+			"anaml_entity":            anaml.DataSourceEntity(),
+			"anaml_entity_population": anaml.DataSourceEntityPopulation(),
+			"anaml_table":             anaml.DataSourceTable(),
+			"anaml_feature":           anaml.DataSourceFeature(),
+			"anaml_feature_set":       anaml.DataSourceFeatureSet(),
+			"anaml_feature_template":  anaml.DataSourceFeatureTemplate(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"anaml_entity":           anaml.ResourceEntity(),
-			"anaml_entity_mapping":   anaml.ResourceEntityMapping(),
-			"anaml_table":            anaml.ResourceTable(),
-			"anaml_feature":          anaml.ResourceFeature(),
-			"anaml_feature_set":      anaml.ResourceFeatureSet(),
-			"anaml_feature_template": anaml.ResourceFeatureTemplate(),
+			"anaml_entity":            anaml.ResourceEntity(),
+			"anaml_entity_mapping":    anaml.ResourceEntityMapping(),
+			"anaml_entity_population": anaml.ResourceEntityPopulation(),
+			"anaml_table":             anaml.ResourceTable(),
+			"anaml_feature":           anaml.ResourceFeature(),
+			"anaml_feature_set":       anaml.ResourceFeatureSet(),
+			"anaml_feature_template":  anaml.ResourceFeatureTemplate(),
 		},
 
 		ConfigureFunc: providerConfigure,

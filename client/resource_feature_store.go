@@ -72,6 +72,11 @@ func ResourceFeatureStore() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validateAnamlIdentifier(),
 			},
+			"entity_population": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validateAnamlIdentifier(),
+			},
 			"labels": {
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -171,6 +176,11 @@ func resourceFeatureStoreRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("attribute", flattenAttributes(FeatureStore.Attributes)); err != nil {
 		return err
 	}
+	if FeatureStore.Population != nil {
+		if err := d.Set("entity_population", strconv.Itoa(*FeatureStore.Population)); err != nil {
+			return err
+		}
+	}
 
 	if FeatureStore.Schedule.Type == "daily" {
 		dailySchedules, err := parseDailySchedule(FeatureStore.Schedule)
@@ -238,6 +248,15 @@ func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
 		return nil, err
 	}
 
+	var population (*int) = nil
+	if d.Get("entity_population").(string) != "" {
+		population_, err := strconv.Atoi(d.Get("entity_population").(string))
+		if err != nil {
+			return nil, err
+		}
+		population = &population_
+	}
+
 	var schedule = composeNeverSchedule()
 	if dailySchedule, _ := expandSingleMap(d.Get("daily_schedule")); dailySchedule != nil {
 		schedule, err = composeDailySchedule(dailySchedule)
@@ -262,6 +281,7 @@ func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
 		Enabled:       d.Get("enabled").(bool),
 		Destinations:  expandDestinationReferences(d),
 		Cluster:       cluster,
+		Population:    population,
 		Schedule:      schedule,
 		Labels:        expandStringList(d.Get("labels").([]interface{})),
 		Attributes:    expandAttributes(d),

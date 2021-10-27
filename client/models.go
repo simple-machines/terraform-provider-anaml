@@ -18,6 +18,18 @@ type EntityMapping struct {
 	Mapping int `json:"mapping"`
 }
 
+// EntityPopulation ..
+type EntityPopulation struct {
+	ID          int         `json:"id,omitempty"`
+	Name        string      `json:"name"`
+	Description string      `json:"description"`
+	Labels      []string    `json:"labels"`
+	Attributes  []Attribute `json:"attributes"`
+	Entity      int         `json:"entity"`
+	Sources     []int       `json:"sources"`
+	Expression  string      `json:"expression"`
+}
+
 // TimestampInfo ..
 type TimestampInfo struct {
 	Column string `json:"timestampColumn"`
@@ -131,6 +143,7 @@ type FeatureStore struct {
 	Destinations  []DestinationReference `json:"destinations"`
 	Cluster       int                    `json:"cluster"`
 	RunDateOffset *int                   `json:"runDateOffset,omitempty"`
+	Population    *int                   `json:"entityPopulation,omitempty"`
 	StartDate     *string                `json:"startDate,omitempty"`
 	EndDate       *string                `json:"endDate,omitempty"`
 	Labels        []string               `json:"labels"`
