@@ -63,6 +63,18 @@ func expandSingleMap(value interface{}) (map[string]interface{}, error) {
 	return single, nil
 }
 
+func getNullableInt(d *schema.ResourceData, key string) *int {
+	value, ok := d.GetOk(key)
+	if !ok {
+		return nil
+	}
+	intValue, ok := value.(int)
+	if !ok {
+		return nil
+	}
+	return &intValue
+}
+
 func getNullableString(d *schema.ResourceData, key string) *string {
 	value, ok := d.GetOk(key)
 	if !ok {

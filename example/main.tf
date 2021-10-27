@@ -2,10 +2,10 @@ terraform {
   required_version = "~> 0.14"
   required_providers {
     anaml = {
-      source = "simple-machines/anaml"
+      source = "registry.anaml.io/anaml/anaml"
     }
     anaml-operations = {
-      source = "simple-machines/anaml-operations"
+      source = "registry.anaml.io/anaml/anaml-operations"
     }
   }
 }
