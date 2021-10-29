@@ -60,6 +60,20 @@ To build the Go modules:
 go build ./...
 ```
 
+To build and test modules locally:
+1. Build all modules
+    ```
+    go build ./providers/terraform-provider-anaml-operations
+    go build ./providers/terraform-provider-anaml
+    ```
+
+2. Create `version.sh` script in root folder
+    ```
+    export VERSION=<version>
+    ```
+
+3. Run install.sh 
+
 ### Testing with Terraform
 
 To start a Nix shell that builds and installs the Terraform provider:
