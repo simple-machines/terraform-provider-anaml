@@ -96,6 +96,7 @@ resource "anaml_feature_template" "household_count" {
   table       = anaml_table.household.id
   select      = "count"
   aggregation = "sum"
+  entity_restrictions = [anaml_entity.household.id]
 }
 
 resource "anaml_feature" "household_count" {
@@ -108,6 +109,18 @@ resource "anaml_feature" "household_count" {
   select      = "count"
   aggregation = "sum"
   template    = anaml_feature_template.household_count.id
+  entity_restrictions = anaml_feature_template.household_count.entity_restrictions
+}
+
+resource "anaml_feature" "household_count_without_entity_restrictions" {
+  for_each = toset(["1", "2", "4"])
+  days     = parseint(each.key, 10)
+
+  name        = "household_count_without_er_${each.key}_days"
+  description = "Count of household items"
+  table       = anaml_table.household.id
+  select      = "count"
+  aggregation = "sum"
 }
 
 resource "anaml_feature_set" "household" {

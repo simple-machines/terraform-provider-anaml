@@ -74,6 +74,14 @@ func ResourceFeature() *schema.Resource {
 				Optional:    true,
 				Description: "An SQL expression to apply to the result of the feature aggregation.",
 			},
+			"entity_restrictions": {
+                Type:        schema.TypeList,
+				Optional:    true,
+				Description: "List of entity Id's that the feature is restricted to.",
+				Elem: &schema.Schema{
+                	Type: schema.TypeString,
+                },
+			},
 			"over": {
 				Type:         schema.TypeList,
 				Optional:     true,
@@ -192,6 +200,14 @@ func resourceFeatureRead(d *schema.ResourceData, m interface{}) error {
 		if err := d.Set("aggregation", feature.Aggregate.Type); err != nil {
 			return err
 		}
+
+		if feature.EntityRestr != nil {
+        	if err := d.Set("entity_restrictions", identifierList(*feature.EntityRestr)); err != nil {
+        		return err
+        	}
+        } else {
+        	d.Set("entity_restrictions", nil)
+        }
 	} else if feature.Type == "row" {
 		if err := d.Set("over", identifierList(feature.Over)); err != nil {
 			return err
@@ -308,6 +324,13 @@ func buildFeature(d *schema.ResourceData) (*Feature, error) {
 		feature.Type = "event"
 		feature.Table = number
 		feature.Window = &window
+		entity_restrictions := d.Get("entity_restrictions").([]interface{})
+    	if len(entity_restrictions) > 0  {
+    	    listVal := expandIdentifierList(entity_restrictions)
+    	    feature.EntityRestr = &listVal
+    	} else {
+    	    feature.EntityRestr = nil
+    	}
 	} else {
 		feature.Type = "row"
 		feature.Over = expandIdentifierList(d.Get("over").([]interface{}))

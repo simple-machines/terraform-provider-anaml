@@ -9,3 +9,5 @@ example/*-generated.nix
 /terraform-provider-anaml
 /terraform-provider-anaml-operations
 /terraform-provider-anaml-install.run
+.idea/
+version.sh
