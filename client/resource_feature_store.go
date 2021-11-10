@@ -1,6 +1,7 @@
 package anaml
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -105,19 +106,61 @@ func destinationSchema() *schema.Resource {
 				ValidateFunc: validateAnamlIdentifier(),
 			},
 			"folder": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validation.StringIsNotWhiteSpace,
-				// ExactlyOneOf: []string{"folder", "table_name", "topic"},
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem:     folderDestinationSchema(),
 			},
-			"table_name": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validation.StringIsNotWhiteSpace,
+			"table": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem:     tableDestinationSchema(),
 			},
 			"topic": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem:     topicDestinationSchema(),
+			},
+		},
+	}
+}
+
+func folderDestinationSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"path": {
 				Type:         schema.TypeString,
-				Optional:     true,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+			"partitioning_enabled": {
+				Type:     schema.TypeBool,
+				Required: true,
+			},
+		},
+	}
+}
+
+func tableDestinationSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"name": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+		},
+	}
+}
+
+func topicDestinationSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"name": {
+				Type:         schema.TypeString,
+				Required:     true,
 				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 		},
@@ -158,13 +201,19 @@ func resourceFeatureStoreRead(d *schema.ResourceData, m interface{}) error {
 			return err
 		}
 	}
+
+	destinations, err := flattenDestinationReferences(FeatureStore.Destinations)
+	if err != nil {
+		return err
+	}
+
 	if err := d.Set("feature_set", strconv.Itoa(FeatureStore.FeatureSet)); err != nil {
 		return err
 	}
 	if err := d.Set("enabled", FeatureStore.Enabled); err != nil {
 		return err
 	}
-	if err := d.Set("destination", flattenDestinationReferences(FeatureStore.Destinations)); err != nil {
+	if err := d.Set("destination", destinations); err != nil {
 		return err
 	}
 	if err := d.Set("cluster", strconv.Itoa(FeatureStore.Cluster)); err != nil {
@@ -271,6 +320,11 @@ func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
 		}
 	}
 
+	destinations, err := expandDestinationReferences(d)
+	if err != nil {
+		return nil, err
+	}
+
 	return &FeatureStore{
 		Name:          d.Get("name").(string),
 		Description:   d.Get("description").(string),
@@ -279,7 +333,7 @@ func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
 		EndDate:       getNullableString(d, "end_date"),
 		FeatureSet:    featureSet,
 		Enabled:       d.Get("enabled").(bool),
-		Destinations:  expandDestinationReferences(d),
+		Destinations:  destinations,
 		Cluster:       cluster,
 		Population:    population,
 		Schedule:      schedule,
@@ -300,49 +354,90 @@ func resourceFeatureStoreDelete(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func expandDestinationReferences(d *schema.ResourceData) []DestinationReference {
+func expandDestinationReferences(d *schema.ResourceData) ([]DestinationReference, error) {
 	drs := d.Get("destination").([]interface{})
 	res := make([]DestinationReference, 0, len(drs))
 
 	for _, dr := range drs {
 		val, _ := dr.(map[string]interface{})
-		destId, _ := strconv.Atoi(val["destination"].(string))
 
-		dest_type := ""
-		if v, ok := val["folder"].(string); ok && v != "" {
-			dest_type = "folder"
-		}
-		if v, ok := val["table_name"].(string); ok && v != "" {
-			dest_type = "table"
-		}
-		if v, ok := val["topic"].(string); ok && v != "" {
-			dest_type = "topic"
-		}
-
+		destID, _ := strconv.Atoi(val["destination"].(string))
 		parsed := DestinationReference{
-			Type:          dest_type,
-			DestinationID: destId,
-			Folder:        val["folder"].(string),
-			TableName:     val["table_name"].(string),
-			Topic:         val["topic"].(string),
+			DestinationID: destID,
 		}
+
+		if folder, _ := expandSingleMap(val["folder"]); folder != nil {
+			if path, ok := folder["path"].(string); ok {
+				parsed.Type = "folder"
+				parsed.Folder = path
+				enabled := folder["partitioning_enabled"].(bool)
+				parsed.FolderPartitioningEnabled = &enabled
+			} else {
+				return nil, fmt.Errorf("error casting table.path %i", folder["path"])
+			}
+		}
+
+		if table, _ := expandSingleMap(val["table"]); table != nil {
+			if tableName, ok := table["name"].(string); ok {
+				parsed.Type = "table"
+				parsed.TableName = tableName
+			} else {
+				return nil, fmt.Errorf("error casting table.name %i", table["name"])
+			}
+		}
+
+		if topic, _ := expandSingleMap(val["topic"]); topic != nil {
+			if topicName, ok := topic["name"].(string); ok {
+				parsed.Type = "topic"
+				parsed.Topic = topicName
+			} else {
+				return nil, fmt.Errorf("error casting topic.name %i", topic["name"])
+			}
+		}
+
 		res = append(res, parsed)
 	}
 
-	return res
+	return res, nil
 }
 
-func flattenDestinationReferences(destinations []DestinationReference) []map[string]interface{} {
+func flattenDestinationReferences(destinations []DestinationReference) ([]map[string]interface{}, error) {
 	res := make([]map[string]interface{}, 0, len(destinations))
 
 	for _, destination := range destinations {
 		single := make(map[string]interface{})
 		single["destination"] = strconv.Itoa(destination.DestinationID)
-		single["folder"] = destination.Folder
-		single["table_name"] = destination.TableName
-		single["topic"] = destination.Topic
+
+		if destination.Type == "folder" {
+			folder := make(map[string]interface{})
+			folder["path"] = destination.Folder
+			folder["partitioning_enabled"] = destination.FolderPartitioningEnabled
+
+			folders := make([]map[string]interface{}, 0, 1)
+			folders = append(folders, folder)
+			single["folder"] = folders
+		}
+
+		if destination.Type == "table" {
+			table := make(map[string]interface{})
+			table["name"] = destination.TableName
+
+			tables := make([]map[string]interface{}, 0, 1)
+			tables = append(tables, table)
+			single["table"] = tables
+		}
+
+		if destination.Type == "topic" {
+			topic := make(map[string]interface{})
+			topic["name"] = destination.Topic
+
+			topics := make([]map[string]interface{}, 0, 1)
+			topics = append(topics, topic)
+			single["topic"] = topics
+		}
+
 		res = append(res, single)
 	}
 
-	return res
+	return res, nil
 }
