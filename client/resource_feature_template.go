@@ -75,13 +75,13 @@ func ResourceFeatureTemplate() *schema.Resource {
 				Description: "An SQL expression to apply to the result of the feature aggregation.",
 			},
 			"entity_restrictions": {
-            	Type:        schema.TypeList,
-            	Optional:    true,
-            	Description: "List of entity Id's that the feature is restricted to.",
-            	Elem: &schema.Schema{
-                    Type: schema.TypeString,
-                },
-            },
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "List of entity Id's that the feature is restricted to.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"over": {
 				Type:         schema.TypeList,
 				Optional:     true,
@@ -189,12 +189,12 @@ func resourceFeatureTemplateRead(d *schema.ResourceData, m interface{}) error {
 		}
 
 		if feature.EntityRestr != nil {
-        	if err := d.Set("entity_restrictions", identifierList(*feature.EntityRestr)); err != nil {
-        		return err
-        	}
-        } else {
-        	d.Set("entity_restrictions", nil)
-        }
+			if err := d.Set("entity_restrictions", identifierList(*feature.EntityRestr)); err != nil {
+				return err
+			}
+		} else {
+			d.Set("entity_restrictions", nil)
+		}
 
 	} else if feature.Type == "row" {
 		if err := d.Set("over", identifierList(feature.Over)); err != nil {
@@ -312,12 +312,12 @@ func buildFeatureTemplate(d *schema.ResourceData) (*FeatureTemplate, error) {
 		template.Table = number
 		template.Window = &window
 		entity_restrictions := d.Get("entity_restrictions").([]interface{})
-    	if len(entity_restrictions) > 0 {
-    	    listVal := expandIdentifierList(entity_restrictions)
-    	    template.EntityRestr = &listVal
-    	} else {
-    	    template.EntityRestr = nil
-    	}
+		if len(entity_restrictions) > 0 {
+			listVal := expandIdentifierList(entity_restrictions)
+			template.EntityRestr = &listVal
+		} else {
+			template.EntityRestr = nil
+		}
 	} else {
 		template.Type = "row"
 		template.Over = expandIdentifierList(d.Get("over").([]interface{}))
