@@ -134,6 +134,13 @@ type FeatureSet struct {
 	Attributes  []Attribute `json:"attributes"`
 }
 
+// VersionTarget ...
+type VersionTarget struct {
+	Type   string  `json:"adt_type"`
+	Commit *string `json:"commitId,omitempty"`
+	Branch *string `json:"branchName,omitempty"`
+}
+
 // FeatureStore ...
 type FeatureStore struct {
 	ID            int                    `json:"id,omitempty"`
@@ -150,6 +157,7 @@ type FeatureStore struct {
 	EndDate       *string                `json:"endDate,omitempty"`
 	Labels        []string               `json:"labels"`
 	Attributes    []Attribute            `json:"attributes"`
+	VersionTarget *VersionTarget         `json:"versionTarget,omitempty"`
 }
 
 type Schedule struct {

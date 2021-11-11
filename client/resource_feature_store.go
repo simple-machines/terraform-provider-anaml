@@ -92,6 +92,17 @@ func ResourceFeatureStore() *schema.Resource {
 				Description: "Attributes (key value pairs) to attach to the object",
 				Elem:        attributeSchema(),
 			},
+			"commit_target": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Commit to run feature set (and population) for.",
+			},
+			"branch_target": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Description:   "Branch to run feature set (and population) for.",
+				ConflictsWith: []string{"commit_target"},
+			},
 		},
 	}
 }
@@ -202,6 +213,24 @@ func resourceFeatureStoreRead(d *schema.ResourceData, m interface{}) error {
 		}
 	}
 
+	if FeatureStore.VersionTarget != nil {
+		if FeatureStore.VersionTarget.Commit != nil {
+			if err := d.Set("commit_target", FeatureStore.VersionTarget.Commit); err != nil {
+				return err
+			}
+			if err := d.Set("branch_target", nil); err != nil {
+				return err
+			}
+		} else if FeatureStore.VersionTarget.Branch != nil {
+			if err := d.Set("branch_target", FeatureStore.VersionTarget.Branch); err != nil {
+				return err
+			}
+			if err := d.Set("commit_target", nil); err != nil {
+				return err
+			}
+		}
+	}
+
 	return err
 }
 
@@ -270,6 +299,19 @@ func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
 			return nil, err
 		}
 	}
+	var versionTarget (*VersionTarget) = nil
+	if commit, _ := d.Get("commit_target").(string); commit != "" {
+		versionTarget = &VersionTarget{
+			Type:   "commit",
+			Commit: &commit,
+		}
+	}
+	if branch, _ := d.Get("branch_target").(string); branch != "" {
+		versionTarget = &VersionTarget{
+			Type:   "branch",
+			Branch: &branch,
+		}
+	}
 
 	return &FeatureStore{
 		Name:          d.Get("name").(string),
@@ -285,6 +327,7 @@ func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
 		Schedule:      schedule,
 		Labels:        expandStringList(d.Get("labels").([]interface{})),
 		Attributes:    expandAttributes(d),
+		VersionTarget: versionTarget,
 	}, nil
 }
 
