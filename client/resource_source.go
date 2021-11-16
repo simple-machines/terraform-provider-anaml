@@ -9,12 +9,28 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
+const sourceDescription = `# Sources
+
+A Source is the physical configuration for the location of root tables.
+Sources are therefore specific to the underlying storage technology.
+
+Multiple different types of sources are supported:
+
+- Amazon S3
+- Google Cloud Storage
+- Google BigQuery
+- Hive
+- HDFS
+- JDBC
+`
+
 func ResourceSource() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceSourceCreate,
-		Read:   resourceSourceRead,
-		Update: resourceSourceUpdate,
-		Delete: resourceSourceDelete,
+		Description: sourceDescription,
+		Create:      resourceSourceCreate,
+		Read:        resourceSourceRead,
+		Update:      resourceSourceUpdate,
+		Delete:      resourceSourceDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},

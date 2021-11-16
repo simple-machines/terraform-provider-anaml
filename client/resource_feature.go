@@ -8,12 +8,28 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
+const featureDescription = `# Features
+
+A Feature is a time specific observation of the input data. Features define how data
+is transformed into information that is useful for analytics or machine learning. At
+a more concrete level, a Feature defines how data from tables is selected or aggregated
+into a useful output. Each Feature selects data from a single source table but can use
+one or more columns from that table. Each Feature is generated for a single entity.
+
+There are two types of Features:
+- Event Features
+- Row Features
+
+
+`
+
 func ResourceFeature() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceFeatureCreate,
-		Read:   resourceFeatureRead,
-		Update: resourceFeatureUpdate,
-		Delete: resourceFeatureDelete,
+		Description: featureDescription,
+		Create:      resourceFeatureCreate,
+		Read:        resourceFeatureRead,
+		Update:      resourceFeatureUpdate,
+		Delete:      resourceFeatureDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -32,36 +48,37 @@ func ResourceFeature() *schema.Resource {
 			"table": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				Description:  "A reference to a Table ID the feature is derived from",
+				Description:  "A reference to a Table ID the feature is derived from.",
 				ValidateFunc: validateAnamlIdentifier(),
 			},
 			"select": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "An SQL expression for the column to aggregate",
+				Description: "An SQL expression for the column to aggregate.",
 			},
 			"filter": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "An SQL column expression to filter with",
+				Description: "An SQL column expression to filter with.",
 			},
 			"days": {
 				Type:          schema.TypeInt,
 				Optional:      true,
-				Description:   "An event window",
+				Description:   "The event window description for the number of days to aggregate over.",
 				ConflictsWith: []string{"rows"},
 				ValidateFunc:  validation.IntAtLeast(1),
 			},
 			"rows": {
 				Type:          schema.TypeInt,
 				Optional:      true,
-				Description:   "An event window",
+				Description:   "The event window description for the number of rows (events) to aggregate over.",
 				ConflictsWith: []string{"days"},
 				ValidateFunc:  validation.IntAtLeast(1),
 			},
 			"aggregation": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The aggregation to perform.",
 				ValidateFunc: validation.StringInSlice([]string{
 					"sum", "count", "countdistinct", "avg", "std", "min", "max", "minby", "maxby",
 					"last", "percentagechange", "absolutechange", "standardscore", "basketsum",
@@ -96,11 +113,13 @@ func ResourceFeature() *schema.Resource {
 			"entity": {
 				Type:         schema.TypeString,
 				Optional:     true,
+				Description:  "The Entity to map a row feature over.",
 				ValidateFunc: validateAnamlIdentifier(),
 				RequiredWith: []string{"over"},
 			},
 			"template": {
 				Type:         schema.TypeString,
+				Description:  "The feature template this feature is derived from.",
 				Optional:     true,
 				ValidateFunc: validateAnamlIdentifier(),
 			},

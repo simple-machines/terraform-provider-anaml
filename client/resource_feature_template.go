@@ -8,13 +8,26 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
+const featureTemplateDescription = `# Feature Templates
+
+Feature Templates allow for faster creation and update of set of similar Features.
+
+Feature Templates allow a user to quickly pre-fill a Feature creation form with
+useful information. Changes made to a Feature Template will propagate
+to any Feature created using the Feature Template.
+
+However, if a particular field has been modified from the Feature Template's default,
+then that field will not be changed when the Feature Template is updated.
+`
+
 // ResourceFeatureTemplate ...
 func ResourceFeatureTemplate() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceFeatureTemplateCreate,
-		Read:   resourceFeatureTemplateRead,
-		Update: resourceFeatureTemplateUpdate,
-		Delete: resourceFeatureTemplateDelete,
+		Description: featureTemplateDescription,
+		Create:      resourceFeatureTemplateCreate,
+		Read:        resourceFeatureTemplateRead,
+		Update:      resourceFeatureTemplateUpdate,
+		Delete:      resourceFeatureTemplateDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},

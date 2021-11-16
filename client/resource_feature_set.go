@@ -6,12 +6,26 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+const featureSetDescription = `# Feature Sets
+
+A Feature Set is collection of features that are generated at the same time. A Feature Set would usually comprise of:
+
+* the Features required to train and score a machine learning model; or
+* the Features required in a report or dashboard
+
+Feature Sets are often re-used over multiple Feature Stores to generate historical, daily or online outputs.
+
+Each Feature Set is specific to an Entity. Once the Entity is selected, the list of Features
+available to be chosen is restricted to Features for that Entity.
+`
+
 func ResourceFeatureSet() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceFeatureSetCreate,
-		Read:   resourceFeatureSetRead,
-		Update: resourceFeatureSetUpdate,
-		Delete: resourceFeatureSetDelete,
+		Description: featureSetDescription,
+		Create:      resourceFeatureSetCreate,
+		Read:        resourceFeatureSetRead,
+		Update:      resourceFeatureSetUpdate,
+		Delete:      resourceFeatureSetDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
