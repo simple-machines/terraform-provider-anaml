@@ -85,11 +85,11 @@ func ResourceSource() *schema.Resource {
 				Elem:     kafkaSourceDestinationSchema(),
 			},
 			"snowflake": {
-            	Type:     schema.TypeList,
-            	Optional: true,
-            	MaxItems: 1,
-            	Elem:     snowflakeSourceDestinationSchema(),
-            },
+            			Type:     schema.TypeList,
+            			Optional: true,
+            			MaxItems: 1,
+            			Elem:     snowflakeSourceDestinationSchema(),
+            		},
 			"labels": {
 				Type:        schema.TypeList,
 				Optional:    true,
