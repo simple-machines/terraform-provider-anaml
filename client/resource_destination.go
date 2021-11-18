@@ -503,8 +503,8 @@ func parseSnowflakeDestination(destination *Destination) ([]map[string]interface
 	snowflake := make(map[string]interface{})
 	snowflake["url"] = destination.URL
 	snowflake["schema"] = destination.Schema
-    snowflake["database"] = destination.Database
-    snowflake["warehouse"] = destination.Warehouse
+        snowflake["database"] = destination.Database
+        snowflake["warehouse"] = destination.Warehouse
 
 	credentialsProvider, err := parseLoginCredentialsProviderConfig(destination.CredentialsProvider)
 	if err != nil {
