@@ -85,11 +85,11 @@ func ResourceDestination() *schema.Resource {
 				Elem:     kafkaSourceDestinationSchema(),
 			},
 			"snowflake": {
-            	Type:     schema.TypeList,
-            	Optional: true,
-            	MaxItems: 1,
-            	Elem:     snowflakeSourceDestinationSchema(),
-            },
+            			Type:     schema.TypeList,
+            			Optional: true,
+            			MaxItems: 1,
+            			Elem:     snowflakeSourceDestinationSchema(),
+            		},
 			"labels": {
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -272,16 +272,16 @@ func resourceDestinationRead(d *schema.ResourceData, m interface{}) error {
 		}
 	}
 
-    if destination.Type == "snowflake" {
-    	jdbc, err := parseJDBCDestination(destination)
-    	if err != nil {
-    		return err
-    	}
-    	if err := d.Set("jdbc", jdbc); err != nil {
-    		return err
-    	}
-    }
-
+    	if destination.Type == "snowflake" {
+	    	snowflake, err := parseSnowflakeDestination(destination)
+	    	if err != nil {
+	    		return err
+	    	}
+	    	if err := d.Set("snowflake", snowflake); err != nil {
+	    		return err
+	    	}
+	    }
+	
 	if err := d.Set("labels", destination.Labels); err != nil {
 		return err
 	}
