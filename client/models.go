@@ -206,6 +206,7 @@ type Source struct {
 	KafkaProperties     []SensitiveAttribute            `json:"kafkaPropertiesProviders"`
 	Labels              []string                        `json:"labels"`
 	Attributes          []Attribute                     `json:"attributes"`
+	Warehouse           string                          `json:"warehouse,omitempty"`
 }
 
 type FileFormat struct {
@@ -252,6 +253,7 @@ type Destination struct {
 	StagingArea         *GCSStagingArea                 `json:"stagingArea,omitempty"`
 	Labels              []string                        `json:"labels"`
 	Attributes          []Attribute                     `json:"attributes"`
+	Warehouse           string                          `json:"warehouse,omitempty"`
 }
 
 // GCSStagingArea ...

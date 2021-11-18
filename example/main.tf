@@ -1,5 +1,4 @@
 terraform {
-  required_version = "~> 0.14"
   required_providers {
     anaml = {
       source = "registry.anaml.io/anaml/anaml"
@@ -386,6 +385,25 @@ resource "anaml-operations_source" "kafka" {
   }
 }
 
+resource "anaml-operations_source" "snowflake" {
+  name        = "terraform_snowflake_source"
+  description = "An Snowflake source created by Terraform"
+
+  snowflake {
+    url    = "snowflake://my/database"
+    schema = "my_schema"
+    database = "my_database"
+    warehouse = "my_warehouse"
+
+    credentials_provider {
+      basic {
+        username = "admin"
+        password = "test password"
+      }
+    }
+  }
+}
+
 resource "anaml-operations_destination" "s3" {
   name        = "terraform_s3_destination"
   description = "An S3 destination created by Terraform"
@@ -511,6 +529,25 @@ resource "anaml-operations_destination" "kafka" {
       key = "password"
       aws {
         secret_id = "secret_number_3"
+      }
+    }
+  }
+}
+
+resource "anaml-operations_destination" "snowflake" {
+  name        = "terraform_snowflake_destination"
+  description = "An Snowflake destination created by Terraform"
+
+  snowflake {
+    url    = "snowflake://my/database"
+    schema = "my_schema"
+    database = "my_database"
+    warehouse = "my_warehouse"
+
+    credentials_provider {
+      basic {
+        username = "admin"
+        password = "test password"
       }
     }
   }
