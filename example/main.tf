@@ -91,11 +91,11 @@ resource "anaml_table" "household_normalised" {
 }
 
 resource "anaml_feature_template" "household_count" {
-  name        = "household_count"
-  description = "Count of household items"
-  table       = anaml_table.household.id
-  select      = "count"
-  aggregation = "sum"
+  name                = "household_count"
+  description         = "Count of household items"
+  table               = anaml_table.household.id
+  select              = "count"
+  aggregation         = "sum"
   entity_restrictions = [anaml_entity.household.id]
 }
 
@@ -103,12 +103,12 @@ resource "anaml_feature" "household_count" {
   for_each = toset(["1", "2", "4"])
   days     = parseint(each.key, 10)
 
-  name        = "household_count_${each.key}_days"
-  description = "Count of household items"
-  table       = anaml_table.household.id
-  select      = "count"
-  aggregation = "sum"
-  template    = anaml_feature_template.household_count.id
+  name                = "household_count_${each.key}_days"
+  description         = "Count of household items"
+  table               = anaml_table.household.id
+  select              = "count"
+  aggregation         = "sum"
+  template            = anaml_feature_template.household_count.id
   entity_restrictions = anaml_feature_template.household_count.entity_restrictions
 }
 
@@ -142,8 +142,11 @@ resource "anaml-operations_feature_store" "household_daily" {
   enabled     = true
   cluster     = data.anaml-operations_cluster.local.id
   destination {
-    destination = data.anaml-operations_destination.s3a.id
-    folder      = "household_results"
+    destination                 = data.anaml-operations_destination.s3a.id
+    folder {
+      path = "household_results"
+      partitioning_enabled = true
+    }
   }
   daily_schedule {
     start_time_of_day = "00:00:00"
@@ -158,8 +161,11 @@ resource "anaml-operations_feature_store" "household_cron" {
   cluster           = data.anaml-operations_cluster.local.id
   entity_population = anaml_entity_population.adults.id
   destination {
-    destination = data.anaml-operations_destination.s3a.id
-    folder      = "household_results"
+    destination                 = data.anaml-operations_destination.s3a.id
+    folder {
+      path = "household_results"
+      partitioning_enabled = true
+    }
   }
   cron_schedule {
     cron_string = "* * * * *"
@@ -175,8 +181,11 @@ resource "anaml-operations_feature_store" "household_never" {
   enabled     = true
   cluster     = data.anaml-operations_cluster.local.id
   destination {
-    destination = data.anaml-operations_destination.s3a.id
-    folder      = "household_results"
+    destination                 = data.anaml-operations_destination.s3a.id
+    folder {
+      path = "household_results"
+      partitioning_enabled = true
+    }
   }
 }
 
@@ -187,8 +196,11 @@ resource "anaml-operations_feature_store" "household_daily_retry" {
   enabled     = true
   cluster     = data.anaml-operations_cluster.local.id
   destination {
-    destination = data.anaml-operations_destination.s3a.id
-    folder      = "household_results"
+    destination                 = data.anaml-operations_destination.s3a.id
+    folder {
+      path = "household_results"
+      partitioning_enabled = true
+    }
   }
   daily_schedule {
     start_time_of_day = "00:00:00"
@@ -207,8 +219,11 @@ resource "anaml-operations_feature_store" "household_cron_retry" {
   enabled     = true
   cluster     = data.anaml-operations_cluster.local.id
   destination {
-    destination = data.anaml-operations_destination.s3a.id
-    folder      = "household_results"
+    destination                 = data.anaml-operations_destination.s3a.id
+    folder {
+      path = "household_results"
+      partitioning_enabled = true
+    }
   }
   cron_schedule {
     cron_string = "* * * * *"

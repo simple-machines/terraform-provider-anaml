@@ -263,11 +263,12 @@ type GCSStagingArea struct {
 
 // DestinationReference ...
 type DestinationReference struct {
-	Type          string `json:"adt_type"`
-	DestinationID int    `json:"destinationId"`
-	Folder        string `json:"folder,omitempty"`
-	TableName     string `json:"tableName,omitempty"`
-	Topic         string `json:"topic,omitempty"`
+	Type                      string `json:"adt_type"`
+	DestinationID             int    `json:"destinationId"`
+	Folder                    string `json:"folder,omitempty"`
+	FolderPartitioningEnabled *bool  `json:"folderPartitioningEnabled,omitempty"`
+	TableName                 string `json:"tableName,omitempty"`
+	Topic                     string `json:"topic,omitempty"`
 }
 
 // Cluster ...
