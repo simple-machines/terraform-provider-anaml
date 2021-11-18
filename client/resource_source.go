@@ -597,14 +597,14 @@ func resourceSourceRead(d *schema.ResourceData, m interface{}) error {
 	}
 
 	if source.Type == "snowflake" {
-    	snowflake, err := parseSnowflakeSource(source)
-    	if err != nil {
-    		return err
+    		snowflake, err := parseSnowflakeSource(source)
+    		if err != nil {
+    			return err
+    		}
+    		if err := d.Set("snowflake", snowflake); err != nil {
+    			return err
+    		}
     	}
-    	if err := d.Set("snowflake", snowflake); err != nil {
-    		return err
-    	}
-    }
 
 	if err := d.Set("labels", source.Labels); err != nil {
 		return err
