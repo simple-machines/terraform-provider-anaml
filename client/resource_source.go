@@ -34,7 +34,7 @@ func ResourceSource() *schema.Resource {
 				Optional:     true,
 				MaxItems:     1,
 				Elem:         s3SourceDestinationSchema(),
-				ExactlyOneOf: []string{"s3", "s3a", "jdbc", "hive", "big_query", "gcs", "local", "hdfs", "kafka"},
+				ExactlyOneOf: []string{"s3", "s3a", "jdbc", "hive", "big_query", "gcs", "local", "hdfs", "kafka", "snowflake"},
 			},
 			"s3a": {
 				Type:     schema.TypeList,
@@ -84,6 +84,12 @@ func ResourceSource() *schema.Resource {
 				MaxItems: 1,
 				Elem:     kafkaSourceDestinationSchema(),
 			},
+			"snowflake": {
+            	Type:     schema.TypeList,
+            	Optional: true,
+            	MaxItems: 1,
+            	Elem:     snowflakeSourceDestinationSchema(),
+            },
 			"labels": {
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -447,6 +453,39 @@ func kafkaSourceDestinationSchema() *schema.Resource {
 	}
 }
 
+func snowflakeSourceDestinationSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"url": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+			"warehouse": {
+            	Type:         schema.TypeString,
+            	Required:     true,
+            	ValidateFunc: validation.StringIsNotWhiteSpace,
+            },
+            "database": {
+            	Type:         schema.TypeString,
+            	Required:     true,
+            	ValidateFunc: validation.StringIsNotWhiteSpace,
+            },
+			"schema": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+			"credentials_provider": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem:     loginCredentialsProviderConfigSchema(),
+			},
+		},
+	}
+}
+
 func resourceSourceRead(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
 	sourceID := d.Id()
@@ -556,6 +595,16 @@ func resourceSourceRead(d *schema.ResourceData, m interface{}) error {
 			return err
 		}
 	}
+
+	if source.Type == "snowflake" {
+    	snowflake, err := parseSnowflakeSource(source)
+    	if err != nil {
+    		return err
+    	}
+    	if err := d.Set("snowflake", snowflake); err != nil {
+    		return err
+    	}
+    }
 
 	if err := d.Set("labels", source.Labels); err != nil {
 		return err
@@ -743,6 +792,28 @@ func parseKafkaSource(source *Source) ([]map[string]interface{}, error) {
 	return kafkas, nil
 }
 
+func parseSnowflakeSource(source *Source) ([]map[string]interface{}, error) {
+	if source == nil {
+		return nil, errors.New("Source is null")
+	}
+
+	snowflake := make(map[string]interface{})
+	snowflake["url"] = source.URL
+	snowflake["warehouse"] = source.Warehouse
+	snowflake["databse"] = source.Database
+	snowflake["schema"] = source.Schema
+
+	credentialsProvider, err := parseLoginCredentialsProviderConfig(source.CredentialsProvider)
+	if err != nil {
+		return nil, err
+	}
+	snowflake["credentials_provider"] = []map[string]interface{}{credentialsProvider}
+
+	snowflakes := make([]map[string]interface{}, 0, 1)
+	snowflakes = append(snowflakes, snowflake)
+	return snowflakes, nil
+}
+
 func composeSource(d *schema.ResourceData) (*Source, error) {
 	if s3, _ := expandSingleMap(d.Get("s3")); s3 != nil {
 		fileFormat := composeFileFormat(s3)
@@ -902,6 +973,32 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 		}
 		return &source, nil
 	}
+
+	if snowflake, _ := expandSingleMap(d.Get("snowflake")); snowflake != nil {
+    	credentialsProviderMap, err := expandSingleMap(snowflake["credentials_provider"])
+    	if err != nil {
+    		return nil, err
+    	}
+
+    	credentialsProvider, err := composeLoginCredentialsProviderConfig(credentialsProviderMap)
+    	if err != nil {
+    		return nil, err
+    	}
+
+    	source := Source{
+    		Name:                d.Get("name").(string),
+    		Description:         d.Get("description").(string),
+    		Type:                "snowflake",
+    		URL:                 snowflake["url"].(string),
+    		Schema:              snowflake["schema"].(string),
+    		Warehouse:           snowflake["warehouse"].(string),
+    		Database:            snowflake["database"].(string),
+    		CredentialsProvider: credentialsProvider,
+    		Labels:              expandStringList(d.Get("labels").([]interface{})),
+    		Attributes:          expandAttributes(d),
+    	}
+    	return &source, nil
+    }
 
 	return nil, errors.New("Invalid source type")
 }
