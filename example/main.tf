@@ -1,4 +1,5 @@
 terraform {
+  required_version = "~> 0.14"
   required_providers {
     anaml = {
       source = "registry.anaml.io/anaml/anaml"
