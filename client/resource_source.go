@@ -101,11 +101,11 @@ func ResourceSource() *schema.Resource {
 				Elem:     kafkaSourceDestinationSchema(),
 			},
 			"snowflake": {
-            			Type:     schema.TypeList,
-            			Optional: true,
-            			MaxItems: 1,
-            			Elem:     snowflakeSourceDestinationSchema(),
-            		},
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem:     snowflakeSourceDestinationSchema(),
+			},
 			"labels": {
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -478,15 +478,15 @@ func snowflakeSourceDestinationSchema() *schema.Resource {
 				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 			"warehouse": {
-			   	Type:         schema.TypeString,
-			   	Required:     true,
-			   	ValidateFunc: validation.StringIsNotWhiteSpace,
-		        },
-		        "database": {
-			   	Type:         schema.TypeString,
-			   	Required:     true,
-			   	ValidateFunc: validation.StringIsNotWhiteSpace,
-		        },
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+			"database": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
 			"schema": {
 				Type:         schema.TypeString,
 				Required:     true,
@@ -613,14 +613,14 @@ func resourceSourceRead(d *schema.ResourceData, m interface{}) error {
 	}
 
 	if source.Type == "snowflake" {
-    		snowflake, err := parseSnowflakeSource(source)
-    		if err != nil {
-    			return err
-    		}
-    		if err := d.Set("snowflake", snowflake); err != nil {
-    			return err
-    		}
-    	}
+		snowflake, err := parseSnowflakeSource(source)
+		if err != nil {
+			return err
+		}
+		if err := d.Set("snowflake", snowflake); err != nil {
+			return err
+		}
+	}
 
 	if err := d.Set("labels", source.Labels); err != nil {
 		return err
@@ -991,33 +991,33 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 	}
 
 	if snowflake, _ := expandSingleMap(d.Get("snowflake")); snowflake != nil {
-	    	credentialsProviderMap, err := expandSingleMap(snowflake["credentials_provider"])
-	    	if err != nil {
-	    		return nil, err
-	    	}
-	
-	    	credentialsProvider, err := composeLoginCredentialsProviderConfig(credentialsProviderMap)
-	    	if err != nil {
-	    		return nil, err
-	    	}
-	
-	    	source := Source{
-	    		Name:                d.Get("name").(string),
-	    		Description:         d.Get("description").(string),
-	    		Type:                "snowflake",
-	    		URL:                 snowflake["url"].(string),
-	    		Schema:              snowflake["schema"].(string),
-	    		Warehouse:           snowflake["warehouse"].(string),
-	    		Database:            snowflake["database"].(string),
-	    		CredentialsProvider: credentialsProvider,
-	    		Labels:              expandStringList(d.Get("labels").([]interface{})),
-	    		Attributes:          expandAttributes(d),
-	    	}
-	    	return &source, nil
-	    }
-	
-		return nil, errors.New("Invalid source type")
+		credentialsProviderMap, err := expandSingleMap(snowflake["credentials_provider"])
+		if err != nil {
+			return nil, err
+		}
+
+		credentialsProvider, err := composeLoginCredentialsProviderConfig(credentialsProviderMap)
+		if err != nil {
+			return nil, err
+		}
+
+		source := Source{
+			Name:                d.Get("name").(string),
+			Description:         d.Get("description").(string),
+			Type:                "snowflake",
+			URL:                 snowflake["url"].(string),
+			Schema:              snowflake["schema"].(string),
+			Warehouse:           snowflake["warehouse"].(string),
+			Database:            snowflake["database"].(string),
+			CredentialsProvider: credentialsProvider,
+			Labels:              expandStringList(d.Get("labels").([]interface{})),
+			Attributes:          expandAttributes(d),
+		}
+		return &source, nil
 	}
+
+	return nil, errors.New("Invalid source type")
+}
 
 func parseFileFormat(fileFormat *FileFormat) map[string]interface{} {
 	fileFormatMap := make(map[string]interface{})

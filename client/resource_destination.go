@@ -101,11 +101,11 @@ func ResourceDestination() *schema.Resource {
 				Elem:     kafkaSourceDestinationSchema(),
 			},
 			"snowflake": {
-            			Type:     schema.TypeList,
-            			Optional: true,
-            			MaxItems: 1,
-            			Elem:     snowflakeSourceDestinationSchema(),
-            		},
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem:     snowflakeSourceDestinationSchema(),
+			},
 			"labels": {
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -288,16 +288,16 @@ func resourceDestinationRead(d *schema.ResourceData, m interface{}) error {
 		}
 	}
 
-    	if destination.Type == "snowflake" {
-	    	snowflake, err := parseSnowflakeDestination(destination)
-	    	if err != nil {
-	    		return err
-	    	}
-	    	if err := d.Set("snowflake", snowflake); err != nil {
-	    		return err
-	    	}
-	    }
-	
+	if destination.Type == "snowflake" {
+		snowflake, err := parseSnowflakeDestination(destination)
+		if err != nil {
+			return err
+		}
+		if err := d.Set("snowflake", snowflake); err != nil {
+			return err
+		}
+	}
+
 	if err := d.Set("labels", destination.Labels); err != nil {
 		return err
 	}
@@ -519,8 +519,8 @@ func parseSnowflakeDestination(destination *Destination) ([]map[string]interface
 	snowflake := make(map[string]interface{})
 	snowflake["url"] = destination.URL
 	snowflake["schema"] = destination.Schema
-        snowflake["database"] = destination.Database
-        snowflake["warehouse"] = destination.Warehouse
+	snowflake["database"] = destination.Database
+	snowflake["warehouse"] = destination.Warehouse
 
 	credentialsProvider, err := parseLoginCredentialsProviderConfig(destination.CredentialsProvider)
 	if err != nil {
@@ -700,30 +700,30 @@ func composeDestination(d *schema.ResourceData) (*Destination, error) {
 	}
 
 	if snowflake, _ := expandSingleMap(d.Get("snowflake")); snowflake != nil {
-    	credentialsProviderMap, err := expandSingleMap(snowflake["credentials_provider"])
-    	if err != nil {
-    		return nil, err
-    	}
+		credentialsProviderMap, err := expandSingleMap(snowflake["credentials_provider"])
+		if err != nil {
+			return nil, err
+		}
 
-    	credentialsProvider, err := composeLoginCredentialsProviderConfig(credentialsProviderMap)
-    	if err != nil {
-    		return nil, err
-    	}
+		credentialsProvider, err := composeLoginCredentialsProviderConfig(credentialsProviderMap)
+		if err != nil {
+			return nil, err
+		}
 
-    	destination := Destination{
-    		Name:                d.Get("name").(string),
-    		Description:         d.Get("description").(string),
-    		Type:                "snowflake",
-    		URL:                 snowflake["url"].(string),
-    		Schema:              snowflake["schema"].(string),
-    		Warehouse:           snowflake["warehouse"].(string),
-    		Database:            snowflake["database"].(string),
-    		CredentialsProvider: credentialsProvider,
-    		Labels:              expandStringList(d.Get("labels").([]interface{})),
-    		Attributes:          expandAttributes(d),
-    	}
-    	return &destination, nil
-    }
+		destination := Destination{
+			Name:                d.Get("name").(string),
+			Description:         d.Get("description").(string),
+			Type:                "snowflake",
+			URL:                 snowflake["url"].(string),
+			Schema:              snowflake["schema"].(string),
+			Warehouse:           snowflake["warehouse"].(string),
+			Database:            snowflake["database"].(string),
+			CredentialsProvider: credentialsProvider,
+			Labels:              expandStringList(d.Get("labels").([]interface{})),
+			Attributes:          expandAttributes(d),
+		}
+		return &destination, nil
+	}
 
 	return nil, errors.New("Invalid destination type")
 }
