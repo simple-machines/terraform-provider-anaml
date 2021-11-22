@@ -6,12 +6,32 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+const entityMappingDescription = `# Entity Mappings
+
+An Entity Mapping is a relationship between one or more Entities so that features can
+automatically be aggregated at different levels without defining the Feature multiple times.
+
+Each Entity Mapping specifies:
+
+- From Entity - The Entity that the Feature is initially defined on
+- To Entity - The Entity that can be converted to
+- Mapping Feature - A Feature that is defined on the *from* Entity and has a value of the *to* Entity.
+
+For example, given a customer and account Entities where each customer has multiple accounts
+you could define an Entity Mapping from Account to Customer:
+
+- From Entity = Account
+- To Entity = Customer
+- Mapping Feature = Last Customer Id for each Account Id
+`
+
 func ResourceEntityMapping() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceEntityMappingCreate,
-		Read:   resourceEntityMappingRead,
-		Update: resourceEntityMappingUpdate,
-		Delete: resourceEntityMappingDelete,
+		Description: entityMappingDescription,
+		Create:      resourceEntityMappingCreate,
+		Read:        resourceEntityMappingRead,
+		Update:      resourceEntityMappingUpdate,
+		Delete:      resourceEntityMappingDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},

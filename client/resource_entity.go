@@ -6,12 +6,31 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+const entityDescription = `# Entities
+
+An Entity is an item in the business domain. Common examples of Entities are:
+
+- Customers
+- Accounts
+- Products
+- Orders
+
+Anything that has a unique identifier and would be useful to report or predict on could be an Entity.
+
+In a relational database, the identifiers for Entities will often be used for primary keys.
+
+Tables need to specify one or more columns with entity identifiers in order to be used for Feature definitions.
+
+Features will be generated for a specific Entity. This means the aggregation will be grouped by each Entity identitifer.
+`
+
 func ResourceEntity() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceEntityCreate,
-		Read:   resourceEntityRead,
-		Update: resourceEntityUpdate,
-		Delete: resourceEntityDelete,
+		Description: entityDescription,
+		Create:      resourceEntityCreate,
+		Read:        resourceEntityRead,
+		Update:      resourceEntityUpdate,
+		Delete:      resourceEntityDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},

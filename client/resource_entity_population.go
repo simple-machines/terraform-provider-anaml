@@ -6,12 +6,23 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+const entityPopulationsDescription = `# Entity Populations
+
+An Entity Population allows for the specification of entities and dates to run feature generation for.
+This is used for feature "time travel", as well as generating data for a reduced set of entities.
+
+An entity population is specified from a table or set of tables using SQL. The entity population must
+return a two column dataset, the first of which is named for the selected entity's output column; and
+the second of which is named "date".
+`
+
 func ResourceEntityPopulation() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceEntityPopulationCreate,
-		Read:   resourceEntityPopulationRead,
-		Update: resourceEntityPopulationUpdate,
-		Delete: resourceEntityPopulationDelete,
+		Description: entityPopulationsDescription,
+		Create:      resourceEntityPopulationCreate,
+		Read:        resourceEntityPopulationRead,
+		Update:      resourceEntityPopulationUpdate,
+		Delete:      resourceEntityPopulationDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},

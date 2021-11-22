@@ -7,38 +7,55 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
+const protectionDesc = `# Branch Protections
+
+Branch Protections provides functionality for restricting or controlling changes to branches for different sets of users.
+
+With Branch Protections you can:
+
+- Require Change Requests with specific approvals
+- Allow or write access for particular users or groups
+- Prevent branches from being deleted
+`
+
 func ResourceBranchProtection() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceBranchProtectionCreate,
-		Read:   resourceBranchProtectionRead,
-		Update: resourceBranchProtectionUpdate,
-		Delete: resourceBranchProtectionDelete,
+		Description: protectionDesc,
+		Create:      resourceBranchProtectionCreate,
+		Read:        resourceBranchProtectionRead,
+		Update:      resourceBranchProtectionUpdate,
+		Delete:      resourceBranchProtectionDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
 
 		Schema: map[string]*schema.Schema{
 			"protection_pattern": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Description: "Branches that match this pattern will be protected by the branch protection.",
+				Required:    true,
 			},
 			"merge_approval_rules": {
-				Type:     schema.TypeList,
-				Required: true,
-				Elem:     approvalRuleSchema(),
+				Type:        schema.TypeList,
+				Description: "Rules which must be satisfied before a change request can be merged.",
+				Required:    true,
+				Elem:        approvalRuleSchema(),
 			},
 			"push_whitelist": {
-				Type:     schema.TypeList,
-				Required: true,
-				Elem:     principalIdSchema(),
+				Type:        schema.TypeList,
+				Description: "Principals which can push directly to matching branches.",
+				Required:    true,
+				Elem:        principalIdSchema(),
 			},
 			"apply_to_admins": {
-				Type:     schema.TypeBool,
-				Required: true,
+				Type:        schema.TypeBool,
+				Description: "Whether administrators are forbidden from pushing directly to matching branches.",
+				Required:    true,
 			},
 			"allow_branch_deletion": {
-				Type:     schema.TypeBool,
-				Required: true,
+				Type:        schema.TypeBool,
+				Description: "Whether matching branches can be deleted.",
+				Required:    true,
 			},
 		},
 	}

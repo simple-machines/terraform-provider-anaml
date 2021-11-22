@@ -9,12 +9,27 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
+const destinationDescription = `# Destinations
+
+A Destination is the physical configuration for the location of feature run
+results to be written out to.
+
+Multiple different types of destinations are supported:
+- Amazon S3
+- Google Cloud Storage
+- Google BigQuery
+- Hive
+- HDFS
+- JDBC
+`
+
 func ResourceDestination() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceDestinationCreate,
-		Read:   resourceDestinationRead,
-		Update: resourceDestinationUpdate,
-		Delete: resourceDestinationDelete,
+		Description: destinationDescription,
+		Create:      resourceDestinationCreate,
+		Read:        resourceDestinationRead,
+		Update:      resourceDestinationUpdate,
+		Delete:      resourceDestinationDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -22,6 +37,7 @@ func ResourceDestination() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:         schema.TypeString,
+				Description:  "The name of the destination.",
 				Required:     true,
 				ValidateFunc: validateAnamlName(),
 			},

@@ -9,12 +9,40 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
+const clusterDesc = `# Clusters
+
+A Cluster represents an external compute resource that can be used to compute feature values,
+run monitoring jobs and and generate previews.
+
+There are two types of Clusters, a local cluster, and an Anaml Spark Server.
+
+### Local Clusters
+
+Local Clusters are rarely used outside of a development environment, and use the Anaml Server
+application as a Spark Cluster in local mode.
+
+### Anaml Spark Server
+
+This form of cluster uses a separate microservice which runs a web application and launches
+jobs on a Spark cluster. For this form of Cluster, you're required to provide the URL of the
+spark server application.
+
+Anaml Spark Server Clusters can be:
+
+- Google Dataproc clusters
+- Amazon EMR clusters
+- Azure HD Insight clusters
+- Hadoop Yarn clusters
+- Spark on Kubernetes clusters
+`
+
 func ResourceCluster() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceClusterCreate,
-		Read:   resourceClusterRead,
-		Update: resourceClusterUpdate,
-		Delete: resourceClusterDelete,
+		Description: clusterDesc,
+		Create:      resourceClusterCreate,
+		Read:        resourceClusterRead,
+		Update:      resourceClusterUpdate,
+		Delete:      resourceClusterDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -22,6 +50,7 @@ func ResourceCluster() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:         schema.TypeString,
+				Description:  "The name of the cluster.",
 				Required:     true,
 				ValidateFunc: validateAnamlName(),
 			},
@@ -30,28 +59,32 @@ func ResourceCluster() *schema.Resource {
 				Required: true,
 			},
 			"is_preview_cluster": {
-				Type:     schema.TypeBool,
-				Required: true,
+				Type:        schema.TypeBool,
+				Description: "Whether this cluster can be used for preview generation.",
+				Required:    true,
 			},
 			"spark_config": {
-				Type:     schema.TypeList,
-				Required: true,
-				MinItems: 1,
-				MaxItems: 1,
-				Elem:     sparkConfigSchema(),
+				Type:        schema.TypeList,
+				Description: "Additional configuration which is passed to Spark when performing feature generation runs.",
+				Required:    true,
+				MinItems:    1,
+				MaxItems:    1,
+				Elem:        sparkConfigSchema(),
 			},
 			"local": {
 				Type:         schema.TypeList,
+				Description:  "Set up for a local cluster. When this setting is used, a local spark session will be launched within the JVM process of the web server. Not recommended for production deployments.",
 				Optional:     true,
 				MaxItems:     1,
 				Elem:         localSchema(),
 				ExactlyOneOf: []string{"local", "spark_server"},
 			},
 			"spark_server": {
-				Type:     schema.TypeList,
-				Optional: true,
-				MaxItems: 1,
-				Elem:     sparkServerSchema(),
+				Type:        schema.TypeList,
+				Description: "Set up for a remote cluster.",
+				Optional:    true,
+				MaxItems:    1,
+				Elem:        sparkServerSchema(),
 			},
 			"labels": {
 				Type:        schema.TypeList,

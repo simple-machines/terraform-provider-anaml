@@ -8,12 +8,26 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
+const featureStoreDescription = `
+# Feature Stores (Schedules)
+
+A Schedule is the output of a feature set run at a specific time and written to one or more destination.
+Generally the output in the Destination will be a table with a timestamp, entity identifier, and one
+column per features in the Feature Set.
+
+Schedules can either be a historical run which covers a range of dates, or a daily run where new data
+is generated on a daily basis.
+
+An entity population can be used to further refine the entities and dates for feature generation.
+`
+
 func ResourceFeatureStore() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceFeatureStoreCreate,
-		Read:   resourceFeatureStoreRead,
-		Update: resourceFeatureStoreUpdate,
-		Delete: resourceFeatureStoreDelete,
+		Description: featureStoreDescription,
+		Create:      resourceFeatureStoreCreate,
+		Read:        resourceFeatureStoreRead,
+		Update:      resourceFeatureStoreUpdate,
+		Delete:      resourceFeatureStoreDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},

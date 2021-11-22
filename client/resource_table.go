@@ -7,13 +7,75 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
+const tableDescription = `# Tables
+
+A Table represents a source of data for feature generation. A Table can be one of three types:
+
+- External Table
+- View Table
+- Pivot Table
+
+### External Tables
+
+An External Table is the representation of a source table. Therefore you have to specify the
+underlying data sources that the table is stored in.
+
+### View Tables
+
+A View Table is a pre-defined query over one or more other Root Tables or View Tables.
+They function in the same way as views in relational databases. They can be used to transform
+or join tables using arbitary SQL.
+
+**When to use View Tables and when to use Features?**
+
+In general, features should be used wherever possible to transform or aggregate columns as required.
+This allows for better documentation, re-use and collaboration of features as well as allowing
+for better optimise generation runs.
+
+View Tables are mainly useful for joining data on keys other than entity id's such as reference data lookups.
+
+
+### Pivot Tables
+
+Pivot Tables allow features to be re-keyed to different entities.
+
+This can be very useful, as often in business applications one may have different levels of entity; for example,
+plans and customers. Data may be organised and keyed by plan, and some attributes and campaigns may target plans;
+but also, plans are owned by customers, and when doing analysis on customers, knowing information about their
+plans is crucial.
+
+Pivot tables help to solve this issue by allowing features which are written for plans to be repurposed at the
+customer level.
+
+When construcing a pivot table, one needs to specify an entity mapping, which shows how to go from plans to
+customers (this uses a feature query which outputs the customer for a particular plan), and the plan level
+features which are to be aggregated to the customer.
+
+Usually, the features one writes on a pivot table are simple aggregations, such as number of plans (count) or
+average of some column with some filtering. Day and Row windows are not required.
+
+
+## Timestamp and Entities
+
+To be used in feature generation a Table must have one or more [Entities](/entities) and a timestamp associated
+with it. These are needed to be able to join correctly between tables during the feature generation:
+
+* **Timestamp** - Specifiy the name of the column which contains the timestamp that the row of data was created at.
+* **Entities** - For each Entity within the Table, specify the name of the column that contains the id's and the
+entity type.
+
+Note that tables without an Entity and timestamp are still useful for use in View Tables. These are often things
+such as reference data tables used for lookups.
+`
+
 // ResourceTable ...
 func ResourceTable() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceTableCreate,
-		Read:   resourceTableRead,
-		Update: resourceTableUpdate,
-		Delete: resourceTableDelete,
+		Description: tableDescription,
+		Create:      resourceTableCreate,
+		Read:        resourceTableRead,
+		Update:      resourceTableUpdate,
+		Delete:      resourceTableDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
