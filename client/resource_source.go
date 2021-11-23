@@ -816,7 +816,7 @@ func parseSnowflakeSource(source *Source) ([]map[string]interface{}, error) {
 	snowflake := make(map[string]interface{})
 	snowflake["url"] = source.URL
 	snowflake["warehouse"] = source.Warehouse
-	snowflake["databse"] = source.Database
+	snowflake["database"] = source.Database
 	snowflake["schema"] = source.Schema
 
 	credentialsProvider, err := parseLoginCredentialsProviderConfig(source.CredentialsProvider)
