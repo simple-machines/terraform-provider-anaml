@@ -113,8 +113,32 @@ Required:
 
 Optional:
 
-- **folder** (String)
-- **table_name** (String)
-- **topic** (String)
+- **folder** (Block List, Max: 1) (see [below for nested schema](#nestedblock--destination--folder))
+- **table** (Block List, Max: 1) (see [below for nested schema](#nestedblock--destination--table))
+- **topic** (Block List, Max: 1) (see [below for nested schema](#nestedblock--destination--topic))
+
+<a id="nestedblock--destination--folder"></a>
+### Nested Schema for `destination.folder`
+
+Required:
+
+- **partitioning_enabled** (Boolean)
+- **path** (String)
+
+
+<a id="nestedblock--destination--table"></a>
+### Nested Schema for `destination.table`
+
+Required:
+
+- **name** (String)
+
+
+<a id="nestedblock--destination--topic"></a>
+### Nested Schema for `destination.topic`
+
+Required:
+
+- **name** (String)
 
 
