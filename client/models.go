@@ -319,6 +319,15 @@ type User struct {
 	Roles     []Role  `json:"roles"`
 }
 
+// Access token and creation request.
+type AccessToken struct {
+	ID          string `json:"id,omitempty"`
+	Secret      string `json:"secret,omitempty"`
+	Owner       *int   `json:"owner,omitempty"`
+	Description string `json:"description,omitempty"`
+	Roles       []Role `json:"roles"`
+}
+
 type ChangeOtherPasswordRequest struct {
 	Password string `json:"password"`
 }
