@@ -43,6 +43,7 @@ func Provider() *schema.Provider {
 			"anaml-operations_caching":           anaml.ResourceTableCaching(),
 			"anaml-operations_monitoring":        anaml.ResourceTableMonitoring(),
 			"anaml-operations_user_group":        anaml.ResourceUserGroup(),
+			"anaml-operations_access_token":      anaml.ResourceAccessToken(),
 			"anaml-operations_branch_protection": anaml.ResourceBranchProtection(),
 			"anaml-operations_webhook":           anaml.ResourceWebhook(),
 		},

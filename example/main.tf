@@ -572,6 +572,18 @@ resource "anaml-operations_user" "john" {
   roles      = ["super_user"]
 }
 
+resource "anaml-operations_access_token" "john_unpriviledged" {
+  owner       = anaml-operations_user.john.id
+  description = "Unprivileged Token"
+  roles       = []
+}
+
+resource "anaml-operations_access_token" "john_runner" {
+  owner       = anaml-operations_user.john.id
+  description = "Runner Token"
+  roles       = [ "run_featuregen", "run_monitoring", "run_caching" ]
+}
+
 resource "anaml-operations_caching" "caching" {
   name        = "household_caching"
   description = "Caching of tables for households"
