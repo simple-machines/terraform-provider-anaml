@@ -37,7 +37,7 @@ func ResourceUserGroup() *schema.Resource {
 			"members": {
 				Type:        schema.TypeList,
 				Description: "Users to include in the user group",
-				Required:    true,
+				Optional:    true,
 				Elem:        userGroupMemberSchema(),
 			},
 			"external_group_id": {
