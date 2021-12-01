@@ -35,7 +35,7 @@ func ResourceUserGroup() *schema.Resource {
 				},
 			},
 			"members": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Description: "Users to include in the user group",
 				Optional:    true,
 				Elem:        userGroupMemberSchema(),
@@ -45,7 +45,7 @@ func ResourceUserGroup() *schema.Resource {
 				Optional: true,
 			},
 			"external_members": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Description: "Users added externally to the group",
 				Computed:    true,
 				Elem:        userGroupMemberSchema(),
@@ -105,7 +105,7 @@ func resourceUserGroupRead(d *schema.ResourceData, m interface{}) error {
 func resourceUserGroupCreate(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
 
-	groupMembers, err := expandUserGroupMembers(d.Get("members").([]interface{}))
+	groupMembers, err := expandUserGroupMembers(d.Get("members").(*schema.Set).List())
 	if err != nil {
 		return err
 	}
@@ -130,7 +130,7 @@ func resourceUserGroupUpdate(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
 	UserGroupID := d.Id()
 
-	groupMembers, err := expandUserGroupMembers(d.Get("members").([]interface{}))
+	groupMembers, err := expandUserGroupMembers(d.Get("members").(*schema.Set).List())
 	if err != nil {
 		return err
 	}
