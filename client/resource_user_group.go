@@ -35,14 +35,20 @@ func ResourceUserGroup() *schema.Resource {
 				},
 			},
 			"members": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Description: "Users to include in the user group",
-				Required:    true,
+				Optional:    true,
 				Elem:        userGroupMemberSchema(),
 			},
 			"external_group_id": {
 				Type:     schema.TypeString,
 				Optional: true,
+			},
+			"external_members": {
+				Type:        schema.TypeSet,
+				Description: "Users added externally to the group",
+				Computed:    true,
+				Elem:        userGroupMemberSchema(),
 			},
 		},
 	}
@@ -55,11 +61,6 @@ func userGroupMemberSchema() *schema.Resource {
 				Type:         schema.TypeInt,
 				Required:     true,
 				ValidateFunc: validation.IntAtLeast(1),
-			},
-			"source": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringInSlice(validGroupMemberSource(), false),
 			},
 		},
 	}
@@ -78,6 +79,8 @@ func resourceUserGroupRead(d *schema.ResourceData, m interface{}) error {
 		return nil
 	}
 
+	AnamlGroupMembers, ExternalGroupMembers := flattenUserGroupMembers(UserGroup.Members)
+
 	if err := d.Set("name", UserGroup.Name); err != nil {
 		return err
 	}
@@ -87,10 +90,13 @@ func resourceUserGroupRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("roles", mapRolesToFrontend(UserGroup.Roles)); err != nil {
 		return err
 	}
-	if err := d.Set("members", flattenUserGroupMembers(UserGroup.Members)); err != nil {
+	if err := d.Set("members", AnamlGroupMembers); err != nil {
 		return err
 	}
 	if err := d.Set("external_group_id", UserGroup.ExternalGroupID); err != nil {
+		return err
+	}
+	if err := d.Set("external_members", ExternalGroupMembers); err != nil {
 		return err
 	}
 	return err
@@ -99,7 +105,7 @@ func resourceUserGroupRead(d *schema.ResourceData, m interface{}) error {
 func resourceUserGroupCreate(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
 
-	groupMembers, err := expandUserGroupMembers(d.Get("members").([]interface{}))
+	groupMembers, err := expandUserGroupMembers(d.Get("members").(*schema.Set).List())
 	if err != nil {
 		return err
 	}
@@ -124,7 +130,7 @@ func resourceUserGroupUpdate(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
 	UserGroupID := d.Id()
 
-	groupMembers, err := expandUserGroupMembers(d.Get("members").([]interface{}))
+	groupMembers, err := expandUserGroupMembers(d.Get("members").(*schema.Set).List())
 	if err != nil {
 		return err
 	}
@@ -156,15 +162,19 @@ func resourceUserGroupDelete(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func flattenUserGroupMembers(members []UserGroupMember) []map[string]interface{} {
-	res := make([]map[string]interface{}, 0, len(members))
+func flattenUserGroupMembers(members []UserGroupMember) ([]map[string]interface{}, []map[string]interface{}) {
+	internal := make([]map[string]interface{}, 0, len(members))
+	external := make([]map[string]interface{}, 0, len(members))
 	for _, member := range members {
 		single := make(map[string]interface{})
 		single["user_id"] = member.UserID
-		single["source"] = member.Source.Type
-		res = append(res, single)
+		if member.Source.Type == "anaml" {
+			internal = append(internal, single)
+		} else {
+			external = append(external, single)
+		}
 	}
-	return res
+	return internal, external
 }
 
 func expandUserGroupMembers(members []interface{}) ([]UserGroupMember, error) {
@@ -172,15 +182,8 @@ func expandUserGroupMembers(members []interface{}) ([]UserGroupMember, error) {
 
 	for _, member := range members {
 		val, _ := member.(map[string]interface{})
-		var source UserGroupMemberSource
-		if val["source"] == "anaml" {
-			source = UserGroupMemberSource{
-				Type: "anaml",
-			}
-		} else {
-			source = UserGroupMemberSource{
-				Type: "external",
-			}
+		source := UserGroupMemberSource{
+			Type: "anaml",
 		}
 
 		parsed := UserGroupMember{
