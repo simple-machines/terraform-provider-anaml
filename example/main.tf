@@ -616,16 +616,15 @@ resource "anaml-operations_user_group" "engineering" {
   description = "A user group with engineering members."
   members {
     user_id = anaml-operations_user.jane.id
-    source  = "anaml"
   }
   members {
     user_id = anaml-operations_user.john.id
-    source  = "anaml"
   }
   roles = [
     "run_monitoring"
   ]
 }
+
 
 resource "anaml-operations_branch_protection" "official" {
   protection_pattern = "official"
