@@ -17,7 +17,6 @@ description: |-
 
 ### Required
 
-- **members** (Block List, Min: 1) Users to include in the user group (see [below for nested schema](#nestedblock--members))
 - **name** (String)
 
 ### Optional
@@ -25,14 +24,26 @@ description: |-
 - **description** (String)
 - **external_group_id** (String)
 - **id** (String) The ID of this resource.
+- **members** (Block Set) Users to include in the user group (see [below for nested schema](#nestedblock--members))
 - **roles** (List of String)
+
+### Read-Only
+
+- **external_members** (Set of Object) Users added externally to the group (see [below for nested schema](#nestedatt--external_members))
 
 <a id="nestedblock--members"></a>
 ### Nested Schema for `members`
 
 Required:
 
-- **source** (String)
+- **user_id** (Number)
+
+
+<a id="nestedatt--external_members"></a>
+### Nested Schema for `external_members`
+
+Read-Only:
+
 - **user_id** (Number)
 
 
