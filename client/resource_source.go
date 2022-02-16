@@ -469,6 +469,28 @@ func kafkaSourceDestinationSchema() *schema.Resource {
 	}
 }
 
+func onlineDestinationSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"url": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+			"schema": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+			"credentials_provider": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem:     loginCredentialsProviderConfigSchema(),
+			},
+		},
+	}
+}
+
 func snowflakeSourceDestinationSchema() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
