@@ -87,6 +87,7 @@ resource "anaml_table" "household_normalised" {
       (anaml_entity.household.id) = "household"
     }
     timestamp_column = "timestamp"
+    timezone = "Australia/Brisbane"
   }
 }
 
