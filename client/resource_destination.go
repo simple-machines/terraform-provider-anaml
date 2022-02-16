@@ -50,7 +50,7 @@ func ResourceDestination() *schema.Resource {
 				Optional:     true,
 				MaxItems:     1,
 				Elem:         s3SourceDestinationSchema(),
-				ExactlyOneOf: []string{"s3", "s3a", "jdbc", "hive", "big_query", "gcs", "local", "hdfs", "kafka", "snowflake"},
+				ExactlyOneOf: []string{"s3", "s3a", "jdbc", "hive", "big_query", "gcs", "local", "hdfs", "online", "kafka", "snowflake"},
 			},
 			"s3a": {
 				Type:     schema.TypeList,
@@ -93,6 +93,12 @@ func ResourceDestination() *schema.Resource {
 				Optional: true,
 				MaxItems: 1,
 				Elem:     hdfsSourceDestinationSchema(),
+			},
+			"online": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem:     onlineDestinationSchema(),
 			},
 			"kafka": {
 				Type:     schema.TypeList,
@@ -274,6 +280,16 @@ func resourceDestinationRead(d *schema.ResourceData, m interface{}) error {
 			return err
 		}
 		if err := d.Set("big_query", bigQuery); err != nil {
+			return err
+		}
+	}
+
+	if destination.Type == "onlinefeaturestore" {
+		online, err := parseOnlineDestination(destination)
+		if err != nil {
+			return err
+		}
+		if err := d.Set("online", online); err != nil {
 			return err
 		}
 	}
@@ -485,6 +501,26 @@ func parseHiveDestination(destination *Destination) ([]map[string]interface{}, e
 	return hives, nil
 }
 
+func parseOnlineDestination(destination *Destination) ([]map[string]interface{}, error) {
+	if destination == nil {
+		return nil, errors.New("Destination is null")
+	}
+
+	online := make(map[string]interface{})
+	online["url"] = destination.URL
+	online["schema"] = destination.Schema
+
+	credentialsProvider, err := parseLoginCredentialsProviderConfig(destination.CredentialsProvider)
+	if err != nil {
+		return nil, err
+	}
+	online["credentials_provider"] = []map[string]interface{}{credentialsProvider}
+
+	onlines := make([]map[string]interface{}, 0, 1)
+	onlines = append(onlines, online)
+	return onlines, nil
+}
+
 func parseKafkaDestination(destination *Destination) ([]map[string]interface{}, error) {
 	if destination == nil {
 		return nil, errors.New("Destination is null")
@@ -660,6 +696,30 @@ func composeDestination(d *schema.ResourceData) (*Destination, error) {
 			FileFormat:  fileFormat,
 			Labels:      expandStringList(d.Get("labels").([]interface{})),
 			Attributes:  expandAttributes(d),
+		}
+		return &destination, nil
+	}
+
+	if online, _ := expandSingleMap(d.Get("online")); online != nil {
+		credentialsProviderMap, err := expandSingleMap(online["credentials_provider"])
+		if err != nil {
+			return nil, err
+		}
+
+		credentialsProvider, err := composeLoginCredentialsProviderConfig(credentialsProviderMap)
+		if err != nil {
+			return nil, err
+		}
+
+		destination := Destination{
+			Name:                d.Get("name").(string),
+			Description:         d.Get("description").(string),
+			Type:                "onlinefeaturestore",
+			URL:                 online["url"].(string),
+			Schema:              online["schema"].(string),
+			CredentialsProvider: credentialsProvider,
+			Labels:              expandStringList(d.Get("labels").([]interface{})),
+			Attributes:          expandAttributes(d),
 		}
 		return &destination, nil
 	}

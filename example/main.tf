@@ -535,6 +535,23 @@ resource "anaml-operations_destination" "kafka" {
   }
 }
 
+resource "anaml-operations_destination" "online" {
+  name        = "terraform_online_feature_store_destination"
+  description = "An Online feature store destination created by Terraform"
+
+  online {
+    url    = "jdbc://localhost:5454"
+    schema = "my_schema"
+
+    credentials_provider {
+      basic {
+        username = "admin"
+        password = "test password"
+      }
+    }
+  }
+}
+
 resource "anaml-operations_destination" "snowflake" {
   name        = "terraform_snowflake_destination"
   description = "An Snowflake destination created by Terraform"
