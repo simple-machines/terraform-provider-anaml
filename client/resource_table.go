@@ -348,6 +348,7 @@ func expandEntityDescription(d *schema.ResourceData) *EventDescription {
 			Entities: entities,
 			TimestampInfo: &TimestampInfo{
 				Column: r["timestamp_column"].(string),
+				Zone:   r["timezone"].(string),
 			},
 		}
 	} else {
@@ -367,6 +368,7 @@ func flattenEntityDescription(ed *EventDescription) []interface{} {
 
 		td := ed.TimestampInfo
 		oi["timestamp_column"] = td.Column
+		oi["timezone"] = td.Zone
 
 		ois[0] = oi
 
