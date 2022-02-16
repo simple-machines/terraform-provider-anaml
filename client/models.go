@@ -419,6 +419,27 @@ type Attribute struct {
 	Value string `json:"value"`
 }
 
+// EventDescription ..
+type EventStoreTopicColumns struct {
+	Entity        string         `json:"entity"`
+	TimestampInfo *TimestampInfo `json:"timestampInfo"`
+}
+
+type EventStore struct {
+	ID                int                               `json:"id,omitempty"`
+	Name              string                            `json:"name"`
+	Description       string                            `json:"description"`
+	Labels            []string                          `json:"labels"`
+	Attributes        []Attribute                       `json:"attributes"`
+	BootstrapServers  string                            `json:"bootstrapServers"`
+	SchemaRegistryURL string                            `json:"schemaRegistryUrl"`
+	KafkaProperties   []SensitiveAttribute              `json:"kafkaPropertiesProviders"`
+	Ingestions        map[string]EventStoreTopicColumns `json:"ingestions"`
+	ConnectBaseURI    string                            `json:"connectBaseURI"`
+	ScatterBaseURI    string                            `json:"scatterBaseURI"`
+	GlacierBaseURI    string                            `json:"glacierBaseURI"`
+}
+
 func validRoles() []string {
 	return []string{
 		"admin_branch_perms",
