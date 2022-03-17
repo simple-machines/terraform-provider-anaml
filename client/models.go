@@ -438,6 +438,8 @@ type EventStore struct {
 	ConnectBaseURI    string                            `json:"connectBaseURI"`
 	ScatterBaseURI    string                            `json:"scatterBaseURI"`
 	GlacierBaseURI    string                            `json:"glacierBaseURI"`
+	Schedule          *Schedule                         `json:"schedule"`
+	Cluster           int                               `json:"cluster"`
 }
 
 func validRoles() []string {

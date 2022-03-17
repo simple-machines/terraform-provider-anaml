@@ -66,6 +66,25 @@ func ResourceEventStore() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
+			"daily_schedule": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				MaxItems:      1,
+				Elem:          dailyScheduleSchema(),
+				ConflictsWith: []string{"cron_schedule"},
+			},
+			"cron_schedule": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				MaxItems:      1,
+				Elem:          cronScheduleSchema(),
+				ConflictsWith: []string{"daily_schedule"},
+			},
+			"cluster": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validateAnamlIdentifier(),
+			},
 			"labels": {
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -174,6 +193,39 @@ func resourceEventStoreRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("glacier_base_uri", entity.GlacierBaseURI); err != nil {
 		return err
 	}
+	if err := d.Set("cluster", strconv.Itoa(entity.Cluster)); err != nil {
+		return err
+	}
+	if entity.Schedule.Type == "daily" {
+		dailySchedules, err := parseDailySchedule(entity.Schedule)
+		if err != nil {
+			return err
+		}
+		if err := d.Set("daily_schedule", dailySchedules); err != nil {
+			return err
+		}
+		if err := d.Set("cron_schedule", nil); err != nil {
+			return err
+		}
+	} else if entity.Schedule.Type == "cron" {
+		cronSchedules, err := parseCronSchedule(entity.Schedule)
+		if err != nil {
+			return err
+		}
+		if err := d.Set("cron_schedule", cronSchedules); err != nil {
+			return err
+		}
+		if err := d.Set("daily_schedule", nil); err != nil {
+			return err
+		}
+	} else {
+		if err := d.Set("cron_schedule", nil); err != nil {
+			return err
+		}
+		if err := d.Set("daily_schedule", nil); err != nil {
+			return err
+		}
+	}
 	return err
 }
 
@@ -251,6 +303,24 @@ func buildEventStore(d *schema.ResourceData) (*EventStore, error) {
 			},
 		}
 	}
+	cluster, err := strconv.Atoi(d.Get("cluster").(string))
+	if err != nil {
+		return nil, err
+	}
+	schedule := composeNeverSchedule()
+	if dailySchedule, _ := expandSingleMap(d.Get("daily_schedule")); dailySchedule != nil {
+		schedule, err = composeDailySchedule(dailySchedule)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if cronSchedule, _ := expandSingleMap(d.Get("cron_schedule")); cronSchedule != nil {
+		schedule, err = composeCronSchedule(cronSchedule)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	entity := EventStore{
 		Name:              d.Get("name").(string),
 		Description:       d.Get("description").(string),
@@ -263,6 +333,8 @@ func buildEventStore(d *schema.ResourceData) (*EventStore, error) {
 		GlacierBaseURI:    d.Get("glacier_base_uri").(string),
 		Labels:            expandStringList(d.Get("labels").([]interface{})),
 		Attributes:        expandAttributes(d),
+		Cluster:           cluster,
+		Schedule:          schedule,
 	}
-	return &entity, nil
+	return &entity, err
 }

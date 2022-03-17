@@ -162,6 +162,10 @@ resource "anaml-operations_event_store" "basic" {
     key   = "country"
     value = "australia"
   }
+  cluster = data.anaml-operations_cluster.local.id
+  daily_schedule {
+    start_time_of_day = "00:00:00"
+  }
 }
 
 resource "anaml-operations_feature_store" "household_daily" {
