@@ -121,6 +121,12 @@ func ResourceSource() *schema.Resource {
 				Description: "Attributes (key value pairs) to attach to the object",
 				Elem:        attributeSchema(),
 			},
+			"access_rules": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Access rules to attach to the object",
+				Elem:        accessRuleSchema(),
+			},
 		},
 	}
 }
@@ -524,6 +530,76 @@ func snowflakeSourceDestinationSchema() *schema.Resource {
 	}
 }
 
+func accessRuleSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"resource": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+			"principals": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem:     principalIdSchema(),
+			},
+			"masking_rules": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem:     maskingRuleSchema(),
+			},
+		},
+	}
+}
+
+func maskingRuleSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"filter": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem:     filterMaskingRuleSchema(),
+			},
+			"mask": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem:     maskMaskingRuleSchema(),
+			},
+		},
+	}
+}
+
+func filterMaskingRuleSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"expression": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+		},
+	}
+}
+
+func maskMaskingRuleSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"column": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+			"expression": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+		},
+	}
+}
+
 func resourceSourceRead(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
 	sourceID := d.Id()
@@ -853,6 +929,11 @@ func parseSnowflakeSource(source *Source) ([]map[string]interface{}, error) {
 }
 
 func composeSource(d *schema.ResourceData) (*Source, error) {
+	accessRules, err := expandAccessRules(d.Get("access_rules").([]interface{}))
+	if err != nil {
+		return nil, err
+	}
+
 	if s3, _ := expandSingleMap(d.Get("s3")); s3 != nil {
 		fileFormat := composeFileFormat(s3)
 		source := Source{
@@ -864,6 +945,7 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			FileFormat:  fileFormat,
 			Labels:      expandStringList(d.Get("labels").([]interface{})),
 			Attributes:  expandAttributes(d),
+			AccessRules: accessRules,
 		}
 		return &source, nil
 	}
@@ -882,6 +964,7 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			FileFormat:  fileFormat,
 			Labels:      expandStringList(d.Get("labels").([]interface{})),
 			Attributes:  expandAttributes(d),
+			AccessRules: accessRules,
 		}
 		return &source, nil
 	}
@@ -906,6 +989,7 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			CredentialsProvider: credentialsProvider,
 			Labels:              expandStringList(d.Get("labels").([]interface{})),
 			Attributes:          expandAttributes(d),
+			AccessRules:         accessRules,
 		}
 		return &source, nil
 	}
@@ -918,6 +1002,7 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			Database:    hive["database"].(string),
 			Labels:      expandStringList(d.Get("labels").([]interface{})),
 			Attributes:  expandAttributes(d),
+			AccessRules: accessRules,
 		}
 		return &source, nil
 	}
@@ -930,6 +1015,7 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			Path:        bigQuery["path"].(string),
 			Labels:      expandStringList(d.Get("labels").([]interface{})),
 			Attributes:  expandAttributes(d),
+			AccessRules: accessRules,
 		}
 		return &source, nil
 	}
@@ -945,6 +1031,7 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			FileFormat:  fileFormat,
 			Labels:      expandStringList(d.Get("labels").([]interface{})),
 			Attributes:  expandAttributes(d),
+			AccessRules: accessRules,
 		}
 		return &source, nil
 	}
@@ -959,6 +1046,7 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			FileFormat:  fileFormat,
 			Labels:      expandStringList(d.Get("labels").([]interface{})),
 			Attributes:  expandAttributes(d),
+			AccessRules: accessRules,
 		}
 		return &source, nil
 	}
@@ -973,6 +1061,7 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			FileFormat:  fileFormat,
 			Labels:      expandStringList(d.Get("labels").([]interface{})),
 			Attributes:  expandAttributes(d),
+			AccessRules: accessRules,
 		}
 		return &source, nil
 	}
@@ -1008,6 +1097,7 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			KafkaProperties:   sensitives,
 			Labels:            expandStringList(d.Get("labels").([]interface{})),
 			Attributes:        expandAttributes(d),
+			AccessRules:       accessRules,
 		}
 		return &source, nil
 	}
@@ -1034,6 +1124,7 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			CredentialsProvider: credentialsProvider,
 			Labels:              expandStringList(d.Get("labels").([]interface{})),
 			Attributes:          expandAttributes(d),
+			AccessRules:         accessRules,
 		}
 		return &source, nil
 	}
@@ -1112,6 +1203,72 @@ func composeFileFormat(d map[string]interface{}) *FileFormat {
 	}
 
 	return &fileFormat
+}
+
+func expandAccessRules(accessRules []interface{}) ([]AccessRule, error) {
+	res := make([]AccessRule, 0, len(accessRules))
+
+	for _, accessRule := range accessRules {
+		val, _ := accessRule.(map[string]interface{})
+
+		principals, err := expandPrincipalIds(val["principals"].([]interface{}))
+		if err != nil {
+			return nil, err
+		}
+
+		maskingRules, err := expandMaskingRules(val["masking_rules"].([]interface{}))
+		if err != nil {
+			return nil, err
+		}
+
+		parsed := AccessRule{
+			Resource:     val["resource"].(string),
+			Principals:   principals,
+			MaskingRules: maskingRules,
+		}
+		res = append(res, parsed)
+	}
+
+	return res, nil
+}
+
+func expandMaskingRules(maskingRules []interface{}) ([]MaskingRule, error) {
+	res := make([]MaskingRule, 0, len(maskingRules))
+
+	for _, maskingRule := range maskingRules {
+		val, _ := maskingRule.(map[string]interface{})
+
+		if filterMaskingRule, _ := expandSingleMap(val["filter"]); filterMaskingRule != nil {
+			parsed, err := composeFilterMaskingRule(filterMaskingRule)
+			if err != nil {
+				return nil, err
+			}
+			res = append(res, *parsed)
+		}
+		if maskMaskingRule, _ := expandSingleMap(val["mask"]); maskMaskingRule != nil {
+			parsed, err := composeMaskMaskingRule(maskMaskingRule)
+			if err != nil {
+				return nil, err
+			}
+			res = append(res, *parsed)
+		}
+	}
+
+	return res, nil
+}
+
+func composeFilterMaskingRule(d map[string]interface{}) (*MaskingRule, error) {
+	return &MaskingRule{
+		Type:       "filter",
+		Expression: d["expression"].(string),
+	}, nil
+}
+func composeMaskMaskingRule(d map[string]interface{}) (*MaskingRule, error) {
+	return &MaskingRule{
+		Type:       "mask",
+		Column:     d["column"].(string),
+		Expression: d["expression"].(string),
+	}, nil
 }
 
 func validateFileFormat() schema.SchemaValidateFunc {

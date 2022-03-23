@@ -207,6 +207,7 @@ type Source struct {
 	Labels              []string                        `json:"labels"`
 	Attributes          []Attribute                     `json:"attributes"`
 	Warehouse           string                          `json:"warehouse,omitempty"`
+	AccessRules         []AccessRule                    `json:"accessRules"`
 }
 
 type FileFormat struct {
@@ -229,6 +230,20 @@ type SourceReference struct {
 	Folder    string `json:"folder,omitempty"`
 	TableName string `json:"tableName,omitempty"`
 	Topic     string `json:"topic,omitempty"`
+}
+
+// AccessRule ...
+type AccessRule struct {
+	Resource     string        `json:"resource"`
+	Principals   []PrincipalId `json:"principals"`
+	MaskingRules []MaskingRule `json:"maskingRules"`
+}
+
+// MaskingRule ...
+type MaskingRule struct {
+	Type       string `json:"adt_type"`
+	Expression string `json:"expression"`
+	Column     string `json:"column,omitempty"`
 }
 
 // Destination ...
