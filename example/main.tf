@@ -134,6 +134,40 @@ resource "anaml_feature_set" "household" {
   ]
 }
 
+resource "anaml-operations_event_store" "basic" {
+  name           = "household"
+  description    = "A household level view"
+  bootstrap_servers   = "http://bootstrap"
+  schema_registry_url = "http://schema-registry"
+  property {
+    key = "jamf"
+    gcp {
+      secret_project = "example"
+      secret_id      = "sid"
+    }
+  }
+  ingestion {
+    topic = "topic"
+    entity_column = "what"
+    timestamp_column = "when"
+    timezone = "Australia/Sydney"
+  }
+
+  connect_base_uri = "connect"
+  scatter_base_uri = "scatter"
+  glacier_base_uri = "glacier"
+
+  labels = []
+  attribute {
+    key   = "country"
+    value = "australia"
+  }
+  cluster = data.anaml-operations_cluster.local.id
+  daily_schedule {
+    start_time_of_day = "00:00:00"
+  }
+}
+
 resource "anaml-operations_feature_store" "household_daily" {
   name        = "household_daily"
   description = "Daily view of households"
