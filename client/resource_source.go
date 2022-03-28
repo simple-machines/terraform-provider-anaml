@@ -121,7 +121,7 @@ func ResourceSource() *schema.Resource {
 				Description: "Attributes (key value pairs) to attach to the object",
 				Elem:        attributeSchema(),
 			},
-			"access_rules": {
+			"access_rule": {
 				Type:        schema.TypeList,
 				Optional:    true,
 				Description: "Access rules to attach to the object",
@@ -563,7 +563,7 @@ func accessRuleSchema() *schema.Resource {
 				Optional: true,
 				Elem:     principalIdSchema(),
 			},
-			"masking_rules": {
+			"masking_rule": {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem:     maskingRuleSchema(),
@@ -746,7 +746,7 @@ func resourceSourceRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("attribute", flattenAttributes(source.Attributes)); err != nil {
 		return err
 	}
-	if err := d.Set("access_rules", flattenAccessRules(source.AccessRules)); err != nil {
+	if err := d.Set("access_rule", flattenAccessRules(source.AccessRules)); err != nil {
 		return err
 	}
 	return err
@@ -952,7 +952,7 @@ func parseSnowflakeSource(source *Source) ([]map[string]interface{}, error) {
 }
 
 func composeSource(d *schema.ResourceData) (*Source, error) {
-	accessRules, err := expandAccessRules(d.Get("access_rules").([]interface{}))
+	accessRules, err := expandAccessRules(d.Get("access_rule").([]interface{}))
 	if err != nil {
 		return nil, err
 	}
@@ -1257,7 +1257,7 @@ func expandAccessRules(accessRules []interface{}) ([]AccessRule, error) {
 			return nil, err
 		}
 
-		maskingRules, err := expandMaskingRules(val["masking_rules"].([]interface{}))
+		maskingRules, err := expandMaskingRules(val["masking_rule"].([]interface{}))
 		if err != nil {
 			return nil, err
 		}
@@ -1322,7 +1322,7 @@ func flattenAccessRules(accessRules []AccessRule) []map[string]interface{} {
 		single := make(map[string]interface{})
 		single["resource"] = accessRule.Resource
 		single["principals"] = flattenPrincipalIds(accessRule.Principals)
-		single["masking_rules"] = flatternMaskingRules(accessRule.MaskingRules)
+		single["masking_rule"] = flatternMaskingRules(accessRule.MaskingRules)
 		res = append(res, single)
 	}
 	return res

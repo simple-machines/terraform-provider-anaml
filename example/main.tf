@@ -321,7 +321,7 @@ resource "anaml-operations_source" "s3" {
     ignore_trailing_whitespace = false
   }
 
-  access_rules {
+  access_rule {
     resource = "customers"
 
     principals {
@@ -330,12 +330,12 @@ resource "anaml-operations_source" "s3" {
       }
     }
 
-    masking_rules {
+    masking_rule {
       filter {
         expression = "id % 2 = 0"
       }
     }
-    masking_rules {
+    masking_rule {
       mask {
         column     = "email"
         expression = "x -> NULL"
