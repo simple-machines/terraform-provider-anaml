@@ -320,6 +320,28 @@ resource "anaml-operations_source" "s3" {
     ignore_leading_whitespace  = false
     ignore_trailing_whitespace = false
   }
+
+  access_rule {
+    resource = "customers"
+
+    principals {
+      user_group {
+        id = anaml-operations_user_group.engineering.id
+      }
+    }
+
+    masking_rule {
+      filter {
+        expression = "id % 2 = 0"
+      }
+    }
+    masking_rule {
+      mask {
+        column     = "email"
+        expression = "x -> NULL"
+      }
+    }
+  }
 }
 
 resource "anaml-operations_source" "s3a" {
