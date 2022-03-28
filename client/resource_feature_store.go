@@ -59,6 +59,11 @@ func ResourceFeatureStore() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validateAnamlIdentifier(),
 			},
+			"principal": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validateAnamlIdentifier(),
+			},
 			"enabled": {
 				Type:     schema.TypeBool,
 				Required: true,
@@ -226,6 +231,11 @@ func resourceFeatureStoreRead(d *schema.ResourceData, m interface{}) error {
 			return err
 		}
 	}
+	if FeatureStore.Principal != nil {
+		if err := d.Set("principal", strconv.Itoa(*FeatureStore.Principal)); err != nil {
+			return err
+		}
+	}
 
 	destinations, err := flattenDestinationReferences(FeatureStore.Destinations)
 	if err != nil {
@@ -335,6 +345,16 @@ func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
 		return nil, err
 	}
 
+	var principal (*int) = nil
+	principalRaw, principalOk := d.GetOk("principal")
+	if principalOk {
+		principal_, err := strconv.Atoi(principalRaw.(string))
+		if err != nil {
+			return nil, err
+		}
+		principal = &principal_
+	}
+
 	cluster, err := strconv.Atoi(d.Get("cluster").(string))
 	if err != nil {
 		return nil, err
@@ -388,6 +408,7 @@ func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
 		StartDate:     getNullableString(d, "start_date"),
 		EndDate:       getNullableString(d, "end_date"),
 		FeatureSet:    featureSet,
+		Principal:     principal,
 		Enabled:       d.Get("enabled").(bool),
 		Destinations:  destinations,
 		Cluster:       cluster,
