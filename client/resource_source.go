@@ -161,6 +161,10 @@ func s3SourceDestinationSchema() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
+			"empty_value": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 			"ignore_leading_whitespace": {
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -228,6 +232,10 @@ func s3aSourceDestinationSchema() *schema.Resource {
 			},
 			"include_header": {
 				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"empty_value": {
+				Type:     schema.TypeString,
 				Optional: true,
 			},
 			"ignore_leading_whitespace": {
@@ -331,6 +339,10 @@ func gcsSourceDestinationSchema() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
+			"empty_value": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 			"ignore_leading_whitespace": {
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -380,6 +392,10 @@ func localSourceDestinationSchema() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
+			"empty_value": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 			"ignore_leading_whitespace": {
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -427,6 +443,10 @@ func hdfsSourceDestinationSchema() *schema.Resource {
 			},
 			"include_header": {
 				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"empty_value": {
+				Type:     schema.TypeString,
 				Optional: true,
 			},
 			"ignore_leading_whitespace": {
@@ -724,6 +744,9 @@ func resourceSourceRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 	if err := d.Set("attribute", flattenAttributes(source.Attributes)); err != nil {
+		return err
+	}
+	if err := d.Set("access_rules", flattenAccessRules(source.AccessRules)); err != nil {
 		return err
 	}
 	return err
@@ -1138,30 +1161,48 @@ func parseFileFormat(fileFormat *FileFormat) map[string]interface{} {
 	if fileFormat.Type == "csv" {
 		if fileFormat.Compression != nil {
 			fileFormatMap["compression"] = fileFormat.Compression
+		} else {
+			fileFormatMap["compression"] = nil
 		}
 		if fileFormat.DateFormat != nil {
 			fileFormatMap["date_format"] = fileFormat.DateFormat
+		} else {
+			fileFormatMap["date_format"] = nil
 		}
 		if fileFormat.EmptyValue != nil {
 			fileFormatMap["empty_value"] = fileFormat.EmptyValue
+		} else {
+			fileFormatMap["empty_value"] = nil
 		}
 		if fileFormat.Sep != nil {
 			fileFormatMap["field_separator"] = fileFormat.Sep
+		} else {
+			fileFormatMap["field_separator"] = nil
 		}
 		if fileFormat.IgnoreLeadingWhiteSpace != nil {
 			fileFormatMap["ignore_leading_whitespace"] = fileFormat.IgnoreLeadingWhiteSpace
+		} else {
+			fileFormatMap["ignore_leading_whitespace"] = nil
 		}
 		if fileFormat.IgnoreTrailingWhiteSpace != nil {
 			fileFormatMap["ignore_trailing_whitespace"] = fileFormat.IgnoreTrailingWhiteSpace
+		} else {
+			fileFormatMap["ignore_trailing_whitespace"] = nil
 		}
 		if fileFormat.IncludeHeader != nil {
 			fileFormatMap["include_header"] = fileFormat.IncludeHeader
+		} else {
+			fileFormatMap["include_header"] = nil
 		}
 		if fileFormat.QuoteAll != nil {
 			fileFormatMap["quote_all"] = fileFormat.QuoteAll
+		} else {
+			fileFormatMap["quote_all"] = nil
 		}
 		if fileFormat.TimestampFormat != nil {
 			fileFormatMap["timestamp_format"] = fileFormat.TimestampFormat
+		} else {
+			fileFormatMap["timestamp_format"] = nil
 		}
 	}
 	return fileFormatMap
@@ -1273,4 +1314,36 @@ func composeMaskMaskingRule(d map[string]interface{}) (*MaskingRule, error) {
 
 func validateFileFormat() schema.SchemaValidateFunc {
 	return validation.StringInSlice([]string{"csv", "orc", "parquet"}, false)
+}
+
+func flattenAccessRules(accessRules []AccessRule) []map[string]interface{} {
+	res := make([]map[string]interface{}, 0, len(accessRules))
+	for _, accessRule := range accessRules {
+		single := make(map[string]interface{})
+		single["resource"] = accessRule.Resource
+		single["principals"] = flattenPrincipalIds(accessRule.Principals)
+		single["masking_rules"] = flatternMaskingRules(accessRule.MaskingRules)
+		res = append(res, single)
+	}
+	return res
+}
+
+func flatternMaskingRules(maskingRules []MaskingRule) []map[string]([]map[string]interface{}) {
+	res := make([]map[string]([]map[string]interface{}), 0, len(maskingRules))
+	for _, maskingRule := range maskingRules {
+		single := make(map[string]([]map[string]interface{}))
+		if maskingRule.Type == "filter" {
+			nest := make(map[string]interface{})
+			nest["expression"] = maskingRule.Expression
+			single["filter"] = []map[string]interface{}{nest}
+		}
+		if maskingRule.Type == "mask" {
+			nest := make(map[string]interface{})
+			nest["column"] = maskingRule.Column
+			nest["expression"] = maskingRule.Expression
+			single["mask"] = []map[string]interface{}{nest}
+		}
+		res = append(res, single)
+	}
+	return res
 }
