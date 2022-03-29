@@ -11,7 +11,7 @@ jobs:
       - name: Configure Go
         uses: actions/setup-go@v2
         with:
-          go-version: "1.15.2"
+          go-version: "1.17.8"
       - name: Build Terraform providers
         run: |
           GOOS=darwin go build ./providers/terraform-provider-anaml
