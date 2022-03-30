@@ -472,6 +472,15 @@ resource "anaml-operations_destination" "s3" {
     file_format    = "csv"
     include_header = true
   }
+  access_rule {
+    resource = "customers"
+
+    principals {
+      user_group {
+        id = anaml-operations_user_group.engineering.id
+      }
+    }
+  }
 }
 
 resource "anaml-operations_destination" "s3a" {

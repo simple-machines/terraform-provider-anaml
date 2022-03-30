@@ -127,6 +127,12 @@ func ResourceDestination() *schema.Resource {
 				Description: "Attributes (key value pairs) to attach to the object",
 				Elem:        attributeSchema(),
 			},
+			"access_rule": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Access rules to attach to the object",
+				Elem:        accessRuleSchema(),
+			},
 		},
 	}
 }
@@ -318,6 +324,9 @@ func resourceDestinationRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 	if err := d.Set("attribute", flattenAttributes(destination.Attributes)); err != nil {
+		return err
+	}
+	if err := d.Set("access_rule", flattenAccessRules(destination.AccessRules)); err != nil {
 		return err
 	}
 	return err
@@ -570,6 +579,11 @@ func parseSnowflakeDestination(destination *Destination) ([]map[string]interface
 }
 
 func composeDestination(d *schema.ResourceData) (*Destination, error) {
+	accessRules, err := expandAccessRules(d.Get("access_rule").([]interface{}))
+	if err != nil {
+		return nil, err
+	}
+
 	if s3, _ := expandSingleMap(d.Get("s3")); s3 != nil {
 		fileFormat := composeFileFormat(s3)
 		destination := Destination{
@@ -581,6 +595,7 @@ func composeDestination(d *schema.ResourceData) (*Destination, error) {
 			FileFormat:  fileFormat,
 			Labels:      expandStringList(d.Get("labels").([]interface{})),
 			Attributes:  expandAttributes(d),
+			AccessRules: accessRules,
 		}
 		return &destination, nil
 	}
@@ -599,6 +614,7 @@ func composeDestination(d *schema.ResourceData) (*Destination, error) {
 			FileFormat:  fileFormat,
 			Labels:      expandStringList(d.Get("labels").([]interface{})),
 			Attributes:  expandAttributes(d),
+			AccessRules: accessRules,
 		}
 		return &destination, nil
 	}
@@ -623,6 +639,7 @@ func composeDestination(d *schema.ResourceData) (*Destination, error) {
 			CredentialsProvider: credentialsProvider,
 			Labels:              expandStringList(d.Get("labels").([]interface{})),
 			Attributes:          expandAttributes(d),
+			AccessRules:         accessRules,
 		}
 		return &destination, nil
 	}
@@ -635,6 +652,7 @@ func composeDestination(d *schema.ResourceData) (*Destination, error) {
 			Database:    hive["database"].(string),
 			Labels:      expandStringList(d.Get("labels").([]interface{})),
 			Attributes:  expandAttributes(d),
+			AccessRules: accessRules,
 		}
 		return &destination, nil
 	}
@@ -653,6 +671,7 @@ func composeDestination(d *schema.ResourceData) (*Destination, error) {
 			StagingArea: stagingArea,
 			Labels:      expandStringList(d.Get("labels").([]interface{})),
 			Attributes:  expandAttributes(d),
+			AccessRules: accessRules,
 		}
 		return &destination, nil
 	}
@@ -668,6 +687,7 @@ func composeDestination(d *schema.ResourceData) (*Destination, error) {
 			FileFormat:  fileFormat,
 			Labels:      expandStringList(d.Get("labels").([]interface{})),
 			Attributes:  expandAttributes(d),
+			AccessRules: accessRules,
 		}
 		return &destination, nil
 	}
@@ -682,6 +702,7 @@ func composeDestination(d *schema.ResourceData) (*Destination, error) {
 			FileFormat:  fileFormat,
 			Labels:      expandStringList(d.Get("labels").([]interface{})),
 			Attributes:  expandAttributes(d),
+			AccessRules: accessRules,
 		}
 		return &destination, nil
 	}
@@ -696,6 +717,7 @@ func composeDestination(d *schema.ResourceData) (*Destination, error) {
 			FileFormat:  fileFormat,
 			Labels:      expandStringList(d.Get("labels").([]interface{})),
 			Attributes:  expandAttributes(d),
+			AccessRules: accessRules,
 		}
 		return &destination, nil
 	}
@@ -720,6 +742,7 @@ func composeDestination(d *schema.ResourceData) (*Destination, error) {
 			CredentialsProvider: credentialsProvider,
 			Labels:              expandStringList(d.Get("labels").([]interface{})),
 			Attributes:          expandAttributes(d),
+			AccessRules:         accessRules,
 		}
 		return &destination, nil
 	}
@@ -755,6 +778,7 @@ func composeDestination(d *schema.ResourceData) (*Destination, error) {
 			KafkaProperties:   sensitives,
 			Labels:            expandStringList(d.Get("labels").([]interface{})),
 			Attributes:        expandAttributes(d),
+			AccessRules:       accessRules,
 		}
 		return &destination, nil
 	}
@@ -781,6 +805,7 @@ func composeDestination(d *schema.ResourceData) (*Destination, error) {
 			CredentialsProvider: credentialsProvider,
 			Labels:              expandStringList(d.Get("labels").([]interface{})),
 			Attributes:          expandAttributes(d),
+			AccessRules:         accessRules,
 		}
 		return &destination, nil
 	}
