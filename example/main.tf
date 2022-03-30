@@ -176,6 +176,7 @@ resource "anaml-operations_feature_store" "household_daily" {
   feature_set = anaml_feature_set.household.id
   enabled     = true
   cluster     = data.anaml-operations_cluster.local.id
+  principal   = anaml-operations_user.john.id
   destination {
     destination                 = data.anaml-operations_destination.s3a.id
     folder {
@@ -194,6 +195,7 @@ resource "anaml-operations_feature_store" "household_cron" {
   feature_set       = anaml_feature_set.household.id
   enabled           = true
   cluster           = data.anaml-operations_cluster.local.id
+  principal         = anaml-operations_user.john.id
   entity_population = anaml_entity_population.adults.id
   destination {
     destination                 = data.anaml-operations_destination.s3a.id
@@ -215,6 +217,7 @@ resource "anaml-operations_feature_store" "household_never" {
   feature_set = anaml_feature_set.household.id
   enabled     = true
   cluster     = data.anaml-operations_cluster.local.id
+  principal   = anaml-operations_user.john.id
   destination {
     destination                 = data.anaml-operations_destination.s3a.id
     folder {
@@ -230,6 +233,7 @@ resource "anaml-operations_feature_store" "household_daily_retry" {
   feature_set = anaml_feature_set.household.id
   enabled     = true
   cluster     = data.anaml-operations_cluster.local.id
+  principal   = anaml-operations_user.john.id
   destination {
     destination                 = data.anaml-operations_destination.s3a.id
     folder {
@@ -253,6 +257,7 @@ resource "anaml-operations_feature_store" "household_cron_retry" {
   feature_set = anaml_feature_set.household.id
   enabled     = true
   cluster     = data.anaml-operations_cluster.local.id
+  principal   = anaml-operations_user.john.id
   destination {
     destination                 = data.anaml-operations_destination.s3a.id
     folder {
