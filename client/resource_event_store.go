@@ -80,6 +80,11 @@ func ResourceEventStore() *schema.Resource {
 				Elem:          cronScheduleSchema(),
 				ConflictsWith: []string{"daily_schedule"},
 			},
+			"principal": {
+            	Type:         schema.TypeString,
+            	Optional:     true,
+            	ValidateFunc: validateAnamlIdentifier(),
+            },
 			"cluster": {
 				Type:         schema.TypeString,
 				Required:     true,
@@ -193,6 +198,11 @@ func resourceEventStoreRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("glacier_base_uri", entity.GlacierBaseURI); err != nil {
 		return err
 	}
+	if entity.Principal != nil {
+    		if err := d.Set("principal", strconv.Itoa(*entity.Principal)); err != nil {
+    			return err
+    		}
+    	}
 	if err := d.Set("cluster", strconv.Itoa(entity.Cluster)); err != nil {
 		return err
 	}
@@ -303,6 +313,15 @@ func buildEventStore(d *schema.ResourceData) (*EventStore, error) {
 			},
 		}
 	}
+    var principal (*int) = nil
+    principalRaw, principalOk := d.GetOk("principal")
+    if principalOk {
+    	principal_, err := strconv.Atoi(principalRaw.(string))
+    	if err != nil {
+    		return nil, err
+    	}
+    	principal = &principal_
+    }
 	cluster, err := strconv.Atoi(d.Get("cluster").(string))
 	if err != nil {
 		return nil, err
@@ -333,6 +352,7 @@ func buildEventStore(d *schema.ResourceData) (*EventStore, error) {
 		GlacierBaseURI:    d.Get("glacier_base_uri").(string),
 		Labels:            expandStringList(d.Get("labels").([]interface{})),
 		Attributes:        expandAttributes(d),
+		Principal:         principal,
 		Cluster:           cluster,
 		Schedule:          schedule,
 	}

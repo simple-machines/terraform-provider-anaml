@@ -455,6 +455,7 @@ type EventStore struct {
 	ScatterBaseURI    string                            `json:"scatterBaseURI"`
 	GlacierBaseURI    string                            `json:"glacierBaseURI"`
 	Schedule          *Schedule                         `json:"schedule"`
+	Principal         *int                              `json:"principal,omitempty"`
 	Cluster           int                               `json:"cluster"`
 }
 

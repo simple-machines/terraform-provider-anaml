@@ -166,6 +166,7 @@ resource "anaml-operations_event_store" "basic" {
   daily_schedule {
     start_time_of_day = "00:00:00"
   }
+  principal = anaml-operations_user.jane.id
 }
 
 resource "anaml-operations_feature_store" "household_daily" {
