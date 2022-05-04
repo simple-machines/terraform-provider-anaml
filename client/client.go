@@ -33,9 +33,9 @@ type AuthResponse struct {
 }
 
 // NewClient -
-func NewClient(host, username, password, branch *string) (*Client, error) {
+func NewClient(host, username, password, branch *string, timeout time.Duration) (*Client, error) {
 	c := Client{
-		HTTPClient: &http.Client{Timeout: 10 * time.Second},
+		HTTPClient: &http.Client{Timeout: timeout},
 		HostURL:    HostURL,
 	}
 

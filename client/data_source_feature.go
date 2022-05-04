@@ -8,6 +8,8 @@ import (
 
 func DataSourceFeature() *schema.Resource {
 	return &schema.Resource{
+		Description: "A single Feature",
+
 		Read: dataSourceFeatureRead,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -15,8 +17,9 @@ func DataSourceFeature() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Description: "The Feature's name",
+				Required:    true,
 			},
 			"description": {
 				Type:     schema.TypeString,
