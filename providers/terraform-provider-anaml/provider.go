@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	anaml "anaml.io/terraform/client"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -29,6 +31,12 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("ANAML_DEFAULT_BRANCH", nil),
+			},
+			"request_timeout": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "30s",
+				ValidateFunc: anaml.ValidateDuration(),
 			},
 		},
 
@@ -69,7 +77,13 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		host = &tempHost
 	}
 
-	c, err := anaml.NewClient(host, &username, &password, &branch)
+	timeout, err := time.ParseDuration(d.Get("request_timeout").(string))
+
+	if err != nil {
+		return nil, err
+	}
+
+	c, err := anaml.NewClient(host, &username, &password, &branch, timeout)
 	if err != nil {
 		return nil, err
 	}

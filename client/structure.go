@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -111,6 +112,16 @@ func validateAnamlName() schema.SchemaValidateFunc {
 
 func validateAnamlIdentifier() schema.SchemaValidateFunc {
 	return validation.StringMatch(identifierPattern, "Must be parsable as an integer")
+}
+
+func ValidateDuration() schema.SchemaValidateFunc {
+	return func(i interface{}, k string) ([]string, []error) {
+		_, err := time.ParseDuration(i.(string))
+		if err != nil {
+			return nil, []error{err}
+		}
+		return nil, nil
+	}
 }
 
 func validateMapKeysAnamlIdentifier() schema.SchemaValidateDiagFunc {
