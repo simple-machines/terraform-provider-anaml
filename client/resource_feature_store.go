@@ -175,6 +175,13 @@ func folderDestinationSchema() *schema.Resource {
 				Type:     schema.TypeBool,
 				Required: true,
 			},
+			"save_mode": {
+				Type:     schema.TypeString,
+				Required: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"overwrite", "ignore", "append", "errorifexists",
+				}, true),
+			},
 		},
 	}
 }
@@ -187,6 +194,13 @@ func tableDestinationSchema() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
+			"save_mode": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"overwrite", "ignore", "append", "errorifexists",
+				}, true),
+			},
 		},
 	}
 }
@@ -198,6 +212,13 @@ func topicDestinationSchema() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+			"format": {
+				Type:     schema.TypeString,
+				Required: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"json", "avro",
+				}, true),
 			},
 		},
 	}
@@ -478,6 +499,8 @@ func expandDestinationReferences(d *schema.ResourceData) ([]DestinationReference
 				parsed.Folder = path
 				enabled := folder["partitioning_enabled"].(bool)
 				parsed.FolderPartitioningEnabled = &enabled
+				mode := folder["save_mode"].(string)
+				parsed.Mode = mode
 			} else {
 				return nil, fmt.Errorf("error casting table.path %i", folder["path"])
 			}
@@ -487,6 +510,9 @@ func expandDestinationReferences(d *schema.ResourceData) ([]DestinationReference
 			if tableName, ok := table["name"].(string); ok {
 				parsed.Type = "table"
 				parsed.TableName = tableName
+				if mode, _ := table["save_mode"].(string); mode != "" {
+					parsed.Mode = mode
+				}
 			} else {
 				return nil, fmt.Errorf("error casting table.name %i", table["name"])
 			}
@@ -496,6 +522,9 @@ func expandDestinationReferences(d *schema.ResourceData) ([]DestinationReference
 			if topicName, ok := topic["name"].(string); ok {
 				parsed.Type = "topic"
 				parsed.Topic = topicName
+				parsed.Format = &KafkaFormat{
+					Type: topic["format"].(string),
+				}
 			} else {
 				return nil, fmt.Errorf("error casting topic.name %i", topic["name"])
 			}
@@ -518,6 +547,7 @@ func flattenDestinationReferences(destinations []DestinationReference) ([]map[st
 			folder := make(map[string]interface{})
 			folder["path"] = destination.Folder
 			folder["partitioning_enabled"] = destination.FolderPartitioningEnabled
+			folder["save_mode"] = destination.Mode
 
 			folders := make([]map[string]interface{}, 0, 1)
 			folders = append(folders, folder)
@@ -527,6 +557,7 @@ func flattenDestinationReferences(destinations []DestinationReference) ([]map[st
 		if destination.Type == "table" {
 			table := make(map[string]interface{})
 			table["name"] = destination.TableName
+			table["save_mode"] = destination.Mode
 
 			tables := make([]map[string]interface{}, 0, 1)
 			tables = append(tables, table)
@@ -536,6 +567,7 @@ func flattenDestinationReferences(destinations []DestinationReference) ([]map[st
 		if destination.Type == "topic" {
 			topic := make(map[string]interface{})
 			topic["name"] = destination.Topic
+			topic["format"] = destination.Format.Type
 
 			topics := make([]map[string]interface{}, 0, 1)
 			topics = append(topics, topic)

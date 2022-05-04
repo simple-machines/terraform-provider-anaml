@@ -36,6 +36,14 @@ data "anaml-operations_destination" "s3a" {
   name = anaml-operations_destination.s3a.name
 }
 
+data "anaml-operations_destination" "kafka" {
+  name = anaml-operations_destination.kafka.name
+}
+
+data "anaml-operations_destination" "online" {
+  name = anaml-operations_destination.online.name
+}
+
 resource "anaml_entity" "household" {
   name           = "household"
   description    = "A household level view"
@@ -181,6 +189,46 @@ resource "anaml-operations_feature_store" "household_daily" {
     folder {
       path = "household_results"
       partitioning_enabled = true
+      save_mode = "overwrite"
+    }
+  }
+  daily_schedule {
+    start_time_of_day = "00:00:00"
+  }
+}
+
+resource "anaml-operations_feature_store" "household_daily_table_dest" {
+  name        = "household_daily_table_dest"
+  description = "Daily view of households"
+  start_date  = "2020-01-01"
+  end_date    = "2021-01-01"
+  feature_set = anaml_feature_set.household.id
+  enabled     = true
+  cluster     = data.anaml-operations_cluster.local.id
+  destination {
+    destination                 = data.anaml-operations_destination.online.id
+    table {
+      name = "household_results"
+    }
+  }
+  daily_schedule {
+    start_time_of_day = "00:00:00"
+  }
+}
+
+resource "anaml-operations_feature_store" "household_daily_topic_dest" {
+  name        = "household_daily_topic_dest"
+  description = "Daily view of households"
+  start_date  = "2020-01-01"
+  end_date    = "2021-01-01"
+  feature_set = anaml_feature_set.household.id
+  enabled     = true
+  cluster     = data.anaml-operations_cluster.local.id
+  destination {
+    destination                 = data.anaml-operations_destination.kafka.id
+    topic {
+      name = "household_results"
+      format = "json"
     }
   }
   daily_schedule {
@@ -200,6 +248,7 @@ resource "anaml-operations_feature_store" "household_cron" {
     folder {
       path = "household_results"
       partitioning_enabled = true
+      save_mode = "append"
     }
   }
   cron_schedule {
@@ -220,6 +269,7 @@ resource "anaml-operations_feature_store" "household_never" {
     folder {
       path = "household_results"
       partitioning_enabled = true
+      save_mode = "ignore"
     }
   }
 }
@@ -235,6 +285,7 @@ resource "anaml-operations_feature_store" "household_daily_retry" {
     folder {
       path = "household_results"
       partitioning_enabled = true
+      save_mode = "errorifexists"
     }
   }
   daily_schedule {
@@ -258,6 +309,7 @@ resource "anaml-operations_feature_store" "household_cron_retry" {
     folder {
       path = "household_results"
       partitioning_enabled = true
+      save_mode = "overwrite"
     }
   }
   cron_schedule {
