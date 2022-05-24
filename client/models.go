@@ -428,6 +428,7 @@ type Webhook struct {
 	FeatureStoreRuns     *struct{} `json:"featureStoreRuns,omitempty"`
 	MonitoringRuns       *struct{} `json:"monitoringRuns,omitempty"`
 	CachingRuns          *struct{} `json:"cachingRuns,omitempty"`
+	MaterialisationRuns  *struct{} `json:"materialisationRuns,omitempty"`
 }
 
 type Attribute struct {
