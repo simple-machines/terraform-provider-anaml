@@ -77,6 +77,12 @@ func ResourceWebhook() *schema.Resource {
 				MaxItems: 1,
 				Elem:     &schema.Resource{},
 			},
+			"materialisation_runs": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem:     &schema.Resource{},
+			},
 		},
 	}
 }
@@ -121,6 +127,9 @@ func resourceWebhookRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("caching_runs", flattenEmpty(webhook.CachingRuns)); err != nil {
 		return err
 	}
+	if err := d.Set("materialisation_runs", flattenEmpty(webhook.MaterialisationRuns)); err != nil {
+		return err
+	}
 	return err
 }
 
@@ -136,6 +145,7 @@ func resourceWebhookCreate(d *schema.ResourceData, m interface{}) error {
 		FeatureStoreRuns:     expandEmpty(d.Get("feature_store_runs").([]interface{})),
 		MonitoringRuns:       expandEmpty(d.Get("monitoring_runs").([]interface{})),
 		CachingRuns:          expandEmpty(d.Get("caching_runs").([]interface{})),
+		MaterialisationRuns:  expandEmpty(d.Get("materialisation_runs").([]interface{})),
 	}
 
 	e, err := c.CreateWebhook(webhook)
@@ -160,6 +170,7 @@ func resourceWebhookUpdate(d *schema.ResourceData, m interface{}) error {
 		FeatureStoreRuns:     expandEmpty(d.Get("feature_store_runs").([]interface{})),
 		MonitoringRuns:       expandEmpty(d.Get("monitoring_runs").([]interface{})),
 		CachingRuns:          expandEmpty(d.Get("caching_runs").([]interface{})),
+		MaterialisationRuns:  expandEmpty(d.Get("materialisation_runs").([]interface{})),
 	}
 
 	err := c.UpdateWebhook(webhookID, webhook)
