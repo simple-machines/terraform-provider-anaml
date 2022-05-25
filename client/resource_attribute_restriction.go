@@ -53,19 +53,19 @@ func ResourceAttributeRestriction() *schema.Resource {
 				Type:     schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
-				Elem:     freetextAttributeSchema(),
+				Elem:     &schema.Resource{},
 			},
 			"boolean": {
 				Type:     schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
-				Elem:     booleanAttributeSchema(),
+				Elem:     &schema.Resource{},
 			},
 			"integer": {
 				Type:     schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
-				Elem:     integerAttributeSchema(),
+				Elem:     &schema.Resource{},
 			},
 			"applies_to": {
 				Type:     schema.TypeList,
@@ -91,27 +91,8 @@ func enumAttributeSchema() *schema.Resource {
 				Required:     true,
 				MinItems:     1,
 				Elem:         enumChoiceSchema(),
-				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 		},
-	}
-}
-
-func freetextAttributeSchema() *schema.Resource {
-	return &schema.Resource{
-		Schema: map[string]*schema.Schema{},
-	}
-}
-
-func booleanAttributeSchema() *schema.Resource {
-	return &schema.Resource{
-		Schema: map[string]*schema.Schema{},
-	}
-}
-
-func integerAttributeSchema() *schema.Resource {
-	return &schema.Resource{
-		Schema: map[string]*schema.Schema{},
 	}
 }
 

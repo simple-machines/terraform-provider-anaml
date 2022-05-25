@@ -8,7 +8,7 @@ import (
 )
 
 func (c *Client) GetAttributeRestriction(attributeID string) (*AttributeRestriction, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/attribute/%s", c.HostURL, attributeID), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/allowed-attribute/%s", c.HostURL, attributeID), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +36,7 @@ func (c *Client) CreateAttributeRestriction(creationRequest AttributeRestriction
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/attribute", c.HostURL), strings.NewReader(string(rb)))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/allowed-attribute", c.HostURL), strings.NewReader(string(rb)))
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +62,7 @@ func (c *Client) UpdateAttributeRestriction(attributeID string, creationRequest 
 		return err
 	}
 
-	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/attribute/%s", c.HostURL, attributeID), strings.NewReader(string(rb)))
+	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/allowed-attribute/%s", c.HostURL, attributeID), strings.NewReader(string(rb)))
 	if err != nil {
 		return err
 	}
@@ -76,7 +76,7 @@ func (c *Client) UpdateAttributeRestriction(attributeID string, creationRequest 
 }
 
 func (c *Client) DeleteAttributeRestriction(attributeID string) error {
-	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/attribute/%s", c.HostURL, attributeID), nil)
+	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/allowed-attribute/%s", c.HostURL, attributeID), nil)
 	if err != nil {
 		return err
 	}
