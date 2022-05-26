@@ -85,6 +85,12 @@ func ResourceEventStore() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validateAnamlIdentifier(),
 			},
+			"access_rules": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Access rules to attach to the object",
+				Elem:        accessRuleSchema(),
+			},
 			"labels": {
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -196,6 +202,9 @@ func resourceEventStoreRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("cluster", strconv.Itoa(entity.Cluster)); err != nil {
 		return err
 	}
+	if err := d.Set("access_rules", flattenAccessRules(entity.AccessRules)); err != nil {
+		return err
+	}
 	if entity.Schedule.Type == "daily" {
 		dailySchedules, err := parseDailySchedule(entity.Schedule)
 		if err != nil {
@@ -273,6 +282,11 @@ func resourceEventStoreDelete(d *schema.ResourceData, m interface{}) error {
 }
 
 func buildEventStore(d *schema.ResourceData) (*EventStore, error) {
+	accessRules, err := expandAccessRules(d.Get("access_rules").([]interface{}))
+	if err != nil {
+		return nil, err
+	}
+
 	array, ok := d.Get("property").([]interface{})
 	if !ok {
 		return nil, fmt.Errorf("Kafka Properties Value is not an array.")
@@ -335,6 +349,7 @@ func buildEventStore(d *schema.ResourceData) (*EventStore, error) {
 		Attributes:        expandAttributes(d),
 		Cluster:           cluster,
 		Schedule:          schedule,
+		AccessRules:       accessRules,
 	}
 	return &entity, err
 }
