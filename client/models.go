@@ -148,6 +148,7 @@ type FeatureStore struct {
 	ID            int                    `json:"id,omitempty"`
 	Name          string                 `json:"name"`
 	Description   string                 `json:"description"`
+	Type          string                 `json:"adt_type"`
 	FeatureSet    int                    `json:"featureSet"`
 	Enabled       bool                   `json:"enabled"`
 	Schedule      *Schedule              `json:"schedule"`
@@ -158,6 +159,7 @@ type FeatureStore struct {
 	Population    *int                   `json:"entityPopulation,omitempty"`
 	StartDate     *string                `json:"startDate,omitempty"`
 	EndDate       *string                `json:"endDate,omitempty"`
+	Table         *int                   `json:"table,omitempty"`
 	Labels        []string               `json:"labels"`
 	Attributes    []Attribute            `json:"attributes"`
 	VersionTarget *VersionTarget         `json:"versionTarget,omitempty"`
@@ -459,6 +461,7 @@ type EventStore struct {
 	GlacierBaseURI    string                            `json:"glacierBaseURI"`
 	Schedule          *Schedule                         `json:"schedule"`
 	Cluster           int                               `json:"cluster"`
+	AccessRules       []AccessRule                      `json:"accessRules"`
 }
 
 func validRoles() []string {
