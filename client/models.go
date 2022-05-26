@@ -5,7 +5,9 @@ type Entity struct {
 	ID            int         `json:"id,omitempty"`
 	Name          string      `json:"name"`
 	Description   string      `json:"description"`
-	DefaultColumn string      `json:"defaultColumn"`
+	Type          string      `json:"adt_type"`
+	DefaultColumn *string     `json:"defaultColumn,omitempty"`
+	Entities      *[]int      `json:"entities,omitempty"`
 	Labels        []string    `json:"labels"`
 	Attributes    []Attribute `json:"attributes"`
 }

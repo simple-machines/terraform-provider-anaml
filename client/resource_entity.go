@@ -46,8 +46,19 @@ func ResourceEntity() *schema.Resource {
 				Required: true,
 			},
 			"default_column": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{"default_column", "entities"},
+			},
+			"entities": {
+				Type:        schema.TypeList,
+				Description: "Entities from which this composite entity is derived",
+				Optional:    true,
+
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validateAnamlIdentifier(),
+				},
 			},
 			"labels": {
 				Type:        schema.TypeList,
@@ -87,8 +98,21 @@ func resourceEntityRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("description", entity.Description); err != nil {
 		return err
 	}
-	if err := d.Set("default_column", entity.DefaultColumn); err != nil {
-		return err
+	if entity.DefaultColumn != nil {
+		if err := d.Set("default_column", entity.DefaultColumn); err != nil {
+			return err
+		}
+		if err := d.Set("entities", nil); err != nil {
+			return err
+		}
+	}
+	if entity.Entities != nil {
+		if err := d.Set("default_column", nil); err != nil {
+			return err
+		}
+		if err := d.Set("entities", identifierList(*entity.Entities)); err != nil {
+			return err
+		}
 	}
 	if err := d.Set("labels", entity.Labels); err != nil {
 		return err
@@ -99,16 +123,29 @@ func resourceEntityRead(d *schema.ResourceData, m interface{}) error {
 	return err
 }
 
-func resourceEntityCreate(d *schema.ResourceData, m interface{}) error {
-	c := m.(*Client)
+func buildEntity(d *schema.ResourceData) Entity {
 	entity := Entity{
-		Name:          d.Get("name").(string),
-		Description:   d.Get("description").(string),
-		DefaultColumn: d.Get("default_column").(string),
-		Labels:        expandStringList(d.Get("labels").([]interface{})),
-		Attributes:    expandAttributes(d),
+		Name:        d.Get("name").(string),
+		Description: d.Get("description").(string),
+		Labels:      expandStringList(d.Get("labels").([]interface{})),
+		Attributes:  expandAttributes(d),
 	}
 
+	if default_column := d.Get("default_column").(string); default_column != "" {
+		entity.Type = "base"
+		entity.DefaultColumn = &default_column
+	} else {
+		entities := expandIdentifierList(d.Get("entities").([]interface{}))
+		entity.Type = "composite"
+		entity.Entities = &entities
+	}
+
+	return entity
+}
+
+func resourceEntityCreate(d *schema.ResourceData, m interface{}) error {
+	c := m.(*Client)
+	entity := buildEntity(d)
 	e, err := c.CreateEntity(entity)
 	if err != nil {
 		return err
@@ -121,14 +158,7 @@ func resourceEntityCreate(d *schema.ResourceData, m interface{}) error {
 func resourceEntityUpdate(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
 	entityID := d.Id()
-	entity := Entity{
-		Name:          d.Get("name").(string),
-		Description:   d.Get("description").(string),
-		DefaultColumn: d.Get("default_column").(string),
-		Labels:        expandStringList(d.Get("labels").([]interface{})),
-		Attributes:    expandAttributes(d),
-	}
-
+	entity := buildEntity(d)
 	err := c.UpdateEntity(entityID, entity)
 	if err != nil {
 		return err
