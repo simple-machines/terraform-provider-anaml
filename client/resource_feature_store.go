@@ -224,29 +224,29 @@ func resourceFeatureStoreRead(d *schema.ResourceData, m interface{}) error {
 	}
 
 	if FeatureStore.Type == "batch" {
-        if FeatureStore.StartDate != nil {
-            if err := d.Set("start_date", *FeatureStore.StartDate); err != nil {
-                return err
-            }
-        }
-        if FeatureStore.RunDateOffset != nil {
-            if err := d.Set("run_date_offset", *FeatureStore.RunDateOffset); err != nil {
-                return err
-            }
-        }
-        if FeatureStore.EndDate != nil {
-            if err := d.Set("end_date", *FeatureStore.EndDate); err != nil {
-                return err
-            }
-        }
+		if FeatureStore.StartDate != nil {
+			if err := d.Set("start_date", *FeatureStore.StartDate); err != nil {
+				return err
+			}
+		}
+		if FeatureStore.RunDateOffset != nil {
+			if err := d.Set("run_date_offset", *FeatureStore.RunDateOffset); err != nil {
+				return err
+			}
+		}
+		if FeatureStore.EndDate != nil {
+			if err := d.Set("end_date", *FeatureStore.EndDate); err != nil {
+				return err
+			}
+		}
 	}
 	if FeatureStore.Type == "streaming" {
-	    if FeatureStore.Table == nil {
-	        return errors.New("Required field is missing for streaming feature store: table")
-	    }
-        if err := d.Set("table", *FeatureStore.Table); err != nil {
-            return err
-        }
+		if FeatureStore.Table == nil {
+			return errors.New("Required field is missing for streaming feature store: table")
+		}
+		if err := d.Set("table", *FeatureStore.Table); err != nil {
+			return err
+		}
 	}
 
 	if FeatureStore.Principal != nil {
@@ -434,15 +434,15 @@ func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
 		VersionTarget: versionTarget,
 	}
 
-    table := getNullableInt(d, "table")
+	table := getNullableInt(d, "table")
 	if table != nil {
-	    featureStore.Type = "streaming"
-	    featureStore.Table = table
+		featureStore.Type = "streaming"
+		featureStore.Table = table
 	} else {
-	    featureStore.Type = "batch"
+		featureStore.Type = "batch"
 		featureStore.RunDateOffset = getNullableInt(d, "run_date_offset")
-    	featureStore.StartDate = getNullableString(d, "start_date")
-    	featureStore.EndDate = getNullableString(d, "end_date")
+		featureStore.StartDate = getNullableString(d, "start_date")
+		featureStore.EndDate = getNullableString(d, "end_date")
 	}
 
 	return &featureStore, nil

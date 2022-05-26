@@ -349,7 +349,7 @@ func buildEventStore(d *schema.ResourceData) (*EventStore, error) {
 		Attributes:        expandAttributes(d),
 		Cluster:           cluster,
 		Schedule:          schedule,
-        AccessRules:       accessRules,
+		AccessRules:       accessRules,
 	}
 	return &entity, err
 }
