@@ -56,8 +56,8 @@ func ResourceFeatureStore() *schema.Resource {
 				Optional: true,
 			},
 			"table": {
-				Type:     schema.TypeInt,
-				Optional: true,
+				Type:          schema.TypeInt,
+				Optional:      true,
 				ConflictsWith: []string{"run_date_offset", "start_date", "end_date"},
 			},
 			"feature_set": {
@@ -72,7 +72,13 @@ func ResourceFeatureStore() *schema.Resource {
 			},
 			"enabled": {
 				Type:     schema.TypeBool,
-				Required: true,
+				Optional: true,
+				Default:  true,
+			},
+			"include_metadata": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  true,
 			},
 			"daily_schedule": {
 				Type:          schema.TypeList,
@@ -175,6 +181,13 @@ func folderDestinationSchema() *schema.Resource {
 				Type:     schema.TypeBool,
 				Required: true,
 			},
+			"save_mode": {
+				Type:     schema.TypeString,
+				Required: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"overwrite", "ignore", "append", "errorifexists",
+				}, true),
+			},
 		},
 	}
 }
@@ -187,6 +200,13 @@ func tableDestinationSchema() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
+			"save_mode": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"overwrite", "ignore", "append", "errorifexists",
+				}, true),
+			},
 		},
 	}
 }
@@ -198,6 +218,13 @@ func topicDestinationSchema() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+			"format": {
+				Type:     schema.TypeString,
+				Required: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"json", "avro",
+				}, true),
 			},
 		},
 	}
@@ -264,6 +291,9 @@ func resourceFeatureStoreRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 	if err := d.Set("enabled", FeatureStore.Enabled); err != nil {
+		return err
+	}
+	if err := d.Set("include_metadata", FeatureStore.IncludeMetadata); err != nil {
 		return err
 	}
 	if err := d.Set("destination", destinations); err != nil {
@@ -420,18 +450,19 @@ func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
 	}
 
 	featureStore := FeatureStore{
-		Name:          d.Get("name").(string),
-		Description:   d.Get("description").(string),
-		FeatureSet:    featureSet,
-		Principal:     principal,
-		Enabled:       d.Get("enabled").(bool),
-		Destinations:  destinations,
-		Cluster:       cluster,
-		Population:    population,
-		Schedule:      schedule,
-		Labels:        expandStringList(d.Get("labels").([]interface{})),
-		Attributes:    expandAttributes(d),
-		VersionTarget: versionTarget,
+		Name:            d.Get("name").(string),
+		Description:     d.Get("description").(string),
+		FeatureSet:      featureSet,
+		Principal:       principal,
+		Enabled:         d.Get("enabled").(bool),
+		Destinations:    destinations,
+		Cluster:         cluster,
+		Population:      population,
+		Schedule:        schedule,
+		Labels:          expandStringList(d.Get("labels").([]interface{})),
+		Attributes:      expandAttributes(d),
+		IncludeMetadata: d.Get("include_metadata").(bool),
+		VersionTarget:   versionTarget,
 	}
 
 	table := getNullableInt(d, "table")
@@ -478,6 +509,8 @@ func expandDestinationReferences(d *schema.ResourceData) ([]DestinationReference
 				parsed.Folder = path
 				enabled := folder["partitioning_enabled"].(bool)
 				parsed.FolderPartitioningEnabled = &enabled
+				mode := folder["save_mode"].(string)
+				parsed.Mode = mode
 			} else {
 				return nil, fmt.Errorf("error casting table.path %i", folder["path"])
 			}
@@ -487,6 +520,9 @@ func expandDestinationReferences(d *schema.ResourceData) ([]DestinationReference
 			if tableName, ok := table["name"].(string); ok {
 				parsed.Type = "table"
 				parsed.TableName = tableName
+				if mode, _ := table["save_mode"].(string); mode != "" {
+					parsed.Mode = mode
+				}
 			} else {
 				return nil, fmt.Errorf("error casting table.name %i", table["name"])
 			}
@@ -496,6 +532,9 @@ func expandDestinationReferences(d *schema.ResourceData) ([]DestinationReference
 			if topicName, ok := topic["name"].(string); ok {
 				parsed.Type = "topic"
 				parsed.Topic = topicName
+				parsed.Format = &KafkaFormat{
+					Type: topic["format"].(string),
+				}
 			} else {
 				return nil, fmt.Errorf("error casting topic.name %i", topic["name"])
 			}
@@ -518,6 +557,7 @@ func flattenDestinationReferences(destinations []DestinationReference) ([]map[st
 			folder := make(map[string]interface{})
 			folder["path"] = destination.Folder
 			folder["partitioning_enabled"] = destination.FolderPartitioningEnabled
+			folder["save_mode"] = destination.Mode
 
 			folders := make([]map[string]interface{}, 0, 1)
 			folders = append(folders, folder)
@@ -527,6 +567,7 @@ func flattenDestinationReferences(destinations []DestinationReference) ([]map[st
 		if destination.Type == "table" {
 			table := make(map[string]interface{})
 			table["name"] = destination.TableName
+			table["save_mode"] = destination.Mode
 
 			tables := make([]map[string]interface{}, 0, 1)
 			tables = append(tables, table)
@@ -536,6 +577,7 @@ func flattenDestinationReferences(destinations []DestinationReference) ([]map[st
 		if destination.Type == "topic" {
 			topic := make(map[string]interface{})
 			topic["name"] = destination.Topic
+			topic["format"] = destination.Format.Type
 
 			topics := make([]map[string]interface{}, 0, 1)
 			topics = append(topics, topic)

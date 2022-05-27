@@ -145,24 +145,25 @@ type VersionTarget struct {
 
 // FeatureStore ...
 type FeatureStore struct {
-	ID            int                    `json:"id,omitempty"`
-	Name          string                 `json:"name"`
-	Description   string                 `json:"description"`
-	Type          string                 `json:"adt_type"`
-	FeatureSet    int                    `json:"featureSet"`
-	Enabled       bool                   `json:"enabled"`
-	Schedule      *Schedule              `json:"schedule"`
-	Destinations  []DestinationReference `json:"destinations"`
-	Cluster       int                    `json:"cluster"`
-	RunDateOffset *int                   `json:"runDateOffset,omitempty"`
-	Principal     *int                   `json:"principal,omitempty"`
-	Population    *int                   `json:"entityPopulation,omitempty"`
-	StartDate     *string                `json:"startDate,omitempty"`
-	EndDate       *string                `json:"endDate,omitempty"`
-	Table         *int                   `json:"table,omitempty"`
-	Labels        []string               `json:"labels"`
-	Attributes    []Attribute            `json:"attributes"`
-	VersionTarget *VersionTarget         `json:"versionTarget,omitempty"`
+	ID              int                    `json:"id,omitempty"`
+	Name            string                 `json:"name"`
+	Description     string                 `json:"description"`
+	Type            string                 `json:"adt_type"`
+	FeatureSet      int                    `json:"featureSet"`
+	Enabled         bool                   `json:"enabled"`
+	Schedule        *Schedule              `json:"schedule"`
+	Destinations    []DestinationReference `json:"destinations"`
+	Cluster         int                    `json:"cluster"`
+	RunDateOffset   *int                   `json:"runDateOffset,omitempty"`
+	Principal       *int                   `json:"principal,omitempty"`
+	Population      *int                   `json:"entityPopulation,omitempty"`
+	StartDate       *string                `json:"startDate,omitempty"`
+	EndDate         *string                `json:"endDate,omitempty"`
+	Table           *int                   `json:"table,omitempty"`
+	Labels          []string               `json:"labels"`
+	Attributes      []Attribute            `json:"attributes"`
+	IncludeMetadata bool                   `json:"includeMetadata"`
+	VersionTarget   *VersionTarget         `json:"versionTarget,omitempty"`
 }
 
 type Schedule struct {
@@ -228,6 +229,10 @@ type FileFormat struct {
 	IgnoreTrailingWhiteSpace *bool   `json:"ignoreTrailingWhiteSpace,omitempty"`
 }
 
+type KafkaFormat struct {
+	Type string `json:"adt_type"`
+}
+
 // SourceReference ...
 type SourceReference struct {
 	Type      string `json:"adt_type"`
@@ -285,12 +290,14 @@ type GCSStagingArea struct {
 
 // DestinationReference ...
 type DestinationReference struct {
-	Type                      string `json:"adt_type"`
-	DestinationID             int    `json:"destinationId"`
-	Folder                    string `json:"folder,omitempty"`
-	FolderPartitioningEnabled *bool  `json:"folderPartitioningEnabled,omitempty"`
-	TableName                 string `json:"tableName,omitempty"`
-	Topic                     string `json:"topic,omitempty"`
+	Type                      string       `json:"adt_type"`
+	DestinationID             int          `json:"destinationId"`
+	Folder                    string       `json:"folder,omitempty"`
+	FolderPartitioningEnabled *bool        `json:"folderPartitioningEnabled,omitempty"`
+	TableName                 string       `json:"tableName,omitempty"`
+	Topic                     string       `json:"topic,omitempty"`
+	Format                    *KafkaFormat `json:"format,omitempty"`
+	Mode                      string       `json:"saveMode,omitempty"`
 }
 
 // Cluster ...
