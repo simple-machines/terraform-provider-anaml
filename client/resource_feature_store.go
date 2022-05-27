@@ -56,8 +56,8 @@ func ResourceFeatureStore() *schema.Resource {
 				Optional: true,
 			},
 			"table": {
-				Type:     schema.TypeInt,
-				Optional: true,
+				Type:          schema.TypeInt,
+				Optional:      true,
 				ConflictsWith: []string{"run_date_offset", "start_date", "end_date"},
 			},
 			"feature_set": {
@@ -72,7 +72,13 @@ func ResourceFeatureStore() *schema.Resource {
 			},
 			"enabled": {
 				Type:     schema.TypeBool,
-				Required: true,
+				Optional: true,
+				Default:  true,
+			},
+			"include_metadata": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  true,
 			},
 			"daily_schedule": {
 				Type:          schema.TypeList,
@@ -287,6 +293,9 @@ func resourceFeatureStoreRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("enabled", FeatureStore.Enabled); err != nil {
 		return err
 	}
+	if err := d.Set("include_metadata", FeatureStore.IncludeMetadata); err != nil {
+		return err
+	}
 	if err := d.Set("destination", destinations); err != nil {
 		return err
 	}
@@ -441,18 +450,19 @@ func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
 	}
 
 	featureStore := FeatureStore{
-		Name:          d.Get("name").(string),
-		Description:   d.Get("description").(string),
-		FeatureSet:    featureSet,
-		Principal:     principal,
-		Enabled:       d.Get("enabled").(bool),
-		Destinations:  destinations,
-		Cluster:       cluster,
-		Population:    population,
-		Schedule:      schedule,
-		Labels:        expandStringList(d.Get("labels").([]interface{})),
-		Attributes:    expandAttributes(d),
-		VersionTarget: versionTarget,
+		Name:            d.Get("name").(string),
+		Description:     d.Get("description").(string),
+		FeatureSet:      featureSet,
+		Principal:       principal,
+		Enabled:         d.Get("enabled").(bool),
+		Destinations:    destinations,
+		Cluster:         cluster,
+		Population:      population,
+		Schedule:        schedule,
+		Labels:          expandStringList(d.Get("labels").([]interface{})),
+		Attributes:      expandAttributes(d),
+		IncludeMetadata: d.Get("include_metadata").(bool),
+		VersionTarget:   versionTarget,
 	}
 
 	table := getNullableInt(d, "table")
