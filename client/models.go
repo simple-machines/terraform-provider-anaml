@@ -462,13 +462,13 @@ type AttributeTarget struct {
 }
 
 type EnumAttributeChoice struct {
-    Value    string                 `json:"value"`
-    Display  *EnumAttributeDisplay  `json:"display,omitempty"`
+	Value    string                 `json:"value"`
+	Display  *EnumAttributeDisplay  `json:"display,omitempty"`
 }
 
 type EnumAttributeDisplay struct {
-    Emoji   string  `json:"emoji"`
-    Colour  string  `json:"colour"`
+	Emoji   string  `json:"emoji,omitempty"`
+	Colour  string  `json:"colour,omitempty"`
 }
 
 // EventDescription ..

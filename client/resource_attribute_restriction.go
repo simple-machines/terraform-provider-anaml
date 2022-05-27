@@ -86,7 +86,7 @@ func ResourceAttributeRestriction() *schema.Resource {
 func enumAttributeSchema() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
-			"choices": {
+			"choice": {
 				Type:         schema.TypeList,
 				Required:     true,
 				MinItems:     1,
@@ -136,7 +136,7 @@ func resourceAttributeRestrictionRead(d *schema.ResourceData, m interface{}) err
 		return err
 	}
 
-	if attribute.Type == "enum" {
+	if attribute.Type == "enumattribute" {
 		e, err := parseEnumAttribute(attribute)
 		if err != nil {
 			return err
@@ -146,7 +146,7 @@ func resourceAttributeRestrictionRead(d *schema.ResourceData, m interface{}) err
 		}
 	}
 
-	if attribute.Type == "freetext" {
+	if attribute.Type == "freetextattribute" {
 		ft, err := parseNonEnumAttribute(attribute)
 		if err != nil {
 			return err
@@ -156,7 +156,7 @@ func resourceAttributeRestrictionRead(d *schema.ResourceData, m interface{}) err
 		}
 	}
 
-	if attribute.Type == "boolean" {
+	if attribute.Type == "booleanattribute" {
 		b, err := parseNonEnumAttribute(attribute)
 		if err != nil {
 			return err
@@ -166,7 +166,7 @@ func resourceAttributeRestrictionRead(d *schema.ResourceData, m interface{}) err
 		}
 	}
 
-	if attribute.Type == "integer" {
+	if attribute.Type == "integerattribute" {
 		i, err := parseNonEnumAttribute(attribute)
 		if err != nil {
 			return err
@@ -227,18 +227,18 @@ func resourceAttributeRestrictionDelete(d *schema.ResourceData, m interface{}) e
 }
 
 func composeAttribute(d *schema.ResourceData) (*AttributeRestriction, error) {
-    appliesTo := mapTargetsToBackend(expandStringList(d.Get("applies_to").([]interface{})))
+	appliesTo := mapTargetsToBackend(expandStringList(d.Get("applies_to").([]interface{})))
 
 	if e, _ := expandSingleMap(d.Get("enum")); e != nil {
-        choices, err := expandEnumChoices(d.Get("choices").([]interface{}))
-        if err != nil {
-            return nil, err
-        }
+		choices, err := expandEnumChoices(e["choice"].([]interface{}))
+		if err != nil {
+			return nil, err
+		}
 
 		attribute := AttributeRestriction{
 			Key:         d.Get("key").(string),
 			Description: d.Get("description").(string),
-			Type:        "enum",
+			Type:        "enumattribute",
 			Choices:     &choices,
 			AppliesTo:   appliesTo,
 		}
@@ -249,7 +249,7 @@ func composeAttribute(d *schema.ResourceData) (*AttributeRestriction, error) {
 		attribute := AttributeRestriction{
 			Key:         d.Get("key").(string),
 			Description: d.Get("description").(string),
-			Type:        "freetext",
+			Type:        "freetextattribute",
 			AppliesTo:   appliesTo,
 		}
 		return &attribute, nil
@@ -259,7 +259,7 @@ func composeAttribute(d *schema.ResourceData) (*AttributeRestriction, error) {
 		attribute := AttributeRestriction{
 			Key:         d.Get("key").(string),
 			Description: d.Get("description").(string),
-			Type:        "boolean",
+			Type:        "booleanattribute",
 			AppliesTo:   appliesTo,
 		}
 		return &attribute, nil
@@ -269,7 +269,7 @@ func composeAttribute(d *schema.ResourceData) (*AttributeRestriction, error) {
 		attribute := AttributeRestriction{
 			Key:         d.Get("key").(string),
 			Description: d.Get("description").(string),
-			Type:        "integer",
+			Type:        "integerattribute",
 			AppliesTo:   appliesTo,
 		}
 		return &attribute, nil
@@ -284,8 +284,8 @@ func parseEnumAttribute(attribute *AttributeRestriction) ([]map[string]interface
 	}
 
 	e := make(map[string]interface{})
-    choices := flattenEnumChoices(*attribute.Choices)
-	e["choices"] = choices
+	choices := flattenEnumChoices(*attribute.Choices)
+	e["choice"] = choices
 
 	es := make([]map[string]interface{}, 0, 1)
 	es = append(es, e)
@@ -364,28 +364,34 @@ func expandEnumChoices(choices []interface{}) ([]EnumAttributeChoice, error) {
 	for _, choice := range choices {
 		val, _ := choice.(map[string]interface{})
 
-        var display EnumAttributeDisplay
-        display_emoji := ""
-        display_colour := ""
+		var parsed EnumAttributeChoice
+		var display EnumAttributeDisplay
+		display_emoji := ""
+		display_colour := ""
 
-        if de, ok := val["display_emoji"]; ok {
-            display_emoji = de.(string)
-        }
-        if dc, ok := val["display_colour"]; ok {
-            display_colour = dc.(string)
-        }
-
-        if display_emoji != "" || display_colour != "" {
-            display = EnumAttributeDisplay{
-                Emoji:   display_emoji,
-                Colour:  display_colour,
-            }
-        }
-
-		parsed := EnumAttributeChoice{
-			Value:    val["value"].(string),
-			Display:  &display,
+		if de, ok := val["display_emoji"]; ok {
+			display_emoji = de.(string)
 		}
+		if dc, ok := val["display_colour"]; ok {
+			display_colour = dc.(string)
+		}
+
+		if display_emoji != "" || display_colour != "" {
+			display = EnumAttributeDisplay{
+				Emoji:   display_emoji,
+				Colour:  display_colour,
+			}
+			parsed = EnumAttributeChoice{
+				Value:    val["value"].(string),
+				Display:  &display,
+			}
+		} else {
+			parsed = EnumAttributeChoice{
+				Value:    val["value"].(string),
+				Display:  nil,
+			}
+		}
+
 		res = append(res, parsed)
 	}
 
@@ -398,8 +404,8 @@ func flattenEnumChoices(choices []EnumAttributeChoice) []map[string]interface{} 
 		single := make(map[string]interface{})
 		single["value"] = choice.Value
 		if choice.Display != nil {
-		    single["display_emoji"] = choice.Display.Emoji
-		    single["display_colour"] = choice.Display.Colour
+			single["display_emoji"] = choice.Display.Emoji
+			single["display_colour"] = choice.Display.Colour
 		}
 		res = append(res, single)
 	}

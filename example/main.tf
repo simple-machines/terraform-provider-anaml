@@ -44,6 +44,21 @@ data "anaml-operations_destination" "online" {
   name = anaml-operations_destination.online.name
 }
 
+resource "anaml-operations_attribute_restriction" "country" {
+  key = "terraform_country"
+  description = "Applicable country for terraformed resources"
+  enum {
+    choice {
+      value = "australia"
+      display_emoji = "🇦🇺"
+      display_colour = "#00008B"
+    }
+    choice { value = "uk" }
+    choice { value = "america" }
+  }
+  applies_to = ["cluster", "destination", "entity", "feature", "feature_set", "feature_store", "feature_template", "source", "table"]
+}
+
 resource "anaml_entity" "household" {
   name           = "household"
   description    = "A household level view"
@@ -51,7 +66,7 @@ resource "anaml_entity" "household" {
 
   labels = []
   attribute {
-    key   = "country"
+    key   = anaml-operations_attribute_restriction.country.key
     value = "australia"
   }
 }
@@ -167,7 +182,7 @@ resource "anaml-operations_event_store" "basic" {
 
   labels = []
   attribute {
-    key   = "country"
+    key   = anaml-operations_attribute_restriction.country.key
     value = "australia"
   }
   cluster = data.anaml-operations_cluster.local.id
