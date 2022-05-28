@@ -279,6 +279,7 @@ type Destination struct {
 	Labels              []string                        `json:"labels"`
 	Attributes          []Attribute                     `json:"attributes"`
 	Warehouse           string                          `json:"warehouse,omitempty"`
+	AccessRules         []AccessRule                    `json:"accessRules"`
 }
 
 // GCSStagingArea ...
