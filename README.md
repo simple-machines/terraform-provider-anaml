@@ -109,7 +109,7 @@ provider when no exact version number is specified in the provider
 configuration, such as if no version number is specified, or if version
 constraints are specified instead.
 
-The Terraform providers are publshed to the public Terraform Registry.
+The Terraform providers are published to the public Terraform Registry.
 
 CI/CD configuration for publishing to the Terraform Registry is based on the
 documentation from the Terraform website on

@@ -68,7 +68,7 @@ func ResourceAttributeRestriction() *schema.Resource {
 				Elem:     &schema.Resource{},
 			},
 			"applies_to": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Required: true,
 				MinItems: 1,
 				Elem: &schema.Schema{
@@ -87,7 +87,7 @@ func enumAttributeSchema() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"choice": {
-				Type:         schema.TypeList,
+				Type:         schema.TypeSet,
 				Required:     true,
 				MinItems:     1,
 				Elem:         enumChoiceSchema(),
@@ -227,10 +227,10 @@ func resourceAttributeRestrictionDelete(d *schema.ResourceData, m interface{}) e
 }
 
 func composeAttribute(d *schema.ResourceData) (*AttributeRestriction, error) {
-	appliesTo := mapTargetsToBackend(expandStringList(d.Get("applies_to").([]interface{})))
+	appliesTo := mapTargetsToBackend(expandStringList(d.Get("applies_to").(*schema.Set).List()))
 
 	if e, _ := expandSingleMap(d.Get("enum")); e != nil {
-		choices, err := expandEnumChoices(e["choice"].([]interface{}))
+		choices, err := expandEnumChoices(e["choice"].(*schema.Set).List())
 		if err != nil {
 			return nil, err
 		}
