@@ -56,6 +56,7 @@ func Provider() *schema.Provider {
 			"anaml-operations_branch_protection":     anaml.ResourceBranchProtection(),
 			"anaml-operations_webhook":               anaml.ResourceWebhook(),
 			"anaml-operations_attribute_restriction": anaml.ResourceAttributeRestriction(),
+			"anaml-operations_label_restriction":     anaml.ResourceLabelRestriction(),
 		},
 
 		ConfigureFunc: providerConfigure,

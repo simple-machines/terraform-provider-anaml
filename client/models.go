@@ -447,6 +447,14 @@ type Attribute struct {
 	Value string `json:"value"`
 }
 
+// LabelRestriction ...
+type LabelRestriction struct {
+	ID      int      `json:"id,omitempty"`
+	Text    string   `json:"text"`
+	Emoji   *string  `json:"emoji,omitempty"`
+	Colour  *string  `json:"colour,omitempty"`
+}
+
 // AttributeRestriction ...
 type AttributeRestriction struct {
 	ID           int                     `json:"id,omitempty"`
