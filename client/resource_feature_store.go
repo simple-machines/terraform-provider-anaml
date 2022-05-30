@@ -350,6 +350,13 @@ func resourceFeatureStoreRead(d *schema.ResourceData, m interface{}) error {
 				return err
 			}
 		}
+	} else {
+		if err := d.Set("commit_target", nil); err != nil {
+			return err
+		}
+		if err := d.Set("branch_target", nil); err != nil {
+			return err
+		}
 	}
 
 	return err
