@@ -3,9 +3,12 @@ package anaml
 import (
 	"errors"
 	"strconv"
+	"context"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 )
 
 const attributeDescription = `# Attribute Restrictions
@@ -24,9 +27,9 @@ Multiple different types of attributes are supported:
 func ResourceAttributeRestriction() *schema.Resource {
 	return &schema.Resource{
 		Description: attributeDescription,
-		Create:      resourceAttributeRestrictionCreate,
-		Read:        resourceAttributeRestrictionRead,
-		Update:      resourceAttributeRestrictionUpdate,
+		CreateContext:      resourceAttributeRestrictionCreate,
+		ReadContext:        resourceAttributeRestrictionRead,
+		UpdateContext:      resourceAttributeRestrictionUpdate,
 		Delete:      resourceAttributeRestrictionDelete,
 		Importer:    &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -116,13 +119,13 @@ func enumChoiceSchema() *schema.Resource {
 	}
 }
 
-func resourceAttributeRestrictionRead(d *schema.ResourceData, m interface{}) error {
+func resourceAttributeRestrictionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 	attributeID := d.Id()
 
 	attribute, err := c.GetAttributeRestriction(attributeID)
 	if err != nil {
-		return err
+		return diag.Errorf("%s", err)
 	}
 	if attribute == nil {
 		d.SetId("")
@@ -130,85 +133,85 @@ func resourceAttributeRestrictionRead(d *schema.ResourceData, m interface{}) err
 	}
 
 	if err := d.Set("key", attribute.Key); err != nil {
-		return err
+		return diag.Errorf("%s", err)
 	}
 	if err := d.Set("description", attribute.Description); err != nil {
-		return err
+		return diag.Errorf("%s", err)
 	}
 
 	if attribute.Type == "enumattribute" {
-		e, err := parseEnumAttribute(attribute)
+		e, err := parseEnumAttribute(ctx, attribute)
 		if err != nil {
-			return err
+			return diag.Errorf("%s", err)
 		}
 		if err := d.Set("enum", e); err != nil {
-			return err
+			return diag.Errorf("%s", err)
 		}
 	}
 
 	if attribute.Type == "freetextattribute" {
 		ft, err := parseNonEnumAttribute(attribute)
 		if err != nil {
-			return err
+			return diag.Errorf("%s", err)
 		}
 		if err := d.Set("freetext", ft); err != nil {
-			return err
+			return diag.Errorf("%s", err)
 		}
 	}
 
 	if attribute.Type == "booleanattribute" {
 		b, err := parseNonEnumAttribute(attribute)
 		if err != nil {
-			return err
+			return diag.Errorf("%s", err)
 		}
 		if err := d.Set("boolean", b); err != nil {
-			return err
+			return diag.Errorf("%s", err)
 		}
 	}
 
 	if attribute.Type == "integerattribute" {
 		i, err := parseNonEnumAttribute(attribute)
 		if err != nil {
-			return err
+			return diag.Errorf("%s", err)
 		}
 		if err := d.Set("integer", i); err != nil {
-			return err
+			return diag.Errorf("%s", err)
 		}
 	}
 
 	if err := d.Set("applies_to", mapTargetsToFrontend(attribute.AppliesTo)); err != nil {
-		return err
+		return diag.Errorf("%s", err)
 	}
-	return err
+	return nil
 }
 
-func resourceAttributeRestrictionCreate(d *schema.ResourceData, m interface{}) error {
+func resourceAttributeRestrictionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
-	attribute, err := composeAttribute(d)
+	attribute, err := composeAttribute(ctx, d)
 	if attribute == nil || err != nil {
-		return err
+		return diag.Errorf("%s", err)
 	}
 
 	a, err := c.CreateAttributeRestriction(*attribute)
 	if err != nil {
-		return err
+		return diag.Errorf("%s", err)
 	}
 
 	d.SetId(strconv.Itoa(a.ID))
-	return err
+	return nil
 }
 
-func resourceAttributeRestrictionUpdate(d *schema.ResourceData, m interface{}) error {
+func resourceAttributeRestrictionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 	attributeID := d.Id()
-	attribute, err := composeAttribute(d)
+	attribute, err := composeAttribute(ctx, d)
 	if attribute == nil || err != nil {
-		return err
+		return diag.Errorf("%s", err)
 	}
 
 	err = c.UpdateAttributeRestriction(attributeID, *attribute)
 	if err != nil {
-		return err
+		return diag.Errorf("%s", err)
 	}
 
 	return nil
@@ -226,11 +229,11 @@ func resourceAttributeRestrictionDelete(d *schema.ResourceData, m interface{}) e
 	return nil
 }
 
-func composeAttribute(d *schema.ResourceData) (*AttributeRestriction, error) {
+func composeAttribute(ctx context.Context, d *schema.ResourceData) (*AttributeRestriction, error) {
 	appliesTo := mapTargetsToBackend(expandStringList(d.Get("applies_to").(*schema.Set).List()))
 
 	if e, _ := expandSingleMap(d.Get("enum")); e != nil {
-		choices, err := expandEnumChoices(e["choice"].(*schema.Set).List())
+		choices, err := expandEnumChoices(ctx, e["choice"].(*schema.Set).List())
 		if err != nil {
 			return nil, err
 		}
@@ -278,13 +281,13 @@ func composeAttribute(d *schema.ResourceData) (*AttributeRestriction, error) {
 	return nil, errors.New("Invalid attribute type")
 }
 
-func parseEnumAttribute(attribute *AttributeRestriction) ([]map[string]interface{}, error) {
+func parseEnumAttribute(ctx context.Context, attribute *AttributeRestriction) ([]map[string]interface{}, error) {
 	if attribute == nil {
 		return nil, errors.New("Attribute Restriction is null")
 	}
 
 	e := make(map[string]interface{})
-	choices := flattenEnumChoices(*attribute.Choices)
+	choices := flattenEnumChoices(ctx, *attribute.Choices)
 	e["choice"] = choices
 
 	es := make([]map[string]interface{}, 0, 1)
@@ -358,7 +361,7 @@ func mapTargetsToBackend(frontend []string) []AttributeTarget {
 	return vs
 }
 
-func expandEnumChoices(choices []interface{}) ([]EnumAttributeChoice, error) {
+func expandEnumChoices(ctx context.Context, choices []interface{}) ([]EnumAttributeChoice, error) {
 	res := make([]EnumAttributeChoice, 0, len(choices))
 
 	for _, choice := range choices {
@@ -377,6 +380,11 @@ func expandEnumChoices(choices []interface{}) ([]EnumAttributeChoice, error) {
 		}
 
 		if display_emoji != "" || display_colour != "" {
+		    tflog.Warn(ctx, "FINDME 1", map[string]interface{}{
+		        "value": val["value"].(string),
+		        "display_emoji": display_emoji,
+		        "display_colour": display_colour,
+		    })
 			display = EnumAttributeDisplay{
 				Emoji:   display_emoji,
 				Colour:  display_colour,
@@ -386,6 +394,11 @@ func expandEnumChoices(choices []interface{}) ([]EnumAttributeChoice, error) {
 				Display:  &display,
 			}
 		} else {
+		    tflog.Warn(ctx, "FINDME 1", map[string]interface{}{
+		        "value": val["value"].(string),
+		        "display_emoji": display_emoji,
+		        "display_colour": display_colour,
+		    })
 			parsed = EnumAttributeChoice{
 				Value:    val["value"].(string),
 				Display:  nil,
@@ -398,7 +411,7 @@ func expandEnumChoices(choices []interface{}) ([]EnumAttributeChoice, error) {
 	return res, nil
 }
 
-func flattenEnumChoices(choices []EnumAttributeChoice) []map[string]interface{} {
+func flattenEnumChoices(ctx context.Context, choices []EnumAttributeChoice) []map[string]interface{} {
 	res := make([]map[string]interface{}, 0, len(choices))
 	for _, choice := range choices {
 		single := make(map[string]interface{})
@@ -407,6 +420,10 @@ func flattenEnumChoices(choices []EnumAttributeChoice) []map[string]interface{} 
 			single["display_emoji"] = choice.Display.Emoji
 			single["display_colour"] = choice.Display.Colour
 		}
+        tflog.Warn(ctx, "FINDME 2", map[string]interface{}{
+            "value": choice.Value,
+            "display": choice.Display,
+        })
 		res = append(res, single)
 	}
 	return res
