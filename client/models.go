@@ -62,9 +62,10 @@ type Table struct {
 
 // EventWindow ...
 type EventWindow struct {
-	Type string `json:"adt_type"`
-	Days int    `json:"days,omitempty"`
-	Rows int    `json:"rows,omitempty"`
+	Type   string `json:"adt_type"`
+	Days   int    `json:"days,omitempty"`
+	Months int    `json:"months,omitempty"`
+	Rows   int    `json:"rows,omitempty"`
 }
 
 // SQLExpression ...

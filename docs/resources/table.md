@@ -6,10 +6,10 @@ description: |-
   Tables
   A Table represents a source of data for feature generation. A Table can be one of three types:
   External TableView TablePivot Table
-  External tables
+  External Tables
   An External Table is the representation of a source table. Therefore you have to specify the
   underlying data sources that the table is stored in.
-  View tables
+  View Tables
   A View Table is a pre-defined query over one or more other Root Tables or View Tables.
   They function in the same way as views in relational databases. They can be used to transform
   or join tables using arbitary SQL.

@@ -63,14 +63,21 @@ func ResourceFeatureTemplate() *schema.Resource {
 				Type:          schema.TypeInt,
 				Optional:      true,
 				Description:   "An event window",
-				ConflictsWith: []string{"rows"},
+				ConflictsWith: []string{"rows", "months"},
+				ValidateFunc:  validation.IntAtLeast(1),
+			},
+			"months": {
+				Type:          schema.TypeInt,
+				Optional:      true,
+				Description:   "The event window description for the number of months to aggregate over.",
+				ConflictsWith: []string{"days", "rows"},
 				ValidateFunc:  validation.IntAtLeast(1),
 			},
 			"rows": {
 				Type:          schema.TypeInt,
 				Optional:      true,
 				Description:   "An event window",
-				ConflictsWith: []string{"days"},
+				ConflictsWith: []string{"days", "months"},
 				ValidateFunc:  validation.IntAtLeast(1),
 			},
 			"aggregation": {
@@ -174,21 +181,26 @@ func resourceFeatureTemplateRead(d *schema.ResourceData, m interface{}) error {
 			if err := d.Set("days", feature.Window.Days); err != nil {
 				return err
 			}
-			if err = d.Set("rows", nil); err != nil {
+		} else {
+			if err = d.Set("days", nil); err != nil {
 				return err
 			}
-		} else if feature.Window.Type == "rowwindow" {
+		}
+		if feature.Window.Type == "rowwindow" {
 			if err := d.Set("rows", feature.Window.Rows); err != nil {
 				return err
 			}
-			if err = d.Set("days", nil); err != nil {
+		} else {
+			if err := d.Set("rows", nil); err != nil {
 				return err
 			}
-		} else if feature.Window.Type == "openwindow" {
-			if err = d.Set("days", nil); err != nil {
+		}
+		if feature.Window.Type == "monthwindow" {
+			if err := d.Set("months", feature.Window.Months); err != nil {
 				return err
 			}
-			if err = d.Set("rows", nil); err != nil {
+		} else {
+			if err := d.Set("months", nil); err != nil {
 				return err
 			}
 		}

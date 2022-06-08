@@ -38,13 +38,14 @@ Features will be generated for a specific Entity. This means the aggregation wil
 
 ### Required
 
-- **default_column** (String)
 - **description** (String)
 - **name** (String)
 
 ### Optional
 
 - **attribute** (Block List) Attributes (key value pairs) to attach to the object (see [below for nested schema](#nestedblock--attribute))
+- **default_column** (String)
+- **entities** (List of String) Entities from which this composite entity is derived
 - **id** (String) The ID of this resource.
 - **labels** (List of String) Labels to attach to the object
 
