@@ -65,14 +65,21 @@ func ResourceFeature() *schema.Resource {
 				Type:          schema.TypeInt,
 				Optional:      true,
 				Description:   "The event window description for the number of days to aggregate over.",
-				ConflictsWith: []string{"rows"},
+				ConflictsWith: []string{"rows", "months"},
+				ValidateFunc:  validation.IntAtLeast(1),
+			},
+			"months": {
+				Type:          schema.TypeInt,
+				Optional:      true,
+				Description:   "The event window description for the number of months to aggregate over.",
+				ConflictsWith: []string{"days", "rows"},
 				ValidateFunc:  validation.IntAtLeast(1),
 			},
 			"rows": {
 				Type:          schema.TypeInt,
 				Optional:      true,
 				Description:   "The event window description for the number of rows (events) to aggregate over.",
-				ConflictsWith: []string{"days"},
+				ConflictsWith: []string{"days", "months"},
 				ValidateFunc:  validation.IntAtLeast(1),
 			},
 			"aggregation": {
@@ -193,21 +200,26 @@ func resourceFeatureRead(d *schema.ResourceData, m interface{}) error {
 			if err := d.Set("days", feature.Window.Days); err != nil {
 				return err
 			}
-			if err = d.Set("rows", nil); err != nil {
+		} else {
+			if err = d.Set("days", nil); err != nil {
 				return err
 			}
-		} else if feature.Window.Type == "rowwindow" {
+		}
+		if feature.Window.Type == "rowwindow" {
 			if err := d.Set("rows", feature.Window.Rows); err != nil {
 				return err
 			}
-			if err = d.Set("days", nil); err != nil {
+		} else {
+			if err := d.Set("rows", nil); err != nil {
 				return err
 			}
-		} else if feature.Window.Type == "openwindow" {
-			if err = d.Set("days", nil); err != nil {
+		}
+		if feature.Window.Type == "monthwindow" {
+			if err := d.Set("months", feature.Window.Months); err != nil {
 				return err
 			}
-			if err = d.Set("rows", nil); err != nil {
+		} else {
+			if err := d.Set("months", nil); err != nil {
 				return err
 			}
 		}
@@ -333,6 +345,9 @@ func buildFeature(d *schema.ResourceData) (*Feature, error) {
 		if d.Get("days").(int) != 0 {
 			window.Type = "daywindow"
 			window.Days = d.Get("days").(int)
+		} else if d.Get("months").(int) != 0 {
+			window.Type = "monthwindow"
+			window.Months = d.Get("months").(int)
 		} else if d.Get("rows").(int) != 0 {
 			window.Type = "rowwindow"
 			window.Rows = d.Get("rows").(int)

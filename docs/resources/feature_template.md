@@ -46,6 +46,7 @@ then that field will not be changed when the Feature Template is updated.
 - **filter** (String) An SQL column expression to filter with
 - **id** (String) The ID of this resource.
 - **labels** (List of String) Labels to attach to the object
+- **months** (Number) The event window description for the number of months to aggregate over.
 - **over** (List of String) A list of Features this row feature depends on
 - **post_aggregation** (String) An SQL expression to apply to the result of the feature aggregation.
 - **rows** (Number) An event window
