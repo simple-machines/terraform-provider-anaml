@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 const featureSetDescription = `# Feature Sets
@@ -70,6 +71,12 @@ func ResourceFeatureSet() *schema.Resource {
 				Description: "Attributes (key value pairs) to attach to the object",
 				Elem:        attributeSchema(),
 			},
+			"post_expression": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Expressions to apply to output post feature generation",
+				Elem:        postExpressionSchema(),
+			},
 		},
 	}
 }
@@ -103,6 +110,9 @@ func resourceFeatureSetRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 	if err := d.Set("attribute", flattenAttributes(FeatureSet.Attributes)); err != nil {
+		return err
+	}
+	if err := d.Set("post_expressions", flattenPostExpressions(FeatureSet.PostExpressions)); err != nil {
 		return err
 	}
 	return err
@@ -162,4 +172,72 @@ func resourceFeatureSetDelete(d *schema.ResourceData, m interface{}) error {
 	}
 
 	return nil
+}
+
+func postExpressionSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"filter": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem:     filterPostExpressionSchema(),
+			},
+			"mask": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem:     maskPostExpressionSchema(),
+			},
+		},
+	}
+}
+
+func filterPostExpressionSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"expression": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+		},
+	}
+}
+
+func maskPostExpressionSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"column": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+			"expression": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+		},
+	}
+}
+
+func flattenPostExpressions(postExpressions []PostExpression) []map[string]([]map[string]interface{}) {
+	res := make([]map[string]([]map[string]interface{}), 0, len(postExpressions))
+	for _, expr := range postExpressions {
+		single := make(map[string]([]map[string]interface{}))
+		if expr.Type == "filter" {
+			nest := make(map[string]interface{})
+			nest["expression"] = expr.Expression
+			single["filter"] = []map[string]interface{}{nest}
+		}
+		if expr.Type == "mask" {
+			nest := make(map[string]interface{})
+			nest["column"] = expr.Column
+			nest["expression"] = expr.Expression
+			single["mask"] = []map[string]interface{}{nest}
+		}
+		res = append(res, single)
+	}
+	return res
 }

@@ -126,15 +126,23 @@ type FeatureTemplate struct {
 	Attributes  []Attribute          `json:"attributes"`
 }
 
+// PostExpression ...
+type PostExpression struct {
+	Type       string `json:"adt_type"`
+	Expression string `json:"expression"`
+	Column     string `json:"column,omitempty"`
+}
+
 // FeatureSet ...
 type FeatureSet struct {
-	ID          int         `json:"id,omitempty"`
-	Name        string      `json:"name"`
-	Description string      `json:"description"`
-	EntityID    int         `json:"entity,omitempty"`
-	Features    []int       `json:"features"`
-	Labels      []string    `json:"labels"`
-	Attributes  []Attribute `json:"attributes"`
+	ID              int              `json:"id,omitempty"`
+	Name            string           `json:"name"`
+	Description     string           `json:"description"`
+	EntityID        int              `json:"entity,omitempty"`
+	Features        []int            `json:"features"`
+	Labels          []string         `json:"labels"`
+	Attributes      []Attribute      `json:"attributes"`
+	PostExpressions []PostExpression `json:"postExpressions"`
 }
 
 // VersionTarget ...

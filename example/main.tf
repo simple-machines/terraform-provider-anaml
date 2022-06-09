@@ -177,6 +177,18 @@ resource "anaml_feature_set" "household" {
   ]
 
   labels = [ anaml-operations_label_restriction.terraform.text, anaml-operations_label_restriction.important.text ]
+
+  post_expression {
+    filter {
+      expression = "id % 2 = 0"
+    }
+  }
+  post_expression {
+    mask {
+      column     = "id"
+      expression = "x -> coalesce(x, 'unknown')"
+    }
+  }
 }
 
 resource "anaml-operations_event_store" "basic" {
