@@ -53,8 +53,14 @@ func ResourceEventStore() *schema.Resource {
 			},
 			"connect_base_uri": {
 				Type:         schema.TypeString,
-				Required:     true,
+				Optional:     true,
 				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+			"batch_ingest_base_uri": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+				AtLeastOneOf: []string{"connect_base_uri", "batch_ingest_base_uri"},
 			},
 			"scatter_base_uri": {
 				Type:         schema.TypeString,
@@ -117,6 +123,11 @@ func ingestionSchema() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"streaming": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  true,
+			},
 			"entity_column": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -160,6 +171,7 @@ func resourceEventStoreRead(d *schema.ResourceData, m interface{}) error {
 	for k, v := range entity.Ingestions {
 		ingestion := make(map[string]interface{})
 		ingestion["topic"] = k
+		ingestion["streaming"] = v.HasStreaming
 		ingestion["entity_column"] = v.Entity
 		ingestion["timestamp_column"] = v.TimestampInfo.Column
 		ingestion["timezone"] = v.TimestampInfo.Zone
@@ -191,6 +203,9 @@ func resourceEventStoreRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 	if err := d.Set("connect_base_uri", entity.ConnectBaseURI); err != nil {
+		return err
+	}
+	if err := d.Set("batch_ingest_base_uri", entity.BatchIngestBaseURI); err != nil {
 		return err
 	}
 	if err := d.Set("scatter_base_uri", entity.ScatterBaseURI); err != nil {
@@ -309,12 +324,15 @@ func buildEventStore(d *schema.ResourceData) (*EventStore, error) {
 	rawIngest := d.Get("ingestion").([]interface{})
 	for _, v := range rawIngest {
 		vv := v.(map[string]interface{})
+		hasStreaming := vv["streaming"].(bool)
+
 		ingestions[vv["topic"].(string)] = EventStoreTopicColumns{
 			Entity: vv["entity_column"].(string),
 			TimestampInfo: &TimestampInfo{
 				Column: vv["timestamp_column"].(string),
 				Zone:   vv["timezone"].(string),
 			},
+			HasStreaming: hasStreaming,
 		}
 	}
 	cluster, err := strconv.Atoi(d.Get("cluster").(string))
@@ -336,20 +354,21 @@ func buildEventStore(d *schema.ResourceData) (*EventStore, error) {
 	}
 
 	entity := EventStore{
-		Name:              d.Get("name").(string),
-		Description:       d.Get("description").(string),
-		BootstrapServers:  d.Get("bootstrap_servers").(string),
-		SchemaRegistryURL: d.Get("schema_registry_url").(string),
-		KafkaProperties:   sensitives,
-		Ingestions:        ingestions,
-		ConnectBaseURI:    d.Get("connect_base_uri").(string),
-		ScatterBaseURI:    d.Get("scatter_base_uri").(string),
-		GlacierBaseURI:    d.Get("glacier_base_uri").(string),
-		Labels:            expandStringList(d.Get("labels").([]interface{})),
-		Attributes:        expandAttributes(d),
-		Cluster:           cluster,
-		Schedule:          schedule,
-		AccessRules:       accessRules,
+		Name:               d.Get("name").(string),
+		Description:        d.Get("description").(string),
+		BootstrapServers:   d.Get("bootstrap_servers").(string),
+		SchemaRegistryURL:  d.Get("schema_registry_url").(string),
+		KafkaProperties:    sensitives,
+		Ingestions:         ingestions,
+		ConnectBaseURI:     getNullableString(d, "connect_base_uri"),
+		BatchIngestBaseURI: getNullableString(d, "batch_ingest_base_uri"),
+		ScatterBaseURI:     d.Get("scatter_base_uri").(string),
+		GlacierBaseURI:     d.Get("glacier_base_uri").(string),
+		Labels:             expandStringList(d.Get("labels").([]interface{})),
+		Attributes:         expandAttributes(d),
+		Cluster:            cluster,
+		Schedule:           schedule,
+		AccessRules:        accessRules,
 	}
 	return &entity, err
 }
