@@ -44,14 +44,39 @@ data "anaml-operations_destination" "online" {
   name = anaml-operations_destination.online.name
 }
 
+resource "anaml-operations_attribute_restriction" "country" {
+  key = "terraform_country"
+  description = "Applicable country for terraformed resources"
+  enum {
+    choice {
+      value          = "australia"
+      display_emoji  = "🇦🇺"
+      display_colour = "#00008B"
+    }
+    choice { value = "uk" }
+    choice { value = "america" }
+  }
+  applies_to = ["cluster", "destination", "entity", "feature", "feature_set", "feature_store", "feature_template", "source", "table"]
+}
+
+resource "anaml-operations_label_restriction" "terraform" {
+  text   = "terraformed resource"
+  emoji  = "🛠️"
+  colour = "#B0B0B0"
+}
+
+resource "anaml-operations_label_restriction" "important" {
+  text = "important"
+}
+
 resource "anaml_entity" "household" {
   name           = "household"
   description    = "A household level view"
   default_column = "household"
 
-  labels = []
+  labels = [ anaml-operations_label_restriction.terraform.text, anaml-operations_label_restriction.important.text ]
   attribute {
-    key   = "country"
+    key   = anaml-operations_attribute_restriction.country.key
     value = "australia"
   }
 }
@@ -71,6 +96,8 @@ resource "anaml_table" "household" {
     }
     timestamp_column = "timestamp"
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text, anaml-operations_label_restriction.important.text ]
 }
 
 resource "anaml_entity_population" "adults" {
@@ -78,7 +105,7 @@ resource "anaml_entity_population" "adults" {
   description = "Adults in the household"
 
   entity     = anaml_entity.household.id
-  labels     = []
+  labels     = [ anaml-operations_label_restriction.terraform.text ]
   expression = "SELECT customer, daily() FROM household WHERE AGE > 18"
   sources    = [anaml_table.household.id]
 }
@@ -97,6 +124,8 @@ resource "anaml_table" "household_normalised" {
     timestamp_column = "timestamp"
     timezone = "Australia/Brisbane"
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text, anaml-operations_label_restriction.important.text ]
 }
 
 resource "anaml_feature_template" "household_count" {
@@ -106,6 +135,8 @@ resource "anaml_feature_template" "household_count" {
   select              = "count"
   aggregation         = "sum"
   entity_restrictions = [anaml_entity.household.id]
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml_feature" "household_count" {
@@ -119,6 +150,8 @@ resource "anaml_feature" "household_count" {
   aggregation         = "sum"
   template            = anaml_feature_template.household_count.id
   entity_restrictions = anaml_feature_template.household_count.entity_restrictions
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml_feature" "household_count_without_entity_restrictions" {
@@ -130,6 +163,8 @@ resource "anaml_feature" "household_count_without_entity_restrictions" {
   table       = anaml_table.household.id
   select      = "count"
   aggregation = "sum"
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml_feature_set" "household" {
@@ -140,6 +175,8 @@ resource "anaml_feature_set" "household" {
     , anaml_feature.household_count["2"].id
     , anaml_feature.household_count["4"].id
   ]
+
+  labels = [ anaml-operations_label_restriction.terraform.text, anaml-operations_label_restriction.important.text ]
 }
 
 resource "anaml-operations_event_store" "basic" {
@@ -165,9 +202,9 @@ resource "anaml-operations_event_store" "basic" {
   scatter_base_uri = "scatter"
   glacier_base_uri = "glacier"
 
-  labels = []
+  labels = [ anaml-operations_label_restriction.terraform.text ]
   attribute {
-    key   = "country"
+    key   = anaml-operations_attribute_restriction.country.key
     value = "australia"
   }
   cluster = data.anaml-operations_cluster.local.id
@@ -195,6 +232,8 @@ resource "anaml-operations_feature_store" "household_daily" {
   daily_schedule {
     start_time_of_day = "00:00:00"
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_feature_store" "household_daily_table_dest" {
@@ -214,6 +253,8 @@ resource "anaml-operations_feature_store" "household_daily_table_dest" {
   daily_schedule {
     start_time_of_day = "00:00:00"
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_feature_store" "household_daily_topic_dest" {
@@ -234,6 +275,8 @@ resource "anaml-operations_feature_store" "household_daily_topic_dest" {
   daily_schedule {
     start_time_of_day = "00:00:00"
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_feature_store" "household_cron" {
@@ -254,6 +297,8 @@ resource "anaml-operations_feature_store" "household_cron" {
   cron_schedule {
     cron_string = "* * * * *"
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_feature_store" "household_never" {
@@ -272,6 +317,8 @@ resource "anaml-operations_feature_store" "household_never" {
       save_mode = "ignore"
     }
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_feature_store" "household_daily_retry" {
@@ -296,6 +343,8 @@ resource "anaml-operations_feature_store" "household_daily_retry" {
       max_attempts = 3
     }
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_feature_store" "household_cron_retry" {
@@ -320,6 +369,8 @@ resource "anaml-operations_feature_store" "household_cron_retry" {
       max_attempts = 3
     }
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_cluster" "local" {
@@ -338,6 +389,8 @@ resource "anaml-operations_cluster" "local" {
   spark_config {
     enable_hive_support = true
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_cluster" "spark_server" {
@@ -352,6 +405,8 @@ resource "anaml-operations_cluster" "spark_server" {
   spark_config {
     enable_hive_support = true
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_source" "s3" {
@@ -394,6 +449,8 @@ resource "anaml-operations_source" "s3" {
       }
     }
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_source" "s3a" {
@@ -408,6 +465,8 @@ resource "anaml-operations_source" "s3a" {
     access_key  = "access"
     secret_key  = "secret"
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_source" "hive" {
@@ -417,6 +476,8 @@ resource "anaml-operations_source" "hive" {
   hive {
     database = "my_database"
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_source" "jdbc" {
@@ -434,6 +495,8 @@ resource "anaml-operations_source" "jdbc" {
       }
     }
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_source" "big_query" {
@@ -443,6 +506,8 @@ resource "anaml-operations_source" "big_query" {
   big_query {
     path = "/path/to/file"
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_source" "gcs" {
@@ -454,6 +519,8 @@ resource "anaml-operations_source" "gcs" {
     path        = "/path/to/file"
     file_format = "parquet"
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_source" "local" {
@@ -465,6 +532,8 @@ resource "anaml-operations_source" "local" {
     file_format    = "csv"
     include_header = false
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_source" "hdfs" {
@@ -476,6 +545,8 @@ resource "anaml-operations_source" "hdfs" {
     file_format    = "csv"
     include_header = false
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_source" "kafka" {
@@ -493,6 +564,8 @@ resource "anaml-operations_source" "kafka" {
       }
     }
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_source" "snowflake" {
@@ -512,6 +585,8 @@ resource "anaml-operations_source" "snowflake" {
       }
     }
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_destination" "s3" {
@@ -524,6 +599,8 @@ resource "anaml-operations_destination" "s3" {
     file_format    = "csv"
     include_header = true
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_destination" "s3a" {
@@ -538,6 +615,8 @@ resource "anaml-operations_destination" "s3a" {
     access_key  = "access"
     secret_key  = "secret"
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_destination" "hive" {
@@ -547,6 +626,8 @@ resource "anaml-operations_destination" "hive" {
   hive {
     database = "my_database"
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_destination" "jdbc" {
@@ -564,6 +645,8 @@ resource "anaml-operations_destination" "jdbc" {
       }
     }
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_destination" "big_query_temporary" {
@@ -576,6 +659,8 @@ resource "anaml-operations_destination" "big_query_temporary" {
       bucket = "my-bucket"
     }
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_destination" "big_query_persistent" {
@@ -589,6 +674,8 @@ resource "anaml-operations_destination" "big_query_persistent" {
       path   = "/path/to/file"
     }
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_destination" "gcs" {
@@ -600,6 +687,8 @@ resource "anaml-operations_destination" "gcs" {
     path        = "/path/to/file"
     file_format = "parquet"
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_destination" "local" {
@@ -611,6 +700,8 @@ resource "anaml-operations_destination" "local" {
     file_format    = "csv"
     include_header = false
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_destination" "hdfs" {
@@ -622,6 +713,8 @@ resource "anaml-operations_destination" "hdfs" {
     file_format    = "csv"
     include_header = false
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_destination" "kafka" {
@@ -642,6 +735,8 @@ resource "anaml-operations_destination" "kafka" {
       }
     }
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_destination" "online" {
@@ -659,6 +754,8 @@ resource "anaml-operations_destination" "online" {
       }
     }
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_destination" "snowflake" {
@@ -678,6 +775,8 @@ resource "anaml-operations_destination" "snowflake" {
       }
     }
   }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
 resource "anaml-operations_user" "jane" {

@@ -448,6 +448,38 @@ type Attribute struct {
 	Value string `json:"value"`
 }
 
+// LabelRestriction ...
+type LabelRestriction struct {
+	ID     int     `json:"id,omitempty"`
+	Text   string  `json:"text"`
+	Emoji  *string `json:"emoji,omitempty"`
+	Colour *string `json:"colour,omitempty"`
+}
+
+// AttributeRestriction ...
+type AttributeRestriction struct {
+	ID          int                    `json:"id,omitempty"`
+	Key         string                 `json:"key"`
+	Description string                 `json:"description"`
+	Type        string                 `json:"adt_type"`
+	Choices     *[]EnumAttributeChoice `json:"choices,omitempty"`
+	AppliesTo   []AttributeTarget      `json:"appliesTo"`
+}
+
+type AttributeTarget struct {
+	Type string `json:"adt_type"`
+}
+
+type EnumAttributeChoice struct {
+	Value   string                `json:"value"`
+	Display *EnumAttributeDisplay `json:"display,omitempty"`
+}
+
+type EnumAttributeDisplay struct {
+	Emoji  string `json:"emoji,omitempty"`
+	Colour string `json:"colour,omitempty"`
+}
+
 // EventDescription ..
 type EventStoreTopicColumns struct {
 	Entity        string         `json:"entity"`
