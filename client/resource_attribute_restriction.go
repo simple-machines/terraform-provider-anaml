@@ -2,6 +2,7 @@ package anaml
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -245,7 +246,7 @@ func composeAttribute(d *schema.ResourceData) (*AttributeRestriction, error) {
 		return &attribute, nil
 	}
 
-	if ft, _ := expandSingleMap(d.Get("freetext")); ft != nil {
+	if ft, _ := expandSingleMapAllowEmpty(d.Get("freetext")); ft != nil {
 		attribute := AttributeRestriction{
 			Key:         d.Get("key").(string),
 			Description: d.Get("description").(string),
@@ -255,7 +256,7 @@ func composeAttribute(d *schema.ResourceData) (*AttributeRestriction, error) {
 		return &attribute, nil
 	}
 
-	if b, _ := expandSingleMap(d.Get("boolean")); b != nil {
+	if b, _ := expandSingleMapAllowEmpty(d.Get("boolean")); b != nil {
 		attribute := AttributeRestriction{
 			Key:         d.Get("key").(string),
 			Description: d.Get("description").(string),
@@ -265,7 +266,7 @@ func composeAttribute(d *schema.ResourceData) (*AttributeRestriction, error) {
 		return &attribute, nil
 	}
 
-	if i, _ := expandSingleMap(d.Get("integer")); i != nil {
+	if i, _ := expandSingleMapAllowEmpty(d.Get("integer")); i != nil {
 		attribute := AttributeRestriction{
 			Key:         d.Get("key").(string),
 			Description: d.Get("description").(string),
@@ -410,4 +411,31 @@ func flattenEnumChoices(choices []EnumAttributeChoice) []map[string]interface{} 
 		res = append(res, single)
 	}
 	return res
+}
+
+func expandSingleMapAllowEmpty(value interface{}) (map[string]interface{}, error) {
+	if value == nil {
+		return nil, errors.New("Value is null")
+	}
+
+	array, ok := value.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("Value is not an array. Value: %v", value)
+	}
+
+	if len(array) == 0 {
+		return nil, errors.New("Array is empty")
+	}
+
+	if array[0] == nil {
+		// terraform field is defined but is empty - good enough for defining attribute types
+		return make(map[string]interface{}), nil
+	}
+
+	single, ok := array[0].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("Value at index 0 of array is not a map. Value: %v", array[0])
+	}
+
+	return single, nil
 }
