@@ -144,38 +144,21 @@ func resourceAttributeRestrictionRead(d *schema.ResourceData, m interface{}) err
 		if err := d.Set("enum", e); err != nil {
 			return err
 		}
-	}
-
-	if attribute.Type == "freetextattribute" {
-		ft, err := parseNonEnumAttribute(attribute)
-		if err != nil {
-			return err
-		}
-		if err := d.Set("freetext", ft); err != nil {
+	} else {
+		if err := d.Set("enum", nil); err != nil {
 			return err
 		}
 	}
 
-	if attribute.Type == "booleanattribute" {
-		b, err := parseNonEnumAttribute(attribute)
-		if err != nil {
-			return err
-		}
-		if err := d.Set("boolean", b); err != nil {
-			return err
-		}
+	if err := d.Set("freetext", buildEmpty(attribute.Type == "freetextattribute")); err != nil {
+		return err
 	}
-
-	if attribute.Type == "integerattribute" {
-		i, err := parseNonEnumAttribute(attribute)
-		if err != nil {
-			return err
-		}
-		if err := d.Set("integer", i); err != nil {
-			return err
-		}
+	if err := d.Set("boolean", buildEmpty(attribute.Type == "booleanattribute")); err != nil {
+		return err
 	}
-
+	if err := d.Set("integer", buildEmpty(attribute.Type == "integerattribute")); err != nil {
+		return err
+	}
 	if err := d.Set("applies_to", mapTargetsToFrontend(attribute.AppliesTo)); err != nil {
 		return err
 	}
@@ -229,49 +212,34 @@ func resourceAttributeRestrictionDelete(d *schema.ResourceData, m interface{}) e
 func composeAttribute(d *schema.ResourceData) (*AttributeRestriction, error) {
 	appliesTo := mapTargetsToBackend(expandStringList(d.Get("applies_to").(*schema.Set).List()))
 
+	attribute := AttributeRestriction{
+		Key:         d.Get("key").(string),
+		Description: d.Get("description").(string),
+		AppliesTo:   appliesTo,
+	}
+
 	if e, _ := expandSingleMap(d.Get("enum")); e != nil {
 		choices, err := expandEnumChoices(e["choice"].(*schema.Set).List())
 		if err != nil {
 			return nil, err
 		}
-
-		attribute := AttributeRestriction{
-			Key:         d.Get("key").(string),
-			Description: d.Get("description").(string),
-			Type:        "enumattribute",
-			Choices:     &choices,
-			AppliesTo:   appliesTo,
-		}
+		attribute.Type = "enumattribute"
+		attribute.Choices = &choices
 		return &attribute, nil
 	}
 
-	if ft, _ := expandSingleMap(d.Get("freetext")); ft != nil {
-		attribute := AttributeRestriction{
-			Key:         d.Get("key").(string),
-			Description: d.Get("description").(string),
-			Type:        "freetextattribute",
-			AppliesTo:   appliesTo,
-		}
+	if existsEmpty(d.Get("freetext").([]interface{})) {
+		attribute.Type = "freetextattribute"
 		return &attribute, nil
 	}
 
-	if b, _ := expandSingleMap(d.Get("boolean")); b != nil {
-		attribute := AttributeRestriction{
-			Key:         d.Get("key").(string),
-			Description: d.Get("description").(string),
-			Type:        "booleanattribute",
-			AppliesTo:   appliesTo,
-		}
+	if existsEmpty(d.Get("boolean").([]interface{})) {
+		attribute.Type = "booleanattribute"
 		return &attribute, nil
 	}
 
-	if i, _ := expandSingleMap(d.Get("integer")); i != nil {
-		attribute := AttributeRestriction{
-			Key:         d.Get("key").(string),
-			Description: d.Get("description").(string),
-			Type:        "integerattribute",
-			AppliesTo:   appliesTo,
-		}
+	if existsEmpty(d.Get("integer").([]interface{})) {
+		attribute.Type = "integerattribute"
 		return &attribute, nil
 	}
 
@@ -409,5 +377,24 @@ func flattenEnumChoices(choices []EnumAttributeChoice) []map[string]interface{} 
 		}
 		res = append(res, single)
 	}
+	return res
+}
+
+func existsEmpty(drs []interface{}) bool {
+	if len(drs) == 0 {
+		return false
+	} else {
+		return true
+	}
+}
+
+func buildEmpty(specs bool) []map[string]interface{} {
+	res := make([]map[string]interface{}, 0, 1)
+
+	if specs {
+		single := make(map[string]interface{})
+		res = append(res, single)
+	}
+
 	return res
 }
