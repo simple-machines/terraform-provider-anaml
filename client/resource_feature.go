@@ -43,7 +43,6 @@ func ResourceFeature() *schema.Resource {
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  "root",
 			},
 			"table": {
 				Type:         schema.TypeString,
@@ -111,6 +110,7 @@ func ResourceFeature() *schema.Resource {
 				Optional:     true,
 				Description:  "A list of Features this row feature depends on",
 				AtLeastOneOf: []string{"table", "over"},
+				RequiredWith: []string{"entity"},
 
 				Elem: &schema.Schema{
 					Type:         schema.TypeString,
