@@ -89,7 +89,7 @@ func (c *Client) DeleteUser(userID string) error {
 	return nil
 }
 
-func (c *Client) UpdateUserPassword(userID string, password string) error {
+func (c *Client) UpdateUserPassword(userID string, password *string) error {
 	updateRequest := ChangeOtherPasswordRequest{Password: password}
 	rb, err := json.Marshal(updateRequest)
 	if err != nil {
