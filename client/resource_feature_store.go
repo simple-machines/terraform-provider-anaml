@@ -110,16 +110,13 @@ func ResourceFeatureStore() *schema.Resource {
 				ValidateFunc: validateAnamlIdentifier(),
 			},
 			"labels": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "Labels to attach to the object",
-
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
+				Elem:        labelSchema(),
 			},
 			"attribute": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "Attributes (key value pairs) to attach to the object",
 				Elem:        attributeSchema(),
@@ -466,7 +463,7 @@ func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
 		Cluster:         cluster,
 		Population:      population,
 		Schedule:        schedule,
-		Labels:          expandStringList(d.Get("labels").([]interface{})),
+		Labels:          expandLabels(d),
 		Attributes:      expandAttributes(d),
 		IncludeMetadata: d.Get("include_metadata").(bool),
 		VersionTarget:   versionTarget,

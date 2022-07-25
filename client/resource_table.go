@@ -139,16 +139,13 @@ func ResourceTable() *schema.Resource {
 				},
 			},
 			"labels": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "Labels to attach to the object",
-
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
+				Elem:        labelSchema(),
 			},
 			"attribute": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "Attributes (key value pairs) to attach to the object",
 				Elem:        attributeSchema(),
@@ -309,7 +306,7 @@ func buildTable(d *schema.ResourceData) *Table {
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		EventInfo:   expandEntityDescription(d),
-		Labels:      expandStringList(d.Get("labels").([]interface{})),
+		Labels:      expandLabels(d),
 		Attributes:  expandAttributes(d),
 	}
 

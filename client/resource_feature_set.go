@@ -56,16 +56,13 @@ func ResourceFeatureSet() *schema.Resource {
 				},
 			},
 			"labels": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "Labels to attach to the object",
-
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
+				Elem:        labelSchema(),
 			},
 			"attribute": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "Attributes (key value pairs) to attach to the object",
 				Elem:        attributeSchema(),
@@ -117,7 +114,7 @@ func resourceFeatureSetCreate(d *schema.ResourceData, m interface{}) error {
 		Description: d.Get("description").(string),
 		EntityID:    entity,
 		Features:    expandIdentifierList(d.Get("features").(*schema.Set).List()),
-		Labels:      expandStringList(d.Get("labels").([]interface{})),
+		Labels:      expandLabels(d),
 		Attributes:  expandAttributes(d),
 	}
 
@@ -140,7 +137,7 @@ func resourceFeatureSetUpdate(d *schema.ResourceData, m interface{}) error {
 		Description: d.Get("description").(string),
 		EntityID:    entity,
 		Features:    expandIdentifierList(d.Get("features").(*schema.Set).List()),
-		Labels:      expandStringList(d.Get("labels").([]interface{})),
+		Labels:      expandLabels(d),
 		Attributes:  expandAttributes(d),
 	}
 

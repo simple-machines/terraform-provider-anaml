@@ -15,7 +15,7 @@ import (
 var namePattern = regexp.MustCompile(`^[a-z][a-z0-9_]*$`)
 var identifierPattern = regexp.MustCompile(`^[0-9]+$`)
 
-// Takes the result of flatmap.Expand for an array of strings
+// Takes the result of flatmap. Expand for an array of strings
 // and returns a []string
 func expandStringList(configured []interface{}) []string {
 	vs := make([]string, 0, len(configured))

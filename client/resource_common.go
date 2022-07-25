@@ -4,6 +4,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+func labelSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeString,
+	}
+}
+
+func expandLabels(d *schema.ResourceData) []string {
+	return expandStringList(d.Get("labels").(*schema.Set).List())
+}
+
 func attributeSchema() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
@@ -20,7 +30,7 @@ func attributeSchema() *schema.Resource {
 }
 
 func expandAttributes(d *schema.ResourceData) []Attribute {
-	drs := d.Get("attribute").([]interface{})
+	drs := d.Get("attribute").(*schema.Set).List()
 	res := make([]Attribute, 0, len(drs))
 	for _, dr := range drs {
 		val, _ := dr.(map[string]interface{})

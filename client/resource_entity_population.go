@@ -35,19 +35,16 @@ func ResourceEntityPopulation() *schema.Resource {
 			},
 			"description": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 			},
 			"labels": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "Labels to attach to the object",
-
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
+				Elem:        labelSchema(),
 			},
 			"attribute": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "Attributes (key value pairs) to attach to the object",
 				Elem:        attributeSchema(),
@@ -155,7 +152,7 @@ func buildPopulation(d *schema.ResourceData) EntityPopulation {
 	return EntityPopulation{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-		Labels:      expandStringList(d.Get("labels").([]interface{})),
+		Labels:      expandLabels(d),
 		Attributes:  expandAttributes(d),
 		Entity:      entity,
 		Expression:  d.Get("expression").(string),
