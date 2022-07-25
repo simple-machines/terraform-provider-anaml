@@ -56,7 +56,7 @@ func ResourceCluster() *schema.Resource {
 			},
 			"description": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 			},
 			"is_preview_cluster": {
 				Type:        schema.TypeBool,
@@ -87,7 +87,7 @@ func ResourceCluster() *schema.Resource {
 				Elem:        sparkServerSchema(),
 			},
 			"labels": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "Labels to attach to the object",
 
@@ -96,7 +96,7 @@ func ResourceCluster() *schema.Resource {
 				},
 			},
 			"attribute": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "Attributes (key value pairs) to attach to the object",
 				Elem:        attributeSchema(),
@@ -442,7 +442,7 @@ func composeCluster(d *schema.ResourceData) (*Cluster, error) {
 			AnamlServerURL:      local["anaml_server_url"].(string),
 			CredentialsProvider: credentialsProvider,
 			SparkConfig:         &sparkConfig,
-			Labels:              expandStringList(d.Get("labels").([]interface{})),
+			Labels:              expandLabels(d),
 			Attributes:          expandAttributes(d),
 		}
 		return &cluster, nil
@@ -456,7 +456,7 @@ func composeCluster(d *schema.ResourceData) (*Cluster, error) {
 			IsPreviewCluster: d.Get("is_preview_cluster").(bool),
 			SparkServerURL:   sparkServer["spark_server_url"].(string),
 			SparkConfig:      &sparkConfig,
-			Labels:           expandStringList(d.Get("labels").([]interface{})),
+			Labels:           expandLabels(d),
 			Attributes:       expandAttributes(d),
 		}
 		return &cluster, nil

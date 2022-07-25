@@ -43,7 +43,7 @@ func ResourceSource() *schema.Resource {
 			},
 			"description": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 			},
 			"s3": {
 				Type:         schema.TypeList,
@@ -107,16 +107,13 @@ func ResourceSource() *schema.Resource {
 				Elem:     snowflakeSourceDestinationSchema(),
 			},
 			"labels": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "Labels to attach to the object",
-
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
+				Elem:        labelSchema(),
 			},
 			"attribute": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "Attributes (key value pairs) to attach to the object",
 				Elem:        attributeSchema(),
@@ -966,7 +963,7 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			Bucket:      s3["bucket"].(string),
 			Path:        s3["path"].(string),
 			FileFormat:  fileFormat,
-			Labels:      expandStringList(d.Get("labels").([]interface{})),
+			Labels:      expandLabels(d),
 			Attributes:  expandAttributes(d),
 			AccessRules: accessRules,
 		}
@@ -985,7 +982,7 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			AccessKey:   s3a["access_key"].(string),
 			SecretKey:   s3a["secret_key"].(string),
 			FileFormat:  fileFormat,
-			Labels:      expandStringList(d.Get("labels").([]interface{})),
+			Labels:      expandLabels(d),
 			Attributes:  expandAttributes(d),
 			AccessRules: accessRules,
 		}
@@ -1010,7 +1007,7 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			URL:                 jdbc["url"].(string),
 			Schema:              jdbc["schema"].(string),
 			CredentialsProvider: credentialsProvider,
-			Labels:              expandStringList(d.Get("labels").([]interface{})),
+			Labels:              expandLabels(d),
 			Attributes:          expandAttributes(d),
 			AccessRules:         accessRules,
 		}
@@ -1023,7 +1020,7 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			Description: d.Get("description").(string),
 			Type:        "hive",
 			Database:    hive["database"].(string),
-			Labels:      expandStringList(d.Get("labels").([]interface{})),
+			Labels:      expandLabels(d),
 			Attributes:  expandAttributes(d),
 			AccessRules: accessRules,
 		}
@@ -1036,7 +1033,7 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			Description: d.Get("description").(string),
 			Type:        "bigquery",
 			Path:        bigQuery["path"].(string),
-			Labels:      expandStringList(d.Get("labels").([]interface{})),
+			Labels:      expandLabels(d),
 			Attributes:  expandAttributes(d),
 			AccessRules: accessRules,
 		}
@@ -1052,7 +1049,7 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			Bucket:      gcs["bucket"].(string),
 			Path:        gcs["path"].(string),
 			FileFormat:  fileFormat,
-			Labels:      expandStringList(d.Get("labels").([]interface{})),
+			Labels:      expandLabels(d),
 			Attributes:  expandAttributes(d),
 			AccessRules: accessRules,
 		}
@@ -1067,7 +1064,7 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			Type:        "local",
 			Path:        local["path"].(string),
 			FileFormat:  fileFormat,
-			Labels:      expandStringList(d.Get("labels").([]interface{})),
+			Labels:      expandLabels(d),
 			Attributes:  expandAttributes(d),
 			AccessRules: accessRules,
 		}
@@ -1082,7 +1079,7 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			Type:        "hdfs",
 			Path:        hdfs["path"].(string),
 			FileFormat:  fileFormat,
-			Labels:      expandStringList(d.Get("labels").([]interface{})),
+			Labels:      expandLabels(d),
 			Attributes:  expandAttributes(d),
 			AccessRules: accessRules,
 		}
@@ -1118,7 +1115,7 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			BootstrapServers:  kafka["bootstrap_servers"].(string),
 			SchemaRegistryURL: kafka["schema_registry_url"].(string),
 			KafkaProperties:   sensitives,
-			Labels:            expandStringList(d.Get("labels").([]interface{})),
+			Labels:            expandLabels(d),
 			Attributes:        expandAttributes(d),
 			AccessRules:       accessRules,
 		}
@@ -1145,7 +1142,7 @@ func composeSource(d *schema.ResourceData) (*Source, error) {
 			Warehouse:           snowflake["warehouse"].(string),
 			Database:            snowflake["database"].(string),
 			CredentialsProvider: credentialsProvider,
-			Labels:              expandStringList(d.Get("labels").([]interface{})),
+			Labels:              expandLabels(d),
 			Attributes:          expandAttributes(d),
 			AccessRules:         accessRules,
 		}

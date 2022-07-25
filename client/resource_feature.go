@@ -131,16 +131,13 @@ func ResourceFeature() *schema.Resource {
 				ValidateFunc: validateAnamlIdentifier(),
 			},
 			"labels": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "Labels to attach to the object",
-
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
+				Elem:        labelSchema(),
 			},
 			"attribute": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "Attributes (key value pairs) to attach to the object",
 				Elem:        attributeSchema(),
@@ -313,7 +310,7 @@ func buildFeature(d *schema.ResourceData) (*Feature, error) {
 		Aggregate: &AggregateExpression{
 			Type: d.Get("aggregation").(string),
 		},
-		Labels:     expandStringList(d.Get("labels").([]interface{})),
+		Labels:     expandLabels(d),
 		Attributes: expandAttributes(d),
 	}
 

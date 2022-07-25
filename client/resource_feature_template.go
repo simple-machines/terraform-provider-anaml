@@ -41,7 +41,6 @@ func ResourceFeatureTemplate() *schema.Resource {
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  "root",
 			},
 			"table": {
 				Type:         schema.TypeString,
@@ -120,16 +119,13 @@ func ResourceFeatureTemplate() *schema.Resource {
 				RequiredWith: []string{"over"},
 			},
 			"labels": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "Labels to attach to the object",
-
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
+				Elem:        labelSchema(),
 			},
 			"attribute": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "Attributes (key value pairs) to attach to the object",
 				Elem:        attributeSchema(),
@@ -293,7 +289,7 @@ func buildFeatureTemplate(d *schema.ResourceData) (*FeatureTemplate, error) {
 		Select: SQLExpression{
 			SQL: d.Get("select").(string),
 		},
-		Labels:     expandStringList(d.Get("labels").([]interface{})),
+		Labels:     expandLabels(d),
 		Attributes: expandAttributes(d),
 	}
 

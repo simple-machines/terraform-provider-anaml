@@ -29,7 +29,7 @@ func ResourceEventStore() *schema.Resource {
 			},
 			"description": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 			},
 			"bootstrap_servers": {
 				Type:         schema.TypeString,
@@ -98,16 +98,13 @@ func ResourceEventStore() *schema.Resource {
 				Elem:        accessRuleSchema(),
 			},
 			"labels": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "Labels to attach to the object",
-
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
+				Elem:        labelSchema(),
 			},
 			"attribute": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "Attributes (key value pairs) to attach to the object",
 				Elem:        attributeSchema(),
@@ -364,7 +361,7 @@ func buildEventStore(d *schema.ResourceData) (*EventStore, error) {
 		BatchIngestBaseURI: getNullableString(d, "batch_ingest_base_uri"),
 		ScatterBaseURI:     d.Get("scatter_base_uri").(string),
 		GlacierBaseURI:     d.Get("glacier_base_uri").(string),
-		Labels:             expandStringList(d.Get("labels").([]interface{})),
+		Labels:             expandLabels(d),
 		Attributes:         expandAttributes(d),
 		Cluster:            cluster,
 		Schedule:           schedule,
