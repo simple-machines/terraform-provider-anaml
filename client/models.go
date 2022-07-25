@@ -357,7 +357,7 @@ type AccessToken struct {
 }
 
 type ChangeOtherPasswordRequest struct {
-	Password string `json:"password"`
+	Password *string `json:"password"`
 }
 
 type UserGroupMemberSource struct {

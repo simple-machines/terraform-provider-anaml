@@ -25,7 +25,12 @@ func ResourceUser() *schema.Resource {
 			},
 			"email": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Required: true,
+			},
+			"password": {
+				Type:      schema.TypeString,
+				Optional:  true,
+				Sensitive: true,
 			},
 			"given_name": {
 				Type:     schema.TypeString,
@@ -34,11 +39,6 @@ func ResourceUser() *schema.Resource {
 			"surname": {
 				Type:     schema.TypeString,
 				Optional: true,
-			},
-			"password": {
-				Type:      schema.TypeString,
-				Required:  true,
-				Sensitive: true,
 			},
 			"roles": {
 				Type:     schema.TypeList,
@@ -121,7 +121,7 @@ func resourceUserUpdate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	if d.HasChange("password") {
-		password := d.Get("password").(string)
+		password := getNullableString(d, "password")
 		err = c.UpdateUserPassword(userID, password)
 		if err != nil {
 			return err
