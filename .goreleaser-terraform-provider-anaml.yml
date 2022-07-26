@@ -42,12 +42,12 @@ signs:
       - "--batch"
       - "--local-user"
       - "{{ .Env.GPG_FINGERPRINT }}" # set this environment variable for your signing key
+      - "--passphrase"
+      - "{{ .Env.GPG_PASSPHRASE }}"
       - "--output"
       - "${signature}"
       - "--detach-sign"
       - "${artifact}"
-      - "--passphrase"
-      - "{{ .Env.GPG_PASSPHRASE }}"
 release:
   # If you want to manually examine the release before its live, uncomment this line:
   # draft: true
