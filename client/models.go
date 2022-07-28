@@ -2,15 +2,15 @@ package anaml
 
 // Entity ..
 type Entity struct {
-	ID            int         `json:"id,omitempty"`
-	Name          string      `json:"name"`
-	Description   string      `json:"description"`
-	Type          string      `json:"adt_type"`
-	DefaultColumn *string     `json:"defaultColumn,omitempty"`
-	RequiredType  *string     `json:"requiredType,omitempty"`
-	Entities      *[]int      `json:"entities,omitempty"`
-	Labels        []string    `json:"labels"`
-	Attributes    []Attribute `json:"attributes"`
+	ID            int          `json:"id,omitempty"`
+	Name          string       `json:"name"`
+	Description   string       `json:"description"`
+	Type          string       `json:"adt_type"`
+	DefaultColumn *string      `json:"defaultColumn,omitempty"`
+	RequiredType  *interface{} `json:"requiredType,omitempty"`
+	Entities      *[]int       `json:"entities,omitempty"`
+	Labels        []string     `json:"labels"`
+	Attributes    []Attribute  `json:"attributes"`
 }
 
 // EntityMapping ..

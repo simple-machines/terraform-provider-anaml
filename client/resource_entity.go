@@ -109,8 +109,24 @@ func resourceEntityRead(d *schema.ResourceData, m interface{}) error {
 		if err := d.Set("default_column", entity.DefaultColumn); err != nil {
 			return err
 		}
-		if err := d.Set("required_type", entity.RequiredType); err != nil {
-			return err
+
+		if entity.RequiredType != nil {
+			derefed := *(entity.RequiredType)
+			requiredTypeString, ok := derefed.(string)
+
+			if ok {
+				if err := d.Set("required_type", requiredTypeString); err != nil {
+					return err
+				}
+			} else {
+				if err := d.Set("required_type", "Complex Type"); err != nil {
+					return err
+				}
+			}
+		} else {
+			if err := d.Set("required_type", nil); err != nil {
+				return err
+			}
 		}
 		if err := d.Set("entities", nil); err != nil {
 			return err
@@ -148,7 +164,7 @@ func buildEntity(d *schema.ResourceData) Entity {
 		entity.Type = "base"
 		entity.DefaultColumn = &default_column
 		if required_type, set := d.GetOk("required_type"); set {
-			required_type := required_type.(string)
+			required_type := required_type
 			entity.RequiredType = &required_type
 		}
 	} else {
