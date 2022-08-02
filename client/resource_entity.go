@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 const entityDescription = `# Entities
@@ -49,6 +50,15 @@ func ResourceEntity() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ExactlyOneOf: []string{"default_column", "entities"},
+			},
+			"required_type": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"entities"},
+				ValidateFunc: validation.StringInSlice([]string{
+					"string", "integer", "long", "binary",
+				}, false),
+				Description: "The data type the entity is encoded as. If set, tables' entity columns must be of this type. One of string, integer, long, or binary",
 			},
 			"entities": {
 				Type:        schema.TypeList,
@@ -99,12 +109,34 @@ func resourceEntityRead(d *schema.ResourceData, m interface{}) error {
 		if err := d.Set("default_column", entity.DefaultColumn); err != nil {
 			return err
 		}
+
+		if entity.RequiredType != nil {
+			derefed := *(entity.RequiredType)
+			requiredTypeString, ok := derefed.(string)
+
+			if ok {
+				if err := d.Set("required_type", requiredTypeString); err != nil {
+					return err
+				}
+			} else {
+				if err := d.Set("required_type", "Complex Type"); err != nil {
+					return err
+				}
+			}
+		} else {
+			if err := d.Set("required_type", nil); err != nil {
+				return err
+			}
+		}
 		if err := d.Set("entities", nil); err != nil {
 			return err
 		}
 	}
 	if entity.Entities != nil {
 		if err := d.Set("default_column", nil); err != nil {
+			return err
+		}
+		if err := d.Set("required_type", nil); err != nil {
 			return err
 		}
 		if err := d.Set("entities", identifierList(*entity.Entities)); err != nil {
@@ -131,6 +163,10 @@ func buildEntity(d *schema.ResourceData) Entity {
 	if default_column := d.Get("default_column").(string); default_column != "" {
 		entity.Type = "base"
 		entity.DefaultColumn = &default_column
+		if required_type, set := d.GetOk("required_type"); set {
+			required_type := required_type
+			entity.RequiredType = &required_type
+		}
 	} else {
 		entities := expandIdentifierList(d.Get("entities").([]interface{}))
 		entity.Type = "composite"

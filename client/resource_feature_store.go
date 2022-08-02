@@ -183,7 +183,7 @@ func folderDestinationSchema() *schema.Resource {
 				Required: true,
 				ValidateFunc: validation.StringInSlice([]string{
 					"overwrite", "ignore", "append", "errorifexists",
-				}, true),
+				}, false),
 			},
 		},
 	}
@@ -202,7 +202,7 @@ func tableDestinationSchema() *schema.Resource {
 				Optional: true,
 				ValidateFunc: validation.StringInSlice([]string{
 					"overwrite", "ignore", "append", "errorifexists",
-				}, true),
+				}, false),
 			},
 		},
 	}
@@ -221,7 +221,7 @@ func topicDestinationSchema() *schema.Resource {
 				Required: true,
 				ValidateFunc: validation.StringInSlice([]string{
 					"json", "avro",
-				}, true),
+				}, false),
 			},
 		},
 	}

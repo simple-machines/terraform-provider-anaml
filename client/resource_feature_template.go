@@ -86,7 +86,7 @@ func ResourceFeatureTemplate() *schema.Resource {
 					"sum", "count", "countdistinct", "avg", "std", "min", "max", "minby", "maxby",
 					"last", "percentagechange", "absolutechange", "standardscore", "basketsum",
 					"basketlast", "collectlist", "collectset",
-				}, true),
+				}, false),
 			},
 			"post_aggregation": {
 				Type:        schema.TypeString,

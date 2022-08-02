@@ -89,7 +89,7 @@ func ResourceFeature() *schema.Resource {
 					"sum", "count", "countdistinct", "avg", "std", "min", "max", "minby", "maxby",
 					"last", "percentagechange", "absolutechange", "standardscore", "basketsum",
 					"basketlast", "collectlist", "collectset",
-				}, true),
+				}, false),
 				RequiredWith: []string{"table"},
 			},
 			"post_aggregation": {
