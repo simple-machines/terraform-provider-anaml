@@ -143,26 +143,27 @@ type VersionTarget struct {
 
 // FeatureStore ...
 type FeatureStore struct {
-	ID                  int                    `json:"id,omitempty"`
-	Type                string                 `json:"adt_type"`
-	Name                string                 `json:"name"`
-	Description         string                 `json:"description"`
-	Labels              []string               `json:"labels"`
-	Attributes          []Attribute            `json:"attributes"`
-	FeatureSet          int                    `json:"featureSet"`
-	Enabled             bool                   `json:"enabled"`
-	Schedule            *Schedule              `json:"schedule"`
-	Destinations        []DestinationReference `json:"destinations"`
-	Cluster             int                    `json:"cluster"`
-	ClusterPropertySets []int                  `json:"clusterPropertySets"`
-	RunDateOffset       *int                   `json:"runDateOffset,omitempty"`
-	Principal           *int                   `json:"principal,omitempty"`
-	Population          *int                   `json:"entityPopulation,omitempty"`
-	StartDate           *string                `json:"startDate,omitempty"`
-	EndDate             *string                `json:"endDate,omitempty"`
-	Table               *int                   `json:"table,omitempty"`
-	IncludeMetadata     bool                   `json:"includeMetadata"`
-	VersionTarget       *VersionTarget         `json:"versionTarget,omitempty"`
+	ID                        int                    `json:"id,omitempty"`
+	Type                      string                 `json:"adt_type"`
+	Name                      string                 `json:"name"`
+	Description               string                 `json:"description"`
+	Labels                    []string               `json:"labels"`
+	Attributes                []Attribute            `json:"attributes"`
+	FeatureSet                int                    `json:"featureSet"`
+	Enabled                   bool                   `json:"enabled"`
+	Schedule                  *Schedule              `json:"schedule"`
+	Destinations              []DestinationReference `json:"destinations"`
+	Cluster                   int                    `json:"cluster"`
+	ClusterPropertySets       []int                  `json:"clusterPropertySets"`
+	AdditionalSparkProperties map[string]string      `json:"additionalSparkProperties"`
+	RunDateOffset             *int                   `json:"runDateOffset,omitempty"`
+	Principal                 *int                   `json:"principal,omitempty"`
+	Population                *int                   `json:"entityPopulation,omitempty"`
+	StartDate                 *string                `json:"startDate,omitempty"`
+	EndDate                   *string                `json:"endDate,omitempty"`
+	Table                     *int                   `json:"table,omitempty"`
+	IncludeMetadata           bool                   `json:"includeMetadata"`
+	VersionTarget             *VersionTarget         `json:"versionTarget,omitempty"`
 }
 
 type Schedule struct {

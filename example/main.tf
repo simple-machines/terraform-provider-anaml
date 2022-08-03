@@ -257,6 +257,30 @@ resource "anaml-operations_feature_store" "household_daily_table_dest" {
   labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
+resource "anaml-operations_feature_store" "household_daily_table_spark_prop" {
+  name        = "household_daily_table_spark_properties"
+  description = "Daily view of households"
+  start_date  = "2020-01-01"
+  end_date    = "2021-01-01"
+  feature_set = anaml_feature_set.household.id
+  enabled     = true
+  cluster     = data.anaml-operations_cluster.local.id
+  additional_spark_properties = {
+    "spark.driver.extraClassPath" : "/opt/docker/lib/*"
+  }
+  destination {
+    destination = data.anaml-operations_destination.online.id
+    table {
+      name = "household_results"
+    }
+  }
+  daily_schedule {
+    start_time_of_day = "00:00:00"
+  }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
+}
+
 resource "anaml-operations_feature_store" "household_daily_topic_dest" {
   name        = "household_daily_topic_dest"
   description = "Daily view of households"
