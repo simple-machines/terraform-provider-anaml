@@ -12,15 +12,15 @@ terraform {
 
 provider "anaml" {
   host     = "http://localhost:8080/api"
-  username = "03d147fe-0fa8-4aef-bce6-e6fbcd1cd000"
-  password = "test secret"
+  username = "7dbdd48f-133e-46ce-9d8d-3049a9f9ce7e"
+  password = "9gvzkR3Fzp+OLx8Zh3Wqvcfz8ej1U8b9lkTJ31O1B5g="
   branch   = "official"
 }
 
 provider "anaml-operations" {
   host     = "http://127.0.0.1:8080/api"
-  username = "03d147fe-0fa8-4aef-bce6-e6fbcd1cd000"
-  password = "test secret"
+  username = "7dbdd48f-133e-46ce-9d8d-3049a9f9ce7e"
+  password = "9gvzkR3Fzp+OLx8Zh3Wqvcfz8ej1U8b9lkTJ31O1B5g="
 }
 
 
@@ -246,6 +246,30 @@ resource "anaml-operations_feature_store" "household_daily_table_dest" {
   cluster     = data.anaml-operations_cluster.local.id
   destination {
     destination                 = data.anaml-operations_destination.online.id
+    table {
+      name = "household_results"
+    }
+  }
+  daily_schedule {
+    start_time_of_day = "00:00:00"
+  }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
+}
+
+resource "anaml-operations_feature_store" "household_daily_table_spark_prop" {
+  name        = "household_daily_table_spark_properties"
+  description = "Daily view of households"
+  start_date  = "2020-01-01"
+  end_date    = "2021-01-01"
+  feature_set = anaml_feature_set.household.id
+  enabled     = true
+  cluster     = data.anaml-operations_cluster.local.id
+  additional_spark_properties = {
+    "spark.driver.extraClassPath" : "/opt/docker/lib/*"
+  }
+  destination {
+    destination = data.anaml-operations_destination.online.id
     table {
       name = "household_results"
     }
