@@ -509,26 +509,38 @@ type EventStore struct {
 
 func validRoles() []string {
 	return []string{
+		"admin_attributes",
 		"admin_branch_perms",
 		"admin_groups",
+		"admin_projects",
+		"admin_schedules",
 		"admin_system",
 		"admin_users",
 		"admin_webhooks",
 		"author",
 		"run_caching",
+		"run_event_store",
 		"run_featuregen",
 		"run_monitoring",
 		"super_user",
+		"view_reports",
 	}
 }
+
 
 func mapRolesToBackend(frontend []string) []Role {
 	vs := make([]Role, 0, len(frontend))
 	for _, v := range frontend {
-		if v == "admin_branch_perms" {
+		if v == "admin_attributes" {
+			vs = append(vs, Role{"adminattributes"})
+		} else if v == "admin_branch_perms" {
 			vs = append(vs, Role{"adminbranchperms"})
 		} else if v == "admin_groups" {
 			vs = append(vs, Role{"admingroups"})
+		} else if v == "admin_projects" {
+			vs = append(vs, Role{"adminprojects"})
+		} else if v == "admin_schedules" {
+			vs = append(vs, Role{"adminschedules"})
 		} else if v == "admin_system" {
 			vs = append(vs, Role{"adminsystem"})
 		} else if v == "admin_users" {
@@ -539,12 +551,16 @@ func mapRolesToBackend(frontend []string) []Role {
 			vs = append(vs, Role{"author"})
 		} else if v == "run_caching" {
 			vs = append(vs, Role{"runcaching"})
+		} else if v == "run_event_store" {
+			vs = append(vs, Role{"runeventstore"})
 		} else if v == "run_featuregen" {
 			vs = append(vs, Role{"runfeaturegen"})
 		} else if v == "run_monitoring" {
 			vs = append(vs, Role{"runmonitoring"})
 		} else if v == "super_user" {
 			vs = append(vs, Role{"superuser"})
+		} else if v == "view_reports" {
+			vs = append(vs, Role{"viewreports"})
 		}
 		// TODO: We should raise an error if we fall through the cases.
 	}
@@ -554,10 +570,16 @@ func mapRolesToBackend(frontend []string) []Role {
 func mapRolesToFrontend(backend []Role) []string {
 	vs := make([]string, 0, len(backend))
 	for _, v := range backend {
-		if v.Type == "adminbranchperms" {
+		if v.Type == "adminattributes" {
+			vs = append(vs, "admin_attributes")
+		} else if v.Type == "adminbranchperms" {
 			vs = append(vs, "admin_branch_perms")
 		} else if v.Type == "admingroups" {
 			vs = append(vs, "admin_groups")
+		} else if v.Type == "adminprojects" {
+			vs = append(vs, "admin_projects")
+		} else if v.Type == "adminschedules" {
+			vs = append(vs, "admin_schedules")
 		} else if v.Type == "adminsystem" {
 			vs = append(vs, "admin_system")
 		} else if v.Type == "adminusers" {
@@ -568,12 +590,16 @@ func mapRolesToFrontend(backend []Role) []string {
 			vs = append(vs, "author")
 		} else if v.Type == "runcaching" {
 			vs = append(vs, "run_caching")
+		} else if v.Type == "runevent_store" {
+			vs = append(vs, "run_event_store")
 		} else if v.Type == "runfeaturegen" {
 			vs = append(vs, "run_featuregen")
 		} else if v.Type == "runmonitoring" {
 			vs = append(vs, "run_monitoring")
 		} else if v.Type == "superuser" {
 			vs = append(vs, "super_user")
+		} else if v.Type == "viewreports" {
+			vs = append(vs, "view_reports")
 		}
 		// TODO: We should raise an error if we fall through the cases.
 	}
