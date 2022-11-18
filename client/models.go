@@ -518,6 +518,7 @@ func validRoles() []string {
 		"admin_users",
 		"admin_webhooks",
 		"author",
+		"edit_projects",
 		"run_caching",
 		"run_event_store",
 		"run_featuregen",
@@ -549,6 +550,8 @@ func mapRolesToBackend(frontend []string) []Role {
 			vs = append(vs, Role{"adminwebhooks"})
 		} else if v == "author" {
 			vs = append(vs, Role{"author"})
+		} else if v == "edit_projects" {
+			vs = append(vs, Role{"editprojects"})
 		} else if v == "run_caching" {
 			vs = append(vs, Role{"runcaching"})
 		} else if v == "run_event_store" {
@@ -588,6 +591,8 @@ func mapRolesToFrontend(backend []Role) []string {
 			vs = append(vs, "admin_webhooks")
 		} else if v.Type == "author" {
 			vs = append(vs, "author")
+		} else if v.Type == "editprojects" {
+			vs = append(vs, "edit_projects")
 		} else if v.Type == "runcaching" {
 			vs = append(vs, "run_caching")
 		} else if v.Type == "runevent_store" {
