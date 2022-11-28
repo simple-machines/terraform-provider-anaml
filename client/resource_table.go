@@ -103,10 +103,10 @@ func ResourceTable() *schema.Resource {
 				ExactlyOneOf: []string{"source", "event_store", "expression", "entity_mapping"},
 			},
 			"event_store": {
-				Type:         schema.TypeList,
-				Optional:     true,
-				MaxItems:     1,
-				Elem:         eventStoreSchema(),
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem:     eventStoreSchema(),
 			},
 			"expression": {
 				Type:         schema.TypeString,
@@ -215,7 +215,6 @@ func sourceSchema() *schema.Resource {
 		},
 	}
 }
-
 
 func eventStoreSchema() *schema.Resource {
 	return &schema.Resource{
@@ -456,12 +455,12 @@ func expandEventStoreReferences(d *schema.ResourceData) *SourceReference {
 
 		store, _ := strconv.Atoi(val["store"].(string))
 		entity, _ := strconv.Atoi(val["entity"].(string))
-		topic, _ := val["topic"].(string);
+		topic, _ := val["topic"].(string)
 
 		parsed := SourceReference{
-			EventStoreId:  store,
-			Entity:        entity,
-			Topic:         topic,
+			EventStoreId: store,
+			Entity:       entity,
+			Topic:        topic,
 		}
 		return &parsed
 	}

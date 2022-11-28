@@ -239,14 +239,14 @@ type KafkaFormat struct {
 // Doubles up with EventStoreReference as the json name is
 // the same and we normalised everything.
 type SourceReference struct {
-	Type          string `json:"adt_type,omitempty"`
-	SourceID      int    `json:"sourceId,omitempty"`
-	Folder        string `json:"folder,omitempty"`
-	TableName     string `json:"tableName,omitempty"`
-	Topic         string `json:"topic,omitempty"`
+	Type      string `json:"adt_type,omitempty"`
+	SourceID  int    `json:"sourceId,omitempty"`
+	Folder    string `json:"folder,omitempty"`
+	TableName string `json:"tableName,omitempty"`
+	Topic     string `json:"topic,omitempty"`
 
-	EventStoreId  int    `json:"eventStoreId,omitempty"`
-	Entity        int    `json:"entity,omitempty"`
+	EventStoreId int `json:"eventStoreId,omitempty"`
+	Entity       int `json:"entity,omitempty"`
 }
 
 // AccessRule ...
@@ -419,15 +419,21 @@ type TableMonitoring struct {
 	Enabled     bool      `json:"enabled"`
 }
 
+type CachingPlan struct {
+	Type  string             `json:"adt_type"`
+	Specs []TableCachingSpec `json:"specs"`
+}
+
 // TableCaching ...
 type TableCaching struct {
-	ID          int                `json:"id,omitempty"`
-	Name        string             `json:"name"`
-	Description string             `json:"description"`
-	Specs       []TableCachingSpec `json:"specs"`
-	PrefixURI   string             `json:"prefixURI"`
-	Schedule    *Schedule          `json:"schedule"`
-	Cluster     int                `json:"cluster"`
+	ID          int          `json:"id,omitempty"`
+	Name        string       `json:"name"`
+	Description string       `json:"description"`
+	Plan        *CachingPlan `json:"plan"`
+	Retainement *string      `json:"retainment"`
+	PrefixURI   string       `json:"prefixURI"`
+	Schedule    *Schedule    `json:"schedule"`
+	Cluster     int          `json:"cluster"`
 }
 
 type TableCachingSpec struct {
@@ -532,7 +538,6 @@ func validRoles() []string {
 		"view_reports",
 	}
 }
-
 
 func mapRolesToBackend(frontend []string) []Role {
 	vs := make([]Role, 0, len(frontend))

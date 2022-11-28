@@ -813,10 +813,13 @@ resource "anaml-operations_caching" "caching" {
   name        = "household_caching"
   description = "Caching of tables for households"
   prefix_url  = "file:///tmp/anaml/caching"
-  spec {
-    table  = anaml_table.household.id
-    entity = anaml_entity.household.id
+  plan {
+    spec {
+      table  = anaml_table.household.id
+      entity = anaml_entity.household.id
+    }
   }
+  retainment = "P2D"
   cluster = data.anaml-operations_cluster.local.id
   daily_schedule {
     start_time_of_day = "00:00:00"
