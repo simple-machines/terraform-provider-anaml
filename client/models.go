@@ -236,12 +236,17 @@ type KafkaFormat struct {
 }
 
 // SourceReference ...
+// Doubles up with EventStoreReference as the json name is
+// the same and we normalised everything.
 type SourceReference struct {
-	Type      string `json:"adt_type"`
-	SourceID  int    `json:"sourceId"`
-	Folder    string `json:"folder,omitempty"`
-	TableName string `json:"tableName,omitempty"`
-	Topic     string `json:"topic,omitempty"`
+	Type          string `json:"adt_type,omitempty"`
+	SourceID      int    `json:"sourceId,omitempty"`
+	Folder        string `json:"folder,omitempty"`
+	TableName     string `json:"tableName,omitempty"`
+	Topic         string `json:"topic,omitempty"`
+
+	EventStoreId  int    `json:"eventStoreId,omitempty"`
+	Entity        int    `json:"entity,omitempty"`
 }
 
 // AccessRule ...

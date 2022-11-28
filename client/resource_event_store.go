@@ -149,6 +149,7 @@ func resourceEventStoreRead(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return err
 	}
+
 	if entity == nil {
 		d.SetId("")
 		return nil
