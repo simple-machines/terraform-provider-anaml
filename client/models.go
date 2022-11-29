@@ -144,9 +144,11 @@ type VersionTarget struct {
 // FeatureStore ...
 type FeatureStore struct {
 	ID              int                    `json:"id,omitempty"`
+	Type            string                 `json:"adt_type"`
 	Name            string                 `json:"name"`
 	Description     string                 `json:"description"`
-	Type            string                 `json:"adt_type"`
+	Labels          []string               `json:"labels"`
+	Attributes      []Attribute            `json:"attributes"`
 	FeatureSet      int                    `json:"featureSet"`
 	Enabled         bool                   `json:"enabled"`
 	Schedule        *Schedule              `json:"schedule"`
@@ -158,8 +160,6 @@ type FeatureStore struct {
 	StartDate       *string                `json:"startDate,omitempty"`
 	EndDate         *string                `json:"endDate,omitempty"`
 	Table           *int                   `json:"table,omitempty"`
-	Labels          []string               `json:"labels"`
-	Attributes      []Attribute            `json:"attributes"`
 	IncludeMetadata bool                   `json:"includeMetadata"`
 	VersionTarget   *VersionTarget         `json:"versionTarget,omitempty"`
 }

@@ -182,6 +182,10 @@ func s3SourceDestinationSchema() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"line_separator": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -252,6 +256,10 @@ func s3aSourceDestinationSchema() *schema.Resource {
 				Optional: true,
 			},
 			"timestamp_format": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"line_separator": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
@@ -360,6 +368,10 @@ func gcsSourceDestinationSchema() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"line_separator": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -413,6 +425,10 @@ func localSourceDestinationSchema() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"line_separator": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -463,6 +479,10 @@ func hdfsSourceDestinationSchema() *schema.Resource {
 				Optional: true,
 			},
 			"timestamp_format": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"line_separator": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
@@ -1218,6 +1238,11 @@ func parseFileFormat(fileFormat *FileFormat) map[string]interface{} {
 		} else {
 			fileFormatMap["timestamp_format"] = nil
 		}
+		if fileFormat.LineSep != nil {
+			fileFormatMap["line_separator"] = fileFormat.LineSep
+		} else {
+			fileFormatMap["line_separator"] = nil
+		}
 	}
 	return fileFormatMap
 }
@@ -1254,6 +1279,9 @@ func composeFileFormat(d map[string]interface{}) *FileFormat {
 		}
 		if timestampFormat, ok := d["timestamp_format"].(string); ok {
 			fileFormat.TimestampFormat = &timestampFormat
+		}
+		if lineSep, ok := d["line_separator"].(string); ok {
+			fileFormat.LineSep = &lineSep
 		}
 	}
 
