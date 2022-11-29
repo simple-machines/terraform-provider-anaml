@@ -94,7 +94,7 @@ func ResourceFeature() *schema.Resource {
 				Description: "The aggregation to perform.",
 				ValidateFunc: validation.StringInSlice([]string{
 					"sum", "count", "countdistinct", "avg", "std", "min", "max", "minby", "maxby",
-					"last", "percentagechange", "absolutechange", "standardscore", "basketsum",
+					"first", "last", "percentagechange", "absolutechange", "standardscore", "basketsum",
 					"basketlast", "collectlist", "collectset",
 				}, false),
 				RequiredWith: []string{"table"},
