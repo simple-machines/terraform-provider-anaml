@@ -229,6 +229,7 @@ type FileFormat struct {
 	TimestampFormat          *string `json:"timestampFormat,omitempty"`
 	IgnoreLeadingWhiteSpace  *bool   `json:"ignoreLeadingWhiteSpace,omitempty"`
 	IgnoreTrailingWhiteSpace *bool   `json:"ignoreTrailingWhiteSpace,omitempty"`
+	LineSep                  *string `json:"lineSep,omitempty"`
 }
 
 type KafkaFormat struct {
@@ -268,6 +269,8 @@ type Destination struct {
 	ID                  int                             `json:"id,omitempty"`
 	Name                string                          `json:"name"`
 	Description         string                          `json:"description"`
+	Labels              []string                        `json:"labels"`
+	Attributes          []Attribute                     `json:"attributes"`
 	Type                string                          `json:"adt_type"`
 	Bucket              string                          `json:"bucket,omitempty"`
 	Path                string                          `json:"path,omitempty"`
@@ -283,9 +286,9 @@ type Destination struct {
 	SchemaRegistryURL   string                          `json:"schemaRegistryUrl,omitempty"`
 	KafkaProperties     []SensitiveAttribute            `json:"kafkaPropertiesProviders"`
 	StagingArea         *GCSStagingArea                 `json:"stagingArea,omitempty"`
-	Labels              []string                        `json:"labels"`
-	Attributes          []Attribute                     `json:"attributes"`
 	Warehouse           string                          `json:"warehouse,omitempty"`
+	Project             string                          `json:"project,omitempty"`
+	Instance            string                          `json:"instance,omitempty"`
 }
 
 // GCSStagingArea ...

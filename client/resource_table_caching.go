@@ -302,7 +302,7 @@ func resourceTableCachingDelete(d *schema.ResourceData, m interface{}) error {
 func expandTableCachingPlan(d *schema.ResourceData) *CachingPlan {
 	drs, _ := expandSingleMap(d.Get("plan"))
 	res := CachingPlan{
-		Type: "inclusion",
+		Type:  "inclusion",
 		Specs: expandTableCachingSpecs(drs),
 	}
 

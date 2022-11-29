@@ -50,7 +50,7 @@ func ResourceDestination() *schema.Resource {
 				Optional:     true,
 				MaxItems:     1,
 				Elem:         s3SourceDestinationSchema(),
-				ExactlyOneOf: []string{"s3", "s3a", "jdbc", "hive", "big_query", "gcs", "local", "hdfs", "online", "kafka", "snowflake"},
+				ExactlyOneOf: []string{"s3", "s3a", "jdbc", "hive", "big_query", "gcs", "local", "hdfs", "online", "kafka", "snowflake", "bigtable"},
 			},
 			"s3a": {
 				Type:     schema.TypeList,
@@ -111,6 +111,12 @@ func ResourceDestination() *schema.Resource {
 				Optional: true,
 				MaxItems: 1,
 				Elem:     snowflakeSourceDestinationSchema(),
+			},
+			"bigtable": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem:     bigtableDestinationSchema(),
 			},
 			"labels": {
 				Type:        schema.TypeSet,
@@ -287,6 +293,16 @@ func resourceDestinationRead(d *schema.ResourceData, m interface{}) error {
 			return err
 		}
 		if err := d.Set("online", online); err != nil {
+			return err
+		}
+	}
+
+	if destination.Type == "bigtable" {
+		online, err := parseBigtableDestination(destination)
+		if err != nil {
+			return err
+		}
+		if err := d.Set("bigtable", online); err != nil {
 			return err
 		}
 	}
@@ -518,6 +534,20 @@ func parseOnlineDestination(destination *Destination) ([]map[string]interface{},
 	return onlines, nil
 }
 
+func parseBigtableDestination(destination *Destination) ([]map[string]interface{}, error) {
+	if destination == nil {
+		return nil, errors.New("Destination is null")
+	}
+
+	online := make(map[string]interface{})
+	online["project"] = destination.Project
+	online["instance"] = destination.Instance
+
+	onlines := make([]map[string]interface{}, 0, 1)
+	onlines = append(onlines, online)
+	return onlines, nil
+}
+
 func parseKafkaDestination(destination *Destination) ([]map[string]interface{}, error) {
 	if destination == nil {
 		return nil, errors.New("Destination is null")
@@ -717,6 +747,19 @@ func composeDestination(d *schema.ResourceData) (*Destination, error) {
 			CredentialsProvider: credentialsProvider,
 			Labels:              expandLabels(d),
 			Attributes:          expandAttributes(d),
+		}
+		return &destination, nil
+	}
+
+	if bigtable, _ := expandSingleMap(d.Get("bigtable")); bigtable != nil {
+		destination := Destination{
+			Name:        d.Get("name").(string),
+			Description: d.Get("description").(string),
+			Type:        "bigtable",
+			Project:     bigtable["project"].(string),
+			Instance:    bigtable["instance"].(string),
+			Labels:      expandLabels(d),
+			Attributes:  expandAttributes(d),
 		}
 		return &destination, nil
 	}

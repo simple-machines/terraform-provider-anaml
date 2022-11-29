@@ -779,6 +779,18 @@ resource "anaml-operations_destination" "snowflake" {
   labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
+resource "anaml-operations_destination" "bigtable" {
+  name        = "terraform_bigtable_destination"
+  description = "A Bigtable destination created by Terraform"
+
+  bigtable {
+    project = "my_project"
+    instance = "my_instance"
+  }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
+}
+
 resource "anaml-operations_user" "jane" {
   name       = "Jane"
   email      = "jane@example.com"
@@ -819,7 +831,7 @@ resource "anaml-operations_caching" "caching" {
       entity = anaml_entity.household.id
     }
   }
-  retainment = "P2D"
+  retainment = "PT48H"
   cluster = data.anaml-operations_cluster.local.id
   daily_schedule {
     start_time_of_day = "00:00:00"
