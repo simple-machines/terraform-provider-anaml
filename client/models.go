@@ -65,6 +65,7 @@ type Table struct {
 type EventWindow struct {
 	Type   string `json:"adt_type"`
 	Days   int    `json:"days,omitempty"`
+	Hours  int    `json:"hours,omitempty"`
 	Months int    `json:"months,omitempty"`
 	Rows   int    `json:"rows,omitempty"`
 }
