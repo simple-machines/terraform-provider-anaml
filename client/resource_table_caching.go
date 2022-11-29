@@ -2,6 +2,7 @@ package anaml
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -31,13 +32,22 @@ func ResourceTableCaching() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"plan": {
+			"include": {
 				Type:        schema.TypeList,
 				Description: "Table and entity specifications to cache with this job",
-				Required:    true,
+				Optional:    true,
 				MaxItems:    1,
 
 				Elem: planSchema(),
+			},
+			"auto": {
+				Type:        schema.TypeList,
+				Description: "Table and entity specifications to cache with this job",
+				Optional:    true,
+				MaxItems:    1,
+
+				Elem:         excludeSchema(),
+				ExactlyOneOf: []string{"include", "auto"},
 			},
 			"retainment": {
 				Type:         schema.TypeString,
@@ -95,7 +105,16 @@ func resourceTableCachingV0() *schema.Resource {
 				Type:        schema.TypeList,
 				Description: "Table and entity specifications to cache with this job",
 				Optional:    true,
-				Elem:        specSchema(),
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"spec": {
+							Type:        schema.TypeList,
+							Description: "Table and entity specifications to cache with this job",
+							Optional:    true,
+							Elem:        specSchema(),
+						},
+					},
+				},
 			},
 			"daily_schedule": {
 				Type:          schema.TypeList,
@@ -122,9 +141,9 @@ func resourceTableCachingV0() *schema.Resource {
 
 func resourceExampleInstanceStateUpgradeV0(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 	plan := make(map[string]interface{})
-	plan["spec"] = rawState["spec"]
+	plan["include"] = rawState["spec"]
 
-	rawState["plan"] = plan
+	rawState["include"] = plan
 	delete(rawState, "spec")
 
 	return rawState, nil
@@ -134,6 +153,20 @@ func planSchema() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"spec": {
+				Type:        schema.TypeList,
+				Description: "Table and entity specifications to cache with this job",
+				Required:    true,
+				Elem:        specSchema(),
+				MinItems:    1,
+			},
+		},
+	}
+}
+
+func excludeSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"exclude": {
 				Type:        schema.TypeList,
 				Description: "Table and entity specifications to cache with this job",
 				Optional:    true,
@@ -177,7 +210,15 @@ func resourceTableCachingRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("description", TableCaching.Description); err != nil {
 		return err
 	}
-	if err := d.Set("plan", flattenTableCachingPlan(TableCaching.Plan)); err != nil {
+
+	if err := d.Set("include", nil); err != nil {
+		return err
+	}
+	if err := d.Set("auto", nil); err != nil {
+		return err
+	}
+	loc, plan := flattenTableCachingPlan(TableCaching.Plan)
+	if err := d.Set(loc, plan); err != nil {
 		return err
 	}
 	if err := d.Set("cluster", strconv.Itoa(TableCaching.Cluster)); err != nil {
@@ -276,11 +317,16 @@ func composeTableCaching(d *schema.ResourceData) (*TableCaching, error) {
 		retainment = &retainmentstr
 	}
 
+	plan, err := expandTableCachingPlan(d)
+	if err != nil {
+		return nil, err
+	}
+
 	return &TableCaching{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		PrefixURI:   d.Get("prefix_url").(string),
-		Plan:        expandTableCachingPlan(d),
+		Plan:        plan,
 		Retainement: retainment,
 		Cluster:     cluster,
 		Schedule:    schedule,
@@ -299,18 +345,27 @@ func resourceTableCachingDelete(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func expandTableCachingPlan(d *schema.ResourceData) *CachingPlan {
-	drs, _ := expandSingleMap(d.Get("plan"))
-	res := CachingPlan{
-		Type:  "inclusion",
-		Specs: expandTableCachingSpecs(drs),
+func expandTableCachingPlan(d *schema.ResourceData) (*CachingPlan, error) {
+	if inclusion, _ := expandSingleMap(d.Get("include")); inclusion != nil {
+		plan := CachingPlan{
+			Type:  "inclusion",
+			Specs: expandTableCachingSpecs(inclusion["spec"].([]interface{})),
+		}
+		return &plan, nil
 	}
 
-	return &res
+	if auto, _ := expandSingleMap(d.Get("auto")); auto != nil {
+		plan := CachingPlan{
+			Type:     "auto",
+			Excluded: expandTableCachingSpecs(auto["exclude"].([]interface{})),
+		}
+		return &plan, nil
+	}
+
+	return nil, errors.New("Invalid caching plan type")
 }
 
-func expandTableCachingSpecs(d map[string]interface{}) []TableCachingSpec {
-	drs := d["spec"].([]interface{})
+func expandTableCachingSpecs(drs []interface{}) []TableCachingSpec {
 	res := make([]TableCachingSpec, 0, len(drs))
 
 	for _, dr := range drs {
@@ -328,14 +383,23 @@ func expandTableCachingSpecs(d map[string]interface{}) []TableCachingSpec {
 	return res
 }
 
-func flattenTableCachingPlan(plan *CachingPlan) []map[string]interface{} {
+func flattenTableCachingPlan(plan *CachingPlan) (string, []map[string]interface{}) {
 	res := make([]map[string]interface{}, 0, 1)
+	loc := ""
 
-	single := make(map[string]interface{})
-	single["spec"] = flattenTableCachingSpecs(plan.Specs)
-	res = append(res, single)
+	if plan.Type == "inclusion" {
+		single := make(map[string]interface{})
+		single["spec"] = flattenTableCachingSpecs(plan.Specs)
+		res = append(res, single)
+		loc = "include"
+	} else {
+		single := make(map[string]interface{})
+		single["exclude"] = flattenTableCachingSpecs(plan.Excluded)
+		res = append(res, single)
+		loc = "auto"
+	}
 
-	return res
+	return loc, res
 }
 
 func flattenTableCachingSpecs(specs []TableCachingSpec) []map[string]interface{} {

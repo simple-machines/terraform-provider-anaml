@@ -825,8 +825,25 @@ resource "anaml-operations_caching" "caching" {
   name        = "household_caching"
   description = "Caching of tables for households"
   prefix_url  = "file:///tmp/anaml/caching"
-  plan {
+  include {
     spec {
+      table  = anaml_table.household.id
+      entity = anaml_entity.household.id
+    }
+  }
+  retainment = "PT48H"
+  cluster = data.anaml-operations_cluster.local.id
+  daily_schedule {
+    start_time_of_day = "00:00:00"
+  }
+}
+
+resource "anaml-operations_caching" "caching_two" {
+  name        = "household_caching_auto"
+  description = "Caching of tables for households"
+  prefix_url  = "file:///tmp/anaml/caching"
+  auto {
+    exclude {
       table  = anaml_table.household.id
       entity = anaml_entity.household.id
     }

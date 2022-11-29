@@ -423,8 +423,9 @@ type TableMonitoring struct {
 }
 
 type CachingPlan struct {
-	Type  string             `json:"adt_type"`
-	Specs []TableCachingSpec `json:"specs"`
+	Type     string             `json:"adt_type"`
+	Specs    []TableCachingSpec `json:"specs"`
+	Excluded []TableCachingSpec `json:"excluded"`
 }
 
 // TableCaching ...
