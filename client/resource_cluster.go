@@ -163,6 +163,12 @@ func loginCredentialsProviderConfigSchema() *schema.Resource {
 				MaxItems: 1,
 				Elem:     basicCredentialsProviderConfigSchema(),
 			},
+			"file": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem:     fileCredentialsProviderConfigSchema(),
+			},
 			"aws": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -188,6 +194,24 @@ func basicCredentialsProviderConfigSchema() *schema.Resource {
 				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 			"password": {
+				Type:         schema.TypeString,
+				Required:     true,
+				Sensitive:    true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+		},
+	}
+}
+
+func fileCredentialsProviderConfigSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"username": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+			"filepath": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringIsNotWhiteSpace,
@@ -369,6 +393,14 @@ func parseLoginCredentialsProviderConfig(credentials *LoginCredentialsProviderCo
 		basics := make([]map[string]interface{}, 0, 1)
 		basics = append(basics, basic)
 		provider["basic"] = basics
+	} else if credentials.Type == "file" {
+		file := make(map[string]interface{})
+		file["username"] = credentials.Username
+		file["filepath"] = credentials.FilePath
+
+		files := make([]map[string]interface{}, 0, 1)
+		files = append(files, file)
+		provider["file"] = files
 	} else if credentials.Type == "aws" {
 		aws := make(map[string]interface{})
 		aws["username"] = credentials.Username
@@ -471,6 +503,15 @@ func composeLoginCredentialsProviderConfig(d map[string]interface{}) (*LoginCred
 			Type:     "basic",
 			Username: basic["username"].(string),
 			Password: basic["password"].(string),
+		}
+		return &provider, nil
+	}
+
+	if file, _ := expandSingleMap(d["file"]); file != nil {
+		provider := LoginCredentialsProviderConfig{
+			Type:     "file",
+			Username: file["username"].(string),
+			FilePath: file["filepath"].(string),
 		}
 		return &provider, nil
 	}

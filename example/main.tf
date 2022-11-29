@@ -557,10 +557,26 @@ resource "anaml-operations_source" "kafka" {
     bootstrap_servers   = "http://bootstrap"
     schema_registry_url = "http://schema-registry"
     property {
+      key = "clock"
+      value = "time"
+    }
+    property {
+      key = "quest"
+      aws {
+        secret_id      = "sid"
+      }
+    }
+    property {
       key = "jamf"
       gcp {
         secret_project = "example"
         secret_id      = "sid"
+      }
+    }
+    property {
+      key = "exhibit"
+      file {
+        filepath = "example"
       }
     }
   }

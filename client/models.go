@@ -185,6 +185,7 @@ type SensitiveAttribute struct {
 type SecretValueConfig struct {
 	Type          string `json:"adt_type"`
 	Secret        string `json:"secret,omitempty"`
+	FilePath      string `json:"filepath,omitempty"`
 	SecretProject string `json:"secretProject,omitempty"`
 	SecretId      string `json:"secretId,omitempty"`
 }
@@ -326,6 +327,7 @@ type LoginCredentialsProviderConfig struct {
 	Type                  string `json:"adt_type"`
 	Username              string `json:"username"`
 	Password              string `json:"password,omitempty"`
+	FilePath              string `json:"filepath,omitempty"`
 	PasswordSecretProject string `json:"passwordSecretProject,omitempty"`
 	PasswordSecretId      string `json:"passwordSecretId,omitempty"`
 }
