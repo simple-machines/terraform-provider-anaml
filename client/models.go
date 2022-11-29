@@ -80,11 +80,6 @@ type AggregateExpression struct {
 	Type string `json:"adt_type"`
 }
 
-// DataType ...
-type DataType struct {
-	Type string `json:"adt_type"`
-}
-
 // Feature ... again, completely normalised.
 // Note
 // Go is a bad language, We can't use omitempty for over, because both [] and 'nil' are empty.
