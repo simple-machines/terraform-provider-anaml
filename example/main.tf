@@ -557,10 +557,26 @@ resource "anaml-operations_source" "kafka" {
     bootstrap_servers   = "http://bootstrap"
     schema_registry_url = "http://schema-registry"
     property {
+      key = "clock"
+      value = "time"
+    }
+    property {
+      key = "quest"
+      aws {
+        secret_id      = "sid"
+      }
+    }
+    property {
       key = "jamf"
       gcp {
         secret_project = "example"
         secret_id      = "sid"
+      }
+    }
+    property {
+      key = "exhibit"
+      file {
+        filepath = "example"
       }
     }
   }
@@ -779,6 +795,18 @@ resource "anaml-operations_destination" "snowflake" {
   labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
+resource "anaml-operations_destination" "bigtable" {
+  name        = "terraform_bigtable_destination"
+  description = "A Bigtable destination created by Terraform"
+
+  bigtable {
+    project = "my_project"
+    instance = "my_instance"
+  }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
+}
+
 resource "anaml-operations_user" "jane" {
   name       = "Jane"
   email      = "jane@example.com"
@@ -813,10 +841,30 @@ resource "anaml-operations_caching" "caching" {
   name        = "household_caching"
   description = "Caching of tables for households"
   prefix_url  = "file:///tmp/anaml/caching"
-  spec {
-    table  = anaml_table.household.id
-    entity = anaml_entity.household.id
+  include {
+    spec {
+      table  = anaml_table.household.id
+      entity = anaml_entity.household.id
+    }
   }
+  retainment = "PT48H"
+  cluster = data.anaml-operations_cluster.local.id
+  daily_schedule {
+    start_time_of_day = "00:00:00"
+  }
+}
+
+resource "anaml-operations_caching" "caching_two" {
+  name        = "household_caching_auto"
+  description = "Caching of tables for households"
+  prefix_url  = "file:///tmp/anaml/caching"
+  auto {
+    exclude {
+      table  = anaml_table.household.id
+      entity = anaml_entity.household.id
+    }
+  }
+  retainment = "PT48H"
   cluster = data.anaml-operations_cluster.local.id
   daily_schedule {
     start_time_of_day = "00:00:00"

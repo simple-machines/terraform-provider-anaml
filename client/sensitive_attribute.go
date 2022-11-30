@@ -35,6 +35,13 @@ func parseSecretProviderConfig(secretProvider *SecretValueConfig) (map[string]in
 
 	if secretProvider.Type == "basic" {
 		provider["value"] = secretProvider.Secret
+	} else if secretProvider.Type == "file" {
+		file := make(map[string]interface{})
+		file["filepath"] = secretProvider.FilePath
+
+		files := make([]map[string]interface{}, 0, 1)
+		files = append(files, file)
+		provider["file"] = files
 	} else if secretProvider.Type == "awssm" {
 		aws := make(map[string]interface{})
 		aws["secret_id"] = secretProvider.SecretId
@@ -67,6 +74,11 @@ func composeSensitiveAttribute(d map[string]interface{}) (*SensitiveAttribute, e
 			Type:   "basic",
 			Secret: d["value"].(string),
 		}
+	} else if file, _ := expandSingleMap(d["file"]); file != nil {
+		sensitive.ValueConfig = &SecretValueConfig{
+			Type:     "file",
+			FilePath: file["filepath"].(string),
+		}
 	} else if aws, _ := expandSingleMap(d["aws"]); aws != nil {
 		sensitive.ValueConfig = &SecretValueConfig{
 			Type:     "awssm",
@@ -96,6 +108,12 @@ func sensitiveAttributeSchema() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"file": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem:     fileSecretProviderConfigSchema(),
+			},
 			"aws": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -108,6 +126,18 @@ func sensitiveAttributeSchema() *schema.Resource {
 				MaxItems: 1,
 				// ExactlyOneOf: []string{"value", "aws", "gcp"},
 				Elem: gcpSecretProviderConfigSchema(),
+			},
+		},
+	}
+}
+
+func fileSecretProviderConfigSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"filepath": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 		},
 	}

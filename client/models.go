@@ -65,6 +65,7 @@ type Table struct {
 type EventWindow struct {
 	Type   string `json:"adt_type"`
 	Days   int    `json:"days,omitempty"`
+	Hours  int    `json:"hours,omitempty"`
 	Months int    `json:"months,omitempty"`
 	Rows   int    `json:"rows,omitempty"`
 }
@@ -76,11 +77,6 @@ type SQLExpression struct {
 
 // AggregateExpression ...
 type AggregateExpression struct {
-	Type string `json:"adt_type"`
-}
-
-// DataType ...
-type DataType struct {
 	Type string `json:"adt_type"`
 }
 
@@ -148,9 +144,11 @@ type VersionTarget struct {
 // FeatureStore ...
 type FeatureStore struct {
 	ID              int                    `json:"id,omitempty"`
+	Type            string                 `json:"adt_type"`
 	Name            string                 `json:"name"`
 	Description     string                 `json:"description"`
-	Type            string                 `json:"adt_type"`
+	Labels          []string               `json:"labels"`
+	Attributes      []Attribute            `json:"attributes"`
 	FeatureSet      int                    `json:"featureSet"`
 	Enabled         bool                   `json:"enabled"`
 	Schedule        *Schedule              `json:"schedule"`
@@ -162,8 +160,6 @@ type FeatureStore struct {
 	StartDate       *string                `json:"startDate,omitempty"`
 	EndDate         *string                `json:"endDate,omitempty"`
 	Table           *int                   `json:"table,omitempty"`
-	Labels          []string               `json:"labels"`
-	Attributes      []Attribute            `json:"attributes"`
 	IncludeMetadata bool                   `json:"includeMetadata"`
 	VersionTarget   *VersionTarget         `json:"versionTarget,omitempty"`
 }
@@ -189,6 +185,7 @@ type SensitiveAttribute struct {
 type SecretValueConfig struct {
 	Type          string `json:"adt_type"`
 	Secret        string `json:"secret,omitempty"`
+	FilePath      string `json:"filepath,omitempty"`
 	SecretProject string `json:"secretProject,omitempty"`
 	SecretId      string `json:"secretId,omitempty"`
 }
@@ -229,6 +226,7 @@ type FileFormat struct {
 	TimestampFormat          *string `json:"timestampFormat,omitempty"`
 	IgnoreLeadingWhiteSpace  *bool   `json:"ignoreLeadingWhiteSpace,omitempty"`
 	IgnoreTrailingWhiteSpace *bool   `json:"ignoreTrailingWhiteSpace,omitempty"`
+	LineSep                  *string `json:"lineSep,omitempty"`
 }
 
 type KafkaFormat struct {
@@ -236,12 +234,17 @@ type KafkaFormat struct {
 }
 
 // SourceReference ...
+// Doubles up with EventStoreReference as the json name is
+// the same and we normalised everything.
 type SourceReference struct {
-	Type      string `json:"adt_type"`
-	SourceID  int    `json:"sourceId"`
+	Type      string `json:"adt_type,omitempty"`
+	SourceID  int    `json:"sourceId,omitempty"`
 	Folder    string `json:"folder,omitempty"`
 	TableName string `json:"tableName,omitempty"`
 	Topic     string `json:"topic,omitempty"`
+
+	EventStoreId int `json:"eventStoreId,omitempty"`
+	Entity       int `json:"entity,omitempty"`
 }
 
 // AccessRule ...
@@ -263,6 +266,8 @@ type Destination struct {
 	ID                  int                             `json:"id,omitempty"`
 	Name                string                          `json:"name"`
 	Description         string                          `json:"description"`
+	Labels              []string                        `json:"labels"`
+	Attributes          []Attribute                     `json:"attributes"`
 	Type                string                          `json:"adt_type"`
 	Bucket              string                          `json:"bucket,omitempty"`
 	Path                string                          `json:"path,omitempty"`
@@ -278,9 +283,9 @@ type Destination struct {
 	SchemaRegistryURL   string                          `json:"schemaRegistryUrl,omitempty"`
 	KafkaProperties     []SensitiveAttribute            `json:"kafkaPropertiesProviders"`
 	StagingArea         *GCSStagingArea                 `json:"stagingArea,omitempty"`
-	Labels              []string                        `json:"labels"`
-	Attributes          []Attribute                     `json:"attributes"`
 	Warehouse           string                          `json:"warehouse,omitempty"`
+	Project             string                          `json:"project,omitempty"`
+	Instance            string                          `json:"instance,omitempty"`
 }
 
 // GCSStagingArea ...
@@ -322,6 +327,7 @@ type LoginCredentialsProviderConfig struct {
 	Type                  string `json:"adt_type"`
 	Username              string `json:"username"`
 	Password              string `json:"password,omitempty"`
+	FilePath              string `json:"filepath,omitempty"`
 	PasswordSecretProject string `json:"passwordSecretProject,omitempty"`
 	PasswordSecretId      string `json:"passwordSecretId,omitempty"`
 }
@@ -414,15 +420,22 @@ type TableMonitoring struct {
 	Enabled     bool      `json:"enabled"`
 }
 
+type CachingPlan struct {
+	Type     string             `json:"adt_type"`
+	Specs    []TableCachingSpec `json:"specs"`
+	Excluded []TableCachingSpec `json:"excluded"`
+}
+
 // TableCaching ...
 type TableCaching struct {
-	ID          int                `json:"id,omitempty"`
-	Name        string             `json:"name"`
-	Description string             `json:"description"`
-	Specs       []TableCachingSpec `json:"specs"`
-	PrefixURI   string             `json:"prefixURI"`
-	Schedule    *Schedule          `json:"schedule"`
-	Cluster     int                `json:"cluster"`
+	ID          int          `json:"id,omitempty"`
+	Name        string       `json:"name"`
+	Description string       `json:"description"`
+	Plan        *CachingPlan `json:"plan"`
+	Retainement *string      `json:"retainment"`
+	PrefixURI   string       `json:"prefixURI"`
+	Schedule    *Schedule    `json:"schedule"`
+	Cluster     int          `json:"cluster"`
 }
 
 type TableCachingSpec struct {
@@ -442,6 +455,7 @@ type Webhook struct {
 	MonitoringRuns       *struct{} `json:"monitoringRuns,omitempty"`
 	CachingRuns          *struct{} `json:"cachingRuns,omitempty"`
 	MaterialisationRuns  *struct{} `json:"materialisationRuns,omitempty"`
+	EventStoreRuns       *struct{} `json:"eventStoreRuns,omitempty"`
 }
 
 type Attribute struct {
@@ -527,7 +541,6 @@ func validRoles() []string {
 		"view_reports",
 	}
 }
-
 
 func mapRolesToBackend(frontend []string) []Role {
 	vs := make([]Role, 0, len(frontend))

@@ -55,6 +55,11 @@ Usually, the features one writes on a pivot table are simple aggregations, such 
 average of some column with some filtering. Day and Row windows are not required.
 
 
+### Event Store Tables
+
+
+
+
 ## Timestamp and Entities
 
 To be used in feature generation a Table must have one or more [Entities](/entities) and a timestamp associated
@@ -95,7 +100,13 @@ func ResourceTable() *schema.Resource {
 				Optional:     true,
 				MaxItems:     1,
 				Elem:         sourceSchema(),
-				ExactlyOneOf: []string{"source", "expression", "entity_mapping"},
+				ExactlyOneOf: []string{"source", "event_store", "expression", "entity_mapping"},
+			},
+			"event_store": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem:     eventStoreSchema(),
 			},
 			"expression": {
 				Type:         schema.TypeString,
@@ -205,6 +216,28 @@ func sourceSchema() *schema.Resource {
 	}
 }
 
+func eventStoreSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"store": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validateAnamlIdentifier(),
+			},
+			"topic": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+			"entity": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validateAnamlIdentifier(),
+			},
+		},
+	}
+}
+
 func resourceTableRead(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
 	tableID := d.Id()
@@ -241,6 +274,12 @@ func resourceTableRead(d *schema.ResourceData, m interface{}) error {
 
 	if table.Type == "root" {
 		if err := d.Set("source", flattenSourceReferences(table.Source)); err != nil {
+			return err
+		}
+	}
+
+	if table.Type == "eventstore" {
+		if err := d.Set("event_store", flattenEventStoreReferences(table.Source)); err != nil {
 			return err
 		}
 	}
@@ -317,12 +356,14 @@ func buildTable(d *schema.ResourceData) *Table {
 	} else if d.Get("entity_mapping").(string) != "" {
 		table.Type = "pivot"
 		entity, _ := strconv.Atoi(d.Get("entity_mapping").(string))
-
 		table.EntityMapping = entity
 		table.ExtraFeatures = expandIdentifierList(d.Get("extra_features").([]interface{}))
-	} else {
+	} else if len(d.Get("source").([]interface{})) == 1 {
 		table.Type = "root"
 		table.Source = expandSourceReferences(d)
+	} else {
+		table.Type = "eventstore"
+		table.Source = expandEventStoreReferences(d)
 	}
 
 	return &table
@@ -406,6 +447,27 @@ func expandSourceReferences(d *schema.ResourceData) *SourceReference {
 	return nil
 }
 
+func expandEventStoreReferences(d *schema.ResourceData) *SourceReference {
+	srs := d.Get("event_store").([]interface{})
+
+	for _, sr := range srs {
+		val, _ := sr.(map[string]interface{})
+
+		store, _ := strconv.Atoi(val["store"].(string))
+		entity, _ := strconv.Atoi(val["entity"].(string))
+		topic, _ := val["topic"].(string)
+
+		parsed := SourceReference{
+			EventStoreId: store,
+			Entity:       entity,
+			Topic:        topic,
+		}
+		return &parsed
+	}
+
+	return nil
+}
+
 func flattenSourceReferences(source *SourceReference) []map[string]interface{} {
 	res := make([]map[string]interface{}, 0, 1)
 
@@ -417,6 +479,22 @@ func flattenSourceReferences(source *SourceReference) []map[string]interface{} {
 	single["source"] = strconv.Itoa(source.SourceID)
 	single["folder"] = source.Folder
 	single["table_name"] = source.TableName
+	single["topic"] = source.Topic
+	res = append(res, single)
+
+	return res
+}
+
+func flattenEventStoreReferences(source *SourceReference) []map[string]interface{} {
+	res := make([]map[string]interface{}, 0, 1)
+
+	if source == nil {
+		return res
+	}
+
+	single := make(map[string]interface{})
+	single["store"] = strconv.Itoa(source.EventStoreId)
+	single["entity"] = strconv.Itoa(source.Entity)
 	single["topic"] = source.Topic
 	res = append(res, single)
 

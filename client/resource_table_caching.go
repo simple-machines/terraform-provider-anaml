@@ -1,9 +1,12 @@
 package anaml
 
 import (
+	"context"
+	"errors"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func ResourceTableCaching() *schema.Resource {
@@ -29,11 +32,27 @@ func ResourceTableCaching() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"spec": {
+			"include": {
 				Type:        schema.TypeList,
 				Description: "Table and entity specifications to cache with this job",
 				Optional:    true,
-				Elem:        specSchema(),
+				MaxItems:    1,
+
+				Elem: planSchema(),
+			},
+			"auto": {
+				Type:        schema.TypeList,
+				Description: "Table and entity specifications to cache with this job",
+				Optional:    true,
+				MaxItems:    1,
+
+				Elem:         excludeSchema(),
+				ExactlyOneOf: []string{"include", "auto"},
+			},
+			"retainment": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 			"daily_schedule": {
 				Type:          schema.TypeList,
@@ -53,6 +72,105 @@ func ResourceTableCaching() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validateAnamlIdentifier(),
+			},
+		},
+
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceTableCachingV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: resourceExampleInstanceStateUpgradeV0,
+				Version: 0,
+			},
+		},
+	}
+}
+
+func resourceTableCachingV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"name": {
+				Type:     schema.TypeString,
+				Required: true,
+			},
+			"description": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"prefix_url": {
+				Type:     schema.TypeString,
+				Required: true,
+			},
+			"spec": {
+				Type:        schema.TypeList,
+				Description: "Table and entity specifications to cache with this job",
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"spec": {
+							Type:        schema.TypeList,
+							Description: "Table and entity specifications to cache with this job",
+							Optional:    true,
+							Elem:        specSchema(),
+						},
+					},
+				},
+			},
+			"daily_schedule": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				MaxItems:      1,
+				Elem:          dailyScheduleSchema(),
+				ConflictsWith: []string{"cron_schedule"},
+			},
+			"cron_schedule": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				MaxItems:      1,
+				Elem:          cronScheduleSchema(),
+				ConflictsWith: []string{"daily_schedule"},
+			},
+			"cluster": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validateAnamlIdentifier(),
+			},
+		},
+	}
+}
+
+func resourceExampleInstanceStateUpgradeV0(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+	plan := make(map[string]interface{})
+	plan["include"] = rawState["spec"]
+
+	rawState["include"] = plan
+	delete(rawState, "spec")
+
+	return rawState, nil
+}
+
+func planSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"spec": {
+				Type:        schema.TypeList,
+				Description: "Table and entity specifications to cache with this job",
+				Required:    true,
+				Elem:        specSchema(),
+				MinItems:    1,
+			},
+		},
+	}
+}
+
+func excludeSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"exclude": {
+				Type:        schema.TypeList,
+				Description: "Table and entity specifications to cache with this job",
+				Optional:    true,
+				Elem:        specSchema(),
 			},
 		},
 	}
@@ -92,7 +210,15 @@ func resourceTableCachingRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("description", TableCaching.Description); err != nil {
 		return err
 	}
-	if err := d.Set("spec", flattenTableCachingSpecs(TableCaching.Specs)); err != nil {
+
+	if err := d.Set("include", nil); err != nil {
+		return err
+	}
+	if err := d.Set("auto", nil); err != nil {
+		return err
+	}
+	loc, plan := flattenTableCachingPlan(TableCaching.Plan)
+	if err := d.Set(loc, plan); err != nil {
 		return err
 	}
 	if err := d.Set("cluster", strconv.Itoa(TableCaching.Cluster)); err != nil {
@@ -100,6 +226,14 @@ func resourceTableCachingRead(d *schema.ResourceData, m interface{}) error {
 	}
 	if err := d.Set("prefix_url", TableCaching.PrefixURI); err != nil {
 		return err
+	}
+
+	if TableCaching.Retainement != nil {
+		if err := d.Set("retainment", TableCaching.Retainement); err != nil {
+			return err
+		}
+	} else {
+		d.Set("retainment", nil)
 	}
 
 	if TableCaching.Schedule.Type == "daily" {
@@ -163,43 +297,37 @@ func composeTableCaching(d *schema.ResourceData) (*TableCaching, error) {
 		return nil, err
 	}
 
+	var schedule = composeNeverSchedule()
 	if dailySchedule, _ := expandSingleMap(d.Get("daily_schedule")); dailySchedule != nil {
-		schedule, err := composeDailySchedule(dailySchedule)
+		schedule, err = composeDailySchedule(dailySchedule)
 		if err != nil {
 			return nil, err
 		}
-		return &TableCaching{
-			Name:        d.Get("name").(string),
-			Description: d.Get("description").(string),
-			PrefixURI:   d.Get("prefix_url").(string),
-			Specs:       expandTableCachingSpecs(d),
-			Cluster:     cluster,
-			Schedule:    schedule,
-		}, nil
 	}
-
 	if cronSchedule, _ := expandSingleMap(d.Get("cron_schedule")); cronSchedule != nil {
-		schedule, err := composeCronSchedule(cronSchedule)
+		schedule, err = composeCronSchedule(cronSchedule)
 		if err != nil {
 			return nil, err
 		}
-		return &TableCaching{
-			Name:        d.Get("name").(string),
-			Description: d.Get("description").(string),
-			PrefixURI:   d.Get("prefix_url").(string),
-			Specs:       expandTableCachingSpecs(d),
-			Cluster:     cluster,
-			Schedule:    schedule,
-		}, nil
 	}
 
-	schedule := composeNeverSchedule()
+	var retainment *string
+	if d.Get("retainment").(string) != "" {
+		retainmentstr := d.Get("retainment").(string)
+		retainment = &retainmentstr
+	}
+
+	plan, err := expandTableCachingPlan(d)
+	if err != nil {
+		return nil, err
+	}
 
 	return &TableCaching{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		PrefixURI:   d.Get("prefix_url").(string),
-		Specs:       expandTableCachingSpecs(d),
+		Plan:        plan,
+		Retainement: retainment,
 		Cluster:     cluster,
 		Schedule:    schedule,
 	}, nil
@@ -217,8 +345,27 @@ func resourceTableCachingDelete(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func expandTableCachingSpecs(d *schema.ResourceData) []TableCachingSpec {
-	drs := d.Get("spec").([]interface{})
+func expandTableCachingPlan(d *schema.ResourceData) (*CachingPlan, error) {
+	if inclusion, _ := expandSingleMap(d.Get("include")); inclusion != nil {
+		plan := CachingPlan{
+			Type:  "inclusion",
+			Specs: expandTableCachingSpecs(inclusion["spec"].([]interface{})),
+		}
+		return &plan, nil
+	}
+
+	if auto, _ := expandSingleMap(d.Get("auto")); auto != nil {
+		plan := CachingPlan{
+			Type:     "auto",
+			Excluded: expandTableCachingSpecs(auto["exclude"].([]interface{})),
+		}
+		return &plan, nil
+	}
+
+	return nil, errors.New("Invalid caching plan type")
+}
+
+func expandTableCachingSpecs(drs []interface{}) []TableCachingSpec {
 	res := make([]TableCachingSpec, 0, len(drs))
 
 	for _, dr := range drs {
@@ -234,6 +381,25 @@ func expandTableCachingSpecs(d *schema.ResourceData) []TableCachingSpec {
 	}
 
 	return res
+}
+
+func flattenTableCachingPlan(plan *CachingPlan) (string, []map[string]interface{}) {
+	res := make([]map[string]interface{}, 0, 1)
+	loc := ""
+
+	if plan.Type == "inclusion" {
+		single := make(map[string]interface{})
+		single["spec"] = flattenTableCachingSpecs(plan.Specs)
+		res = append(res, single)
+		loc = "include"
+	} else {
+		single := make(map[string]interface{})
+		single["exclude"] = flattenTableCachingSpecs(plan.Excluded)
+		res = append(res, single)
+		loc = "auto"
+	}
+
+	return loc, res
 }
 
 func flattenTableCachingSpecs(specs []TableCachingSpec) []map[string]interface{} {

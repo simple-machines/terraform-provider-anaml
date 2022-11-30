@@ -58,25 +58,32 @@ func ResourceFeatureTemplate() *schema.Resource {
 				Optional:    true,
 				Description: "An SQL column expression to filter with",
 			},
+			"hours": {
+				Type:          schema.TypeInt,
+				Optional:      true,
+				Description:   "An event window",
+				ConflictsWith: []string{"days", "rows", "months"},
+				ValidateFunc:  validation.IntAtLeast(1),
+			},
 			"days": {
 				Type:          schema.TypeInt,
 				Optional:      true,
 				Description:   "An event window",
-				ConflictsWith: []string{"rows", "months"},
+				ConflictsWith: []string{"hours", "rows", "months"},
 				ValidateFunc:  validation.IntAtLeast(1),
 			},
 			"months": {
 				Type:          schema.TypeInt,
 				Optional:      true,
 				Description:   "The event window description for the number of months to aggregate over.",
-				ConflictsWith: []string{"days", "rows"},
+				ConflictsWith: []string{"hours", "days", "rows"},
 				ValidateFunc:  validation.IntAtLeast(1),
 			},
 			"rows": {
 				Type:          schema.TypeInt,
 				Optional:      true,
 				Description:   "An event window",
-				ConflictsWith: []string{"days", "months"},
+				ConflictsWith: []string{"hours", "days", "months"},
 				ValidateFunc:  validation.IntAtLeast(1),
 			},
 			"aggregation": {
@@ -84,7 +91,7 @@ func ResourceFeatureTemplate() *schema.Resource {
 				Optional: true,
 				ValidateFunc: validation.StringInSlice([]string{
 					"sum", "count", "countdistinct", "avg", "std", "min", "max", "minby", "maxby",
-					"last", "percentagechange", "absolutechange", "standardscore", "basketsum",
+					"first", "last", "percentagechange", "absolutechange", "standardscore", "basketsum",
 					"basketlast", "collectlist", "collectset",
 				}, false),
 			},
@@ -173,6 +180,15 @@ func resourceFeatureTemplateRead(d *schema.ResourceData, m interface{}) error {
 	}
 
 	if feature.Type == "event" {
+		if feature.Window.Type == "hourwindow" {
+			if err := d.Set("hours", feature.Window.Hours); err != nil {
+				return err
+			}
+		} else {
+			if err = d.Set("hours", nil); err != nil {
+				return err
+			}
+		}
 		if feature.Window.Type == "daywindow" {
 			if err := d.Set("days", feature.Window.Days); err != nil {
 				return err
@@ -319,9 +335,15 @@ func buildFeatureTemplate(d *schema.ResourceData) (*FeatureTemplate, error) {
 		}
 
 		window := EventWindow{}
-		if d.Get("days").(int) != 0 {
+		if d.Get("hours").(int) != 0 {
+			window.Type = "hourwindow"
+			window.Hours = d.Get("hours").(int)
+		} else if d.Get("days").(int) != 0 {
 			window.Type = "daywindow"
 			window.Days = d.Get("days").(int)
+		} else if d.Get("months").(int) != 0 {
+			window.Type = "monthwindow"
+			window.Months = d.Get("months").(int)
 		} else if d.Get("rows").(int) != 0 {
 			window.Type = "rowwindow"
 			window.Rows = d.Get("rows").(int)
