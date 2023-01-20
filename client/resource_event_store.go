@@ -91,6 +91,14 @@ func ResourceEventStore() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validateAnamlIdentifier(),
 			},
+			"cluster_property_sets": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validateAnamlIdentifier(),
+				},
+			},
 			"access_rules": {
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -213,6 +221,9 @@ func resourceEventStoreRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 	if err := d.Set("cluster", strconv.Itoa(entity.Cluster)); err != nil {
+		return err
+	}
+	if err := d.Set("cluster_property_sets", identifierList(entity.ClusterPropertySets)); err != nil {
 		return err
 	}
 	if err := d.Set("access_rules", flattenAccessRules(entity.AccessRules)); err != nil {
@@ -352,21 +363,22 @@ func buildEventStore(d *schema.ResourceData) (*EventStore, error) {
 	}
 
 	entity := EventStore{
-		Name:               d.Get("name").(string),
-		Description:        d.Get("description").(string),
-		BootstrapServers:   d.Get("bootstrap_servers").(string),
-		SchemaRegistryURL:  d.Get("schema_registry_url").(string),
-		KafkaProperties:    sensitives,
-		Ingestions:         ingestions,
-		ConnectBaseURI:     getNullableString(d, "connect_base_uri"),
-		BatchIngestBaseURI: getNullableString(d, "batch_ingest_base_uri"),
-		ScatterBaseURI:     d.Get("scatter_base_uri").(string),
-		GlacierBaseURI:     d.Get("glacier_base_uri").(string),
-		Labels:             expandLabels(d),
-		Attributes:         expandAttributes(d),
-		Cluster:            cluster,
-		Schedule:           schedule,
-		AccessRules:        accessRules,
+		Name:                d.Get("name").(string),
+		Description:         d.Get("description").(string),
+		BootstrapServers:    d.Get("bootstrap_servers").(string),
+		SchemaRegistryURL:   d.Get("schema_registry_url").(string),
+		KafkaProperties:     sensitives,
+		Ingestions:          ingestions,
+		ConnectBaseURI:      getNullableString(d, "connect_base_uri"),
+		BatchIngestBaseURI:  getNullableString(d, "batch_ingest_base_uri"),
+		ScatterBaseURI:      d.Get("scatter_base_uri").(string),
+		GlacierBaseURI:      d.Get("glacier_base_uri").(string),
+		Labels:              expandLabels(d),
+		Attributes:          expandAttributes(d),
+		Cluster:             cluster,
+		ClusterPropertySets: expandIdentifierList(d.Get("cluster_property_sets").([]interface{})),
+		Schedule:            schedule,
+		AccessRules:         accessRules,
 	}
 	return &entity, err
 }

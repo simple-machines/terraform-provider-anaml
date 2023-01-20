@@ -143,25 +143,26 @@ type VersionTarget struct {
 
 // FeatureStore ...
 type FeatureStore struct {
-	ID              int                    `json:"id,omitempty"`
-	Type            string                 `json:"adt_type"`
-	Name            string                 `json:"name"`
-	Description     string                 `json:"description"`
-	Labels          []string               `json:"labels"`
-	Attributes      []Attribute            `json:"attributes"`
-	FeatureSet      int                    `json:"featureSet"`
-	Enabled         bool                   `json:"enabled"`
-	Schedule        *Schedule              `json:"schedule"`
-	Destinations    []DestinationReference `json:"destinations"`
-	Cluster         int                    `json:"cluster"`
-	RunDateOffset   *int                   `json:"runDateOffset,omitempty"`
-	Principal       *int                   `json:"principal,omitempty"`
-	Population      *int                   `json:"entityPopulation,omitempty"`
-	StartDate       *string                `json:"startDate,omitempty"`
-	EndDate         *string                `json:"endDate,omitempty"`
-	Table           *int                   `json:"table,omitempty"`
-	IncludeMetadata bool                   `json:"includeMetadata"`
-	VersionTarget   *VersionTarget         `json:"versionTarget,omitempty"`
+	ID                  int                    `json:"id,omitempty"`
+	Type                string                 `json:"adt_type"`
+	Name                string                 `json:"name"`
+	Description         string                 `json:"description"`
+	Labels              []string               `json:"labels"`
+	Attributes          []Attribute            `json:"attributes"`
+	FeatureSet          int                    `json:"featureSet"`
+	Enabled             bool                   `json:"enabled"`
+	Schedule            *Schedule              `json:"schedule"`
+	Destinations        []DestinationReference `json:"destinations"`
+	Cluster             int                    `json:"cluster"`
+	ClusterPropertySets []int                  `json:"clusterPropertySets"`
+	RunDateOffset       *int                   `json:"runDateOffset,omitempty"`
+	Principal           *int                   `json:"principal,omitempty"`
+	Population          *int                   `json:"entityPopulation,omitempty"`
+	StartDate           *string                `json:"startDate,omitempty"`
+	EndDate             *string                `json:"endDate,omitempty"`
+	Table               *int                   `json:"table,omitempty"`
+	IncludeMetadata     bool                   `json:"includeMetadata"`
+	VersionTarget       *VersionTarget         `json:"versionTarget,omitempty"`
 }
 
 type Schedule struct {
@@ -318,6 +319,7 @@ type Cluster struct {
 	SparkServerURL      string                          `json:"sparkServerUrl,omitempty"`
 	CredentialsProvider *LoginCredentialsProviderConfig `json:"credentialsProvider,omitempty"`
 	SparkConfig         *SparkConfig                    `json:"sparkConfig,omitempty"`
+	PropertySet         []PropertySet                   `json:"propertySets,omitempty"`
 	Labels              []string                        `json:"labels"`
 	Attributes          []Attribute                     `json:"attributes"`
 }
@@ -336,6 +338,13 @@ type LoginCredentialsProviderConfig struct {
 type SparkConfig struct {
 	EnableHiveSupport         bool              `json:"enableHiveSupport"`
 	HiveMetastoreURL          string            `json:"hiveMetastoreUrl,omitempty"`
+	AdditionalSparkProperties map[string]string `json:"additionalSparkProperties"`
+}
+
+// PropertySet ...
+type PropertySet struct {
+	ID                        *int              `json:"id,omitempty"`
+	Name                      string            `json:"name"`
 	AdditionalSparkProperties map[string]string `json:"additionalSparkProperties"`
 }
 
@@ -411,13 +420,14 @@ type PrincipalId struct {
 
 // TableMonitoring ...
 type TableMonitoring struct {
-	ID          int       `json:"id,omitempty"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	Tables      []int     `json:"tables"`
-	Schedule    *Schedule `json:"schedule"`
-	Cluster     int       `json:"cluster"`
-	Enabled     bool      `json:"enabled"`
+	ID                  int       `json:"id,omitempty"`
+	Name                string    `json:"name"`
+	Description         string    `json:"description"`
+	Tables              []int     `json:"tables"`
+	Schedule            *Schedule `json:"schedule"`
+	Cluster             int       `json:"cluster"`
+	ClusterPropertySets []int     `json:"clusterPropertySets"`
+	Enabled             bool      `json:"enabled"`
 }
 
 type CachingPlan struct {
@@ -428,14 +438,15 @@ type CachingPlan struct {
 
 // TableCaching ...
 type TableCaching struct {
-	ID          int          `json:"id,omitempty"`
-	Name        string       `json:"name"`
-	Description string       `json:"description"`
-	Plan        *CachingPlan `json:"plan"`
-	Retainement *string      `json:"retainment"`
-	PrefixURI   string       `json:"prefixURI"`
-	Schedule    *Schedule    `json:"schedule"`
-	Cluster     int          `json:"cluster"`
+	ID                  int          `json:"id,omitempty"`
+	Name                string       `json:"name"`
+	Description         string       `json:"description"`
+	Plan                *CachingPlan `json:"plan"`
+	Retainement         *string      `json:"retainment"`
+	PrefixURI           string       `json:"prefixURI"`
+	Schedule            *Schedule    `json:"schedule"`
+	Cluster             int          `json:"cluster"`
+	ClusterPropertySets []int        `json:"clusterPropertySets"`
 }
 
 type TableCachingSpec struct {
@@ -503,22 +514,23 @@ type EventStoreTopicColumns struct {
 }
 
 type EventStore struct {
-	ID                 int                               `json:"id,omitempty"`
-	Name               string                            `json:"name"`
-	Description        string                            `json:"description"`
-	Labels             []string                          `json:"labels"`
-	Attributes         []Attribute                       `json:"attributes"`
-	BootstrapServers   string                            `json:"bootstrapServers"`
-	SchemaRegistryURL  string                            `json:"schemaRegistryUrl"`
-	KafkaProperties    []SensitiveAttribute              `json:"kafkaPropertiesProviders"`
-	Ingestions         map[string]EventStoreTopicColumns `json:"ingestions"`
-	ConnectBaseURI     *string                           `json:"connectBaseURI"`
-	BatchIngestBaseURI *string                           `json:"batchIngestBaseURI"`
-	ScatterBaseURI     string                            `json:"scatterBaseURI"`
-	GlacierBaseURI     string                            `json:"glacierBaseURI"`
-	Schedule           *Schedule                         `json:"schedule"`
-	Cluster            int                               `json:"cluster"`
-	AccessRules        []AccessRule                      `json:"accessRules"`
+	ID                  int                               `json:"id,omitempty"`
+	Name                string                            `json:"name"`
+	Description         string                            `json:"description"`
+	Labels              []string                          `json:"labels"`
+	Attributes          []Attribute                       `json:"attributes"`
+	BootstrapServers    string                            `json:"bootstrapServers"`
+	SchemaRegistryURL   string                            `json:"schemaRegistryUrl"`
+	KafkaProperties     []SensitiveAttribute              `json:"kafkaPropertiesProviders"`
+	Ingestions          map[string]EventStoreTopicColumns `json:"ingestions"`
+	ConnectBaseURI      *string                           `json:"connectBaseURI"`
+	BatchIngestBaseURI  *string                           `json:"batchIngestBaseURI"`
+	ScatterBaseURI      string                            `json:"scatterBaseURI"`
+	GlacierBaseURI      string                            `json:"glacierBaseURI"`
+	Schedule            *Schedule                         `json:"schedule"`
+	Cluster             int                               `json:"cluster"`
+	ClusterPropertySets []int                             `json:"clusterPropertySets"`
+	AccessRules         []AccessRule                      `json:"accessRules"`
 }
 
 func validRoles() []string {

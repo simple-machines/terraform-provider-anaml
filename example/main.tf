@@ -390,6 +390,16 @@ resource "anaml-operations_cluster" "local" {
     enable_hive_support = true
   }
 
+  property_set {
+    name = "small"
+    additional_spark_properties = {"spark.dynamicAllocation.maxExecutors": "2"}
+  }
+
+  property_set {
+      name = "medium"
+      additional_spark_properties = {"spark.dynamicAllocation.maxExecutors": "4"}
+  }
+
   labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
@@ -670,7 +680,7 @@ resource "anaml-operations_destination" "big_query_temporary" {
   description = "An BigQuery destination created by Terraform"
 
   big_query {
-    path = "/path/to/file"
+    path = "path/to/file"
     temporary_staging_area {
       bucket = "my-bucket"
     }
@@ -684,7 +694,7 @@ resource "anaml-operations_destination" "big_query_persistent" {
   description = "An BigQuery destination created by Terraform"
 
   big_query {
-    path = "/path/to/file"
+    path = "path/to/file"
     persistent_staging_area {
       bucket = "my-bucket"
       path   = "/path/to/file"

@@ -71,6 +71,12 @@ func ResourceCluster() *schema.Resource {
 				MaxItems:    1,
 				Elem:        sparkConfigSchema(),
 			},
+			"property_set": {
+				Type:        schema.TypeSet,
+				Description: "Property Set with Additional configuration which is passed to Spark when performing feature generation runs.",
+				Optional:    true,
+				Elem:        propertySetSchema(),
+			},
 			"local": {
 				Type:         schema.TypeList,
 				Description:  "Set up for a local cluster. When this setting is used, a local spark session will be launched within the JVM process of the web server. Not recommended for production deployments.",
@@ -122,6 +128,35 @@ func sparkConfigSchema() *schema.Resource {
 					Type: schema.TypeString,
 				},
 				Optional: true,
+				DefaultFunc: func() (interface{}, error) {
+					return make(map[string]interface{}), nil
+				},
+			},
+		},
+	}
+}
+
+func propertySetSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"id": {
+				Type:        schema.TypeInt,
+				Description: "The id of cluster property set. If specified, all values must be unique.",
+				Optional:    true,
+				Computed:    true,
+			},
+			"name": {
+				Type:         schema.TypeString,
+				Description:  "The name of the cluster property set.",
+				Required:     true,
+				ValidateFunc: validateAnamlName(),
+			},
+			"additional_spark_properties": {
+				Type: schema.TypeMap,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Required: true,
 				DefaultFunc: func() (interface{}, error) {
 					return make(map[string]interface{}), nil
 				},
@@ -286,6 +321,10 @@ func resourceClusterRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 	if err := d.Set("spark_config", sparkConfig); err != nil {
+		return err
+	}
+
+	if err := d.Set("property_set", flattenPropertySet(cluster.PropertySet)); err != nil {
 		return err
 	}
 
@@ -474,6 +513,7 @@ func composeCluster(d *schema.ResourceData) (*Cluster, error) {
 			AnamlServerURL:      local["anaml_server_url"].(string),
 			CredentialsProvider: credentialsProvider,
 			SparkConfig:         &sparkConfig,
+			PropertySet:         expandPropertySet(d),
 			Labels:              expandLabels(d),
 			Attributes:          expandAttributes(d),
 		}
@@ -488,6 +528,7 @@ func composeCluster(d *schema.ResourceData) (*Cluster, error) {
 			IsPreviewCluster: d.Get("is_preview_cluster").(bool),
 			SparkServerURL:   sparkServer["spark_server_url"].(string),
 			SparkConfig:      &sparkConfig,
+			PropertySet:      expandPropertySet(d),
 			Labels:           expandLabels(d),
 			Attributes:       expandAttributes(d),
 		}
@@ -550,4 +591,44 @@ func composeSparkConfig(d map[string]interface{}) SparkConfig {
 		HiveMetastoreURL:          d["hive_metastore_url"].(string),
 		AdditionalSparkProperties: additionalSparkProperties,
 	}
+}
+
+func expandPropertySet(d *schema.ResourceData) []PropertySet {
+	drs := d.Get("property_set").(*schema.Set).List()
+	res := make([]PropertySet, 0, len(drs))
+	for _, dr := range drs {
+		val, _ := dr.(map[string]interface{})
+		source := val["additional_spark_properties"].(map[string]interface{})
+		additionalSparkProperties := make(map[string]string)
+
+		for k, v := range source {
+			additionalSparkProperties[k] = v.(string)
+		}
+
+		if val["name"].(string) != "" {
+			parsed := PropertySet{
+				Name:                      val["name"].(string),
+				AdditionalSparkProperties: additionalSparkProperties,
+			}
+
+			if id, ok := val["id"].(int); ok && id != 0 {
+				parsed.ID = &id
+			}
+
+			res = append(res, parsed)
+		}
+	}
+	return res
+}
+
+func flattenPropertySet(ps []PropertySet) []map[string]interface{} {
+	res := make([]map[string]interface{}, 0, len(ps))
+	for _, ps := range ps {
+		single := make(map[string]interface{})
+		single["id"] = ps.ID
+		single["name"] = ps.Name
+		single["additional_spark_properties"] = ps.AdditionalSparkProperties
+		res = append(res, single)
+	}
+	return res
 }

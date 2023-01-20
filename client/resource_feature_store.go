@@ -104,6 +104,14 @@ func ResourceFeatureStore() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validateAnamlIdentifier(),
 			},
+			"cluster_property_sets": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validateAnamlIdentifier(),
+				},
+			},
 			"entity_population": {
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -299,6 +307,9 @@ func resourceFeatureStoreRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("cluster", strconv.Itoa(FeatureStore.Cluster)); err != nil {
 		return err
 	}
+	if err := d.Set("cluster_property_sets", identifierList(FeatureStore.ClusterPropertySets)); err != nil {
+		return err
+	}
 	if err := d.Set("labels", FeatureStore.Labels); err != nil {
 		return err
 	}
@@ -454,19 +465,20 @@ func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
 	}
 
 	featureStore := FeatureStore{
-		Name:            d.Get("name").(string),
-		Description:     d.Get("description").(string),
-		FeatureSet:      featureSet,
-		Principal:       principal,
-		Enabled:         d.Get("enabled").(bool),
-		Destinations:    destinations,
-		Cluster:         cluster,
-		Population:      population,
-		Schedule:        schedule,
-		Labels:          expandLabels(d),
-		Attributes:      expandAttributes(d),
-		IncludeMetadata: d.Get("include_metadata").(bool),
-		VersionTarget:   versionTarget,
+		Name:                d.Get("name").(string),
+		Description:         d.Get("description").(string),
+		FeatureSet:          featureSet,
+		Principal:           principal,
+		Enabled:             d.Get("enabled").(bool),
+		Destinations:        destinations,
+		Cluster:             cluster,
+		ClusterPropertySets: expandIdentifierList(d.Get("cluster_property_sets").([]interface{})),
+		Population:          population,
+		Schedule:            schedule,
+		Labels:              expandLabels(d),
+		Attributes:          expandAttributes(d),
+		IncludeMetadata:     d.Get("include_metadata").(bool),
+		VersionTarget:       versionTarget,
 	}
 
 	table := getNullableInt(d, "table")
