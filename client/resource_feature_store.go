@@ -105,15 +105,15 @@ func ResourceFeatureStore() *schema.Resource {
 				ValidateFunc: validateAnamlIdentifier(),
 			},
 			"additional_spark_properties": {
-                Type:   schema.TypeMap,
-                Elem:   &schema.Schema{
-                            Type: schema.TypeString,
-                        },
-                Optional: true,
-                DefaultFunc: func() (interface{}, error) {
-                    return make(map[string]interface{}), nil
-                    },
-            },
+				Type: schema.TypeMap,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Optional: true,
+				DefaultFunc: func() (interface{}, error) {
+					return make(map[string]interface{}), nil
+				},
+			},
 			"entity_population": {
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -310,8 +310,8 @@ func resourceFeatureStoreRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 	if err := d.Set("additional_spark_properties", FeatureStore.AdditionalSparkProperties); err != nil {
-    	return err
-    }
+		return err
+	}
 	if err := d.Set("labels", FeatureStore.Labels); err != nil {
 		return err
 	}
@@ -426,11 +426,11 @@ func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
 	}
 
 	source := d.Get("additional_spark_properties").(map[string]interface{})
-    additionalSparkProperties := make(map[string]string)
+	additionalSparkProperties := make(map[string]string)
 
-    for k, v := range source {
-    	additionalSparkProperties[k] = v.(string)
-    }
+	for k, v := range source {
+		additionalSparkProperties[k] = v.(string)
+	}
 
 	var population (*int) = nil
 	if d.Get("entity_population").(string) != "" {
@@ -474,20 +474,20 @@ func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
 	}
 
 	featureStore := FeatureStore{
-		Name:            d.Get("name").(string),
-		Description:     d.Get("description").(string),
-		FeatureSet:      featureSet,
-		Principal:       principal,
-		Enabled:         d.Get("enabled").(bool),
-		Destinations:    destinations,
-		Cluster:         cluster,
+		Name:                      d.Get("name").(string),
+		Description:               d.Get("description").(string),
+		FeatureSet:                featureSet,
+		Principal:                 principal,
+		Enabled:                   d.Get("enabled").(bool),
+		Destinations:              destinations,
+		Cluster:                   cluster,
 		AdditionalSparkProperties: additionalSparkProperties,
-		Population:      population,
-		Schedule:        schedule,
-		Labels:          expandLabels(d),
-		Attributes:      expandAttributes(d),
-		IncludeMetadata: d.Get("include_metadata").(bool),
-		VersionTarget:   versionTarget,
+		Population:                population,
+		Schedule:                  schedule,
+		Labels:                    expandLabels(d),
+		Attributes:                expandAttributes(d),
+		IncludeMetadata:           d.Get("include_metadata").(bool),
+		VersionTarget:             versionTarget,
 	}
 
 	table := getNullableInt(d, "table")
