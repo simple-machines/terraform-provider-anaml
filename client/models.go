@@ -155,7 +155,7 @@ type FeatureStore struct {
 	Destinations              []DestinationReference `json:"destinations"`
 	Cluster                   int                    `json:"cluster"`
 	ClusterPropertySets       []int                  `json:"clusterPropertySets"`
-	AdditionalSparkProperties map[string]string      `json:"additionalSparkProperties"`
+	AdditionalSparkProperties map[string]string      `json:"additionalSparkProperties,omitempty"`
 	RunDateOffset             *int                   `json:"runDateOffset,omitempty"`
 	Principal                 *int                   `json:"principal,omitempty"`
 	Population                *int                   `json:"entityPopulation,omitempty"`
@@ -320,7 +320,7 @@ type Cluster struct {
 	SparkServerURL      string                          `json:"sparkServerUrl,omitempty"`
 	CredentialsProvider *LoginCredentialsProviderConfig `json:"credentialsProvider,omitempty"`
 	SparkConfig         *SparkConfig                    `json:"sparkConfig,omitempty"`
-	PropertySet         []PropertySet                   `json:"propertySets,omitempty"`
+	PropertySet         []PropertySet                   `json:"propertySets"`
 	Labels              []string                        `json:"labels"`
 	Attributes          []Attribute                     `json:"attributes"`
 }
