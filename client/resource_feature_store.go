@@ -104,6 +104,24 @@ func ResourceFeatureStore() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validateAnamlIdentifier(),
 			},
+			"cluster_property_sets": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validateAnamlIdentifier(),
+				},
+			},
+			"additional_spark_properties": {
+				Type: schema.TypeMap,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Optional: true,
+				DefaultFunc: func() (interface{}, error) {
+					return make(map[string]interface{}), nil
+				},
+			},
 			"entity_population": {
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -299,6 +317,12 @@ func resourceFeatureStoreRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("cluster", strconv.Itoa(FeatureStore.Cluster)); err != nil {
 		return err
 	}
+	if err := d.Set("cluster_property_sets", identifierList(FeatureStore.ClusterPropertySets)); err != nil {
+		return err
+	}
+	if err := d.Set("additional_spark_properties", FeatureStore.AdditionalSparkProperties); err != nil {
+		return err
+	}
 	if err := d.Set("labels", FeatureStore.Labels); err != nil {
 		return err
 	}
@@ -412,6 +436,13 @@ func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
 		return nil, err
 	}
 
+	source := d.Get("additional_spark_properties").(map[string]interface{})
+	additionalSparkProperties := make(map[string]string)
+
+	for k, v := range source {
+		additionalSparkProperties[k] = v.(string)
+	}
+
 	var population (*int) = nil
 	if d.Get("entity_population").(string) != "" {
 		population_, err := strconv.Atoi(d.Get("entity_population").(string))
@@ -454,19 +485,21 @@ func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
 	}
 
 	featureStore := FeatureStore{
-		Name:            d.Get("name").(string),
-		Description:     d.Get("description").(string),
-		FeatureSet:      featureSet,
-		Principal:       principal,
-		Enabled:         d.Get("enabled").(bool),
-		Destinations:    destinations,
-		Cluster:         cluster,
-		Population:      population,
-		Schedule:        schedule,
-		Labels:          expandLabels(d),
-		Attributes:      expandAttributes(d),
-		IncludeMetadata: d.Get("include_metadata").(bool),
-		VersionTarget:   versionTarget,
+		Name:                      d.Get("name").(string),
+		Description:               d.Get("description").(string),
+		FeatureSet:                featureSet,
+		Principal:                 principal,
+		Enabled:                   d.Get("enabled").(bool),
+		Destinations:              destinations,
+		Cluster:                   cluster,
+		ClusterPropertySets:       expandIdentifierList(d.Get("cluster_property_sets").([]interface{})),
+		AdditionalSparkProperties: additionalSparkProperties,
+		Population:                population,
+		Schedule:                  schedule,
+		Labels:                    expandLabels(d),
+		Attributes:                expandAttributes(d),
+		IncludeMetadata:           d.Get("include_metadata").(bool),
+		VersionTarget:             versionTarget,
 	}
 
 	table := getNullableInt(d, "table")

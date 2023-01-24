@@ -58,6 +58,14 @@ func ResourceTableMonitoring() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validateAnamlIdentifier(),
 			},
+			"cluster_property_sets": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validateAnamlIdentifier(),
+				},
+			},
 		},
 	}
 }
@@ -90,7 +98,9 @@ func resourceTableMonitoringRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("cluster", strconv.Itoa(TableMonitoring.Cluster)); err != nil {
 		return err
 	}
-
+	if err := d.Set("cluster_property_sets", identifierList(TableMonitoring.ClusterPropertySets)); err != nil {
+		return err
+	}
 	if TableMonitoring.Schedule.Type == "daily" {
 		dailySchedules, err := parseDailySchedule(TableMonitoring.Schedule)
 		if err != nil {
@@ -158,12 +168,13 @@ func composeTableMonitoring(d *schema.ResourceData) (*TableMonitoring, error) {
 			return nil, err
 		}
 		return &TableMonitoring{
-			Name:        d.Get("name").(string),
-			Description: d.Get("description").(string),
-			Tables:      expandIdentifierList(d.Get("tables").(*schema.Set).List()),
-			Enabled:     d.Get("enabled").(bool),
-			Cluster:     cluster,
-			Schedule:    schedule,
+			Name:                d.Get("name").(string),
+			Description:         d.Get("description").(string),
+			Tables:              expandIdentifierList(d.Get("tables").(*schema.Set).List()),
+			Enabled:             d.Get("enabled").(bool),
+			Cluster:             cluster,
+			ClusterPropertySets: expandIdentifierList(d.Get("cluster_property_sets").([]interface{})),
+			Schedule:            schedule,
 		}, nil
 	}
 
@@ -173,23 +184,25 @@ func composeTableMonitoring(d *schema.ResourceData) (*TableMonitoring, error) {
 			return nil, err
 		}
 		return &TableMonitoring{
-			Name:        d.Get("name").(string),
-			Description: d.Get("description").(string),
-			Tables:      expandIdentifierList(d.Get("tables").(*schema.Set).List()),
-			Enabled:     d.Get("enabled").(bool),
-			Cluster:     cluster,
-			Schedule:    schedule,
+			Name:                d.Get("name").(string),
+			Description:         d.Get("description").(string),
+			Tables:              expandIdentifierList(d.Get("tables").(*schema.Set).List()),
+			Enabled:             d.Get("enabled").(bool),
+			Cluster:             cluster,
+			ClusterPropertySets: expandIdentifierList(d.Get("cluster_property_sets").([]interface{})),
+			Schedule:            schedule,
 		}, nil
 	}
 
 	schedule := composeNeverSchedule()
 
 	return &TableMonitoring{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		Enabled:     d.Get("enabled").(bool),
-		Cluster:     cluster,
-		Schedule:    schedule,
+		Name:                d.Get("name").(string),
+		Description:         d.Get("description").(string),
+		Enabled:             d.Get("enabled").(bool),
+		Cluster:             cluster,
+		ClusterPropertySets: expandIdentifierList(d.Get("cluster_property_sets").([]interface{})),
+		Schedule:            schedule,
 	}, nil
 }
 

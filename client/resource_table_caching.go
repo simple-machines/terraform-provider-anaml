@@ -73,6 +73,14 @@ func ResourceTableCaching() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validateAnamlIdentifier(),
 			},
+			"cluster_property_sets": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validateAnamlIdentifier(),
+				},
+			},
 		},
 
 		SchemaVersion: 1,
@@ -224,6 +232,9 @@ func resourceTableCachingRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("cluster", strconv.Itoa(TableCaching.Cluster)); err != nil {
 		return err
 	}
+	if err := d.Set("cluster_property_sets", identifierList(TableCaching.ClusterPropertySets)); err != nil {
+		return err
+	}
 	if err := d.Set("prefix_url", TableCaching.PrefixURI); err != nil {
 		return err
 	}
@@ -323,13 +334,14 @@ func composeTableCaching(d *schema.ResourceData) (*TableCaching, error) {
 	}
 
 	return &TableCaching{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		PrefixURI:   d.Get("prefix_url").(string),
-		Plan:        plan,
-		Retainement: retainment,
-		Cluster:     cluster,
-		Schedule:    schedule,
+		Name:                d.Get("name").(string),
+		Description:         d.Get("description").(string),
+		PrefixURI:           d.Get("prefix_url").(string),
+		Plan:                plan,
+		Retainement:         retainment,
+		Cluster:             cluster,
+		ClusterPropertySets: expandIdentifierList(d.Get("cluster_property_sets").([]interface{})),
+		Schedule:            schedule,
 	}, nil
 }
 

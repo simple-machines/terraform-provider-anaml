@@ -257,6 +257,30 @@ resource "anaml-operations_feature_store" "household_daily_table_dest" {
   labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
+resource "anaml-operations_feature_store" "household_daily_table_spark_prop" {
+  name        = "household_daily_table_spark_properties"
+  description = "Daily view of households"
+  start_date  = "2020-01-01"
+  end_date    = "2021-01-01"
+  feature_set = anaml_feature_set.household.id
+  enabled     = true
+  cluster     = data.anaml-operations_cluster.local.id
+  additional_spark_properties = {
+    "spark.driver.extraClassPath" : "/opt/docker/lib/*"
+  }
+  destination {
+    destination = data.anaml-operations_destination.online.id
+    table {
+      name = "household_results"
+    }
+  }
+  daily_schedule {
+    start_time_of_day = "00:00:00"
+  }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
+}
+
 resource "anaml-operations_feature_store" "household_daily_topic_dest" {
   name        = "household_daily_topic_dest"
   description = "Daily view of households"
@@ -388,6 +412,16 @@ resource "anaml-operations_cluster" "local" {
 
   spark_config {
     enable_hive_support = true
+  }
+
+  property_set {
+    name = "small"
+    additional_spark_properties = {"spark.dynamicAllocation.maxExecutors": "2"}
+  }
+
+  property_set {
+      name = "medium"
+      additional_spark_properties = {"spark.dynamicAllocation.maxExecutors": "4"}
   }
 
   labels = [ anaml-operations_label_restriction.terraform.text ]
@@ -670,7 +704,7 @@ resource "anaml-operations_destination" "big_query_temporary" {
   description = "An BigQuery destination created by Terraform"
 
   big_query {
-    path = "/path/to/file"
+    path = "path/to/file"
     temporary_staging_area {
       bucket = "my-bucket"
     }
@@ -684,7 +718,7 @@ resource "anaml-operations_destination" "big_query_persistent" {
   description = "An BigQuery destination created by Terraform"
 
   big_query {
-    path = "/path/to/file"
+    path = "path/to/file"
     persistent_staging_area {
       bucket = "my-bucket"
       path   = "/path/to/file"
