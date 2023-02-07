@@ -180,6 +180,12 @@ func destinationSchema() *schema.Resource {
 				MaxItems: 1,
 				Elem:     topicDestinationSchema(),
 			},
+			"option": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Attributes (key value pairs) to attach to the object",
+				Elem:        attributeSchema(),
+			},
 		},
 	}
 }
@@ -536,8 +542,11 @@ func expandDestinationReferences(d *schema.ResourceData) ([]DestinationReference
 		val, _ := dr.(map[string]interface{})
 
 		destID, _ := strconv.Atoi(val["destination"].(string))
+		options := expandAttributesFromInterfaces(val["option"].(*schema.Set).List())
+
 		parsed := DestinationReference{
 			DestinationID: destID,
+			Options:       options,
 		}
 
 		if folder, _ := expandSingleMap(val["folder"]); folder != nil {
@@ -589,6 +598,9 @@ func flattenDestinationReferences(destinations []DestinationReference) ([]map[st
 	for _, destination := range destinations {
 		single := make(map[string]interface{})
 		single["destination"] = strconv.Itoa(destination.DestinationID)
+		if destination.Options != nil {
+			single["option"] = flattenAttributes(destination.Options)
+		}
 
 		if destination.Type == "folder" {
 			folder := make(map[string]interface{})
