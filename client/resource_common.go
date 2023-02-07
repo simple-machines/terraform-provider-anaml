@@ -31,6 +31,10 @@ func attributeSchema() *schema.Resource {
 
 func expandAttributes(d *schema.ResourceData) []Attribute {
 	drs := d.Get("attribute").(*schema.Set).List()
+	return expandAttributesFromInterfaces(drs)
+}
+
+func expandAttributesFromInterfaces(drs []interface{}) []Attribute {
 	res := make([]Attribute, 0, len(drs))
 	for _, dr := range drs {
 		val, _ := dr.(map[string]interface{})

@@ -307,6 +307,7 @@ type DestinationReference struct {
 	Topic                     string       `json:"topic,omitempty"`
 	Format                    *KafkaFormat `json:"format,omitempty"`
 	Mode                      string       `json:"saveMode,omitempty"`
+	Options                   []Attribute  `json:"options,omitempty"`
 }
 
 // Cluster ...
