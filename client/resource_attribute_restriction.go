@@ -19,6 +19,7 @@ Multiple different types of attributes are supported:
 - Free Text
 - Boolean
 - Integer
+- User (Assign an Anaml user id to the attribute)
 `
 
 func ResourceAttributeRestriction() *schema.Resource {
@@ -47,7 +48,7 @@ func ResourceAttributeRestriction() *schema.Resource {
 				Optional:     true,
 				MaxItems:     1,
 				Elem:         enumAttributeSchema(),
-				ExactlyOneOf: []string{"enum", "freetext", "boolean", "integer"},
+				ExactlyOneOf: []string{"enum", "freetext", "boolean", "integer", "user"},
 			},
 			"freetext": {
 				Type:     schema.TypeList,
@@ -62,6 +63,12 @@ func ResourceAttributeRestriction() *schema.Resource {
 				Elem:     &schema.Resource{},
 			},
 			"integer": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem:     &schema.Resource{},
+			},
+			"user": {
 				Type:     schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
@@ -159,6 +166,9 @@ func resourceAttributeRestrictionRead(d *schema.ResourceData, m interface{}) err
 	if err := d.Set("integer", buildEmpty(attribute.Type == "integerattribute")); err != nil {
 		return err
 	}
+	if err := d.Set("user", buildEmpty(attribute.Type == "userattribute")); err != nil {
+		return err
+	}
 	if err := d.Set("applies_to", mapTargetsToFrontend(attribute.AppliesTo)); err != nil {
 		return err
 	}
@@ -243,6 +253,10 @@ func composeAttribute(d *schema.ResourceData) (*AttributeRestriction, error) {
 		return &attribute, nil
 	}
 
+	if existsEmpty(d.Get("user").([]interface{})) {
+		attribute.Type = "userattribute"
+		return &attribute, nil
+	}
 	return nil, errors.New("Invalid attribute type")
 }
 
