@@ -20,6 +20,7 @@ Multiple different types of attributes are supported:
 - Boolean
 - Integer
 - User (Assign an Anaml user id to the attribute)
+- User Group (Assign an Anaml user group id to the attribute)
 `
 
 func ResourceAttributeRestriction() *schema.Resource {
@@ -48,7 +49,7 @@ func ResourceAttributeRestriction() *schema.Resource {
 				Optional:     true,
 				MaxItems:     1,
 				Elem:         enumAttributeSchema(),
-				ExactlyOneOf: []string{"enum", "freetext", "boolean", "integer", "user"},
+				ExactlyOneOf: []string{"enum", "freetext", "boolean", "integer", "user", "user_group"},
 			},
 			"freetext": {
 				Type:     schema.TypeList,
@@ -69,6 +70,12 @@ func ResourceAttributeRestriction() *schema.Resource {
 				Elem:     &schema.Resource{},
 			},
 			"user": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem:     &schema.Resource{},
+			},
+			"user_group": {
 				Type:     schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
@@ -169,6 +176,9 @@ func resourceAttributeRestrictionRead(d *schema.ResourceData, m interface{}) err
 	if err := d.Set("user", buildEmpty(attribute.Type == "userattribute")); err != nil {
 		return err
 	}
+	if err := d.Set("user_group", buildEmpty(attribute.Type == "usergroupattribute")); err != nil {
+		return err
+	}
 	if err := d.Set("applies_to", mapTargetsToFrontend(attribute.AppliesTo)); err != nil {
 		return err
 	}
@@ -255,6 +265,11 @@ func composeAttribute(d *schema.ResourceData) (*AttributeRestriction, error) {
 
 	if existsEmpty(d.Get("user").([]interface{})) {
 		attribute.Type = "userattribute"
+		return &attribute, nil
+	}
+
+	if existsEmpty(d.Get("user_group").([]interface{})) {
+		attribute.Type = "usergroupattribute"
 		return &attribute, nil
 	}
 	return nil, errors.New("Invalid attribute type")
