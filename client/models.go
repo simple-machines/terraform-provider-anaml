@@ -486,12 +486,14 @@ type LabelRestriction struct {
 
 // AttributeRestriction ...
 type AttributeRestriction struct {
-	ID          int                    `json:"id,omitempty"`
-	Key         string                 `json:"key"`
-	Description string                 `json:"description"`
-	Type        string                 `json:"adt_type"`
-	Choices     *[]EnumAttributeChoice `json:"choices,omitempty"`
-	AppliesTo   []AttributeTarget      `json:"appliesTo"`
+	ID           int                    `json:"id,omitempty"`
+	Key          string                 `json:"key"`
+	Description  string                 `json:"description"`
+	Type         string                 `json:"adt_type"`
+	Mandatory    bool                   `json:"mandatory"`
+	DefaultValue *string                `json:"defaultValue,omitempty"`
+	Choices      *[]EnumAttributeChoice `json:"choices,omitempty"`
+	AppliesTo    []AttributeTarget      `json:"appliesTo"`
 }
 
 type AttributeTarget struct {
