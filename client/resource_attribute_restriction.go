@@ -44,6 +44,14 @@ func ResourceAttributeRestriction() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"mandatory": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"default_value": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 			"enum": {
 				Type:         schema.TypeList,
 				Optional:     true,
@@ -149,6 +157,12 @@ func resourceAttributeRestrictionRead(d *schema.ResourceData, m interface{}) err
 	if err := d.Set("description", attribute.Description); err != nil {
 		return err
 	}
+	if err := d.Set("mandatory", attribute.Mandatory); err != nil {
+		return err
+	}
+	if err := d.Set("default_value", attribute.DefaultValue); err != nil {
+		return err
+	}
 
 	if attribute.Type == "enumattribute" {
 		e, err := parseEnumAttribute(attribute)
@@ -235,7 +249,13 @@ func composeAttribute(d *schema.ResourceData) (*AttributeRestriction, error) {
 	attribute := AttributeRestriction{
 		Key:         d.Get("key").(string),
 		Description: d.Get("description").(string),
+		Mandatory:   d.Get("mandatory").(bool),
 		AppliesTo:   appliesTo,
+	}
+
+	if default_value, set := d.GetOk("default_value"); set {
+		default_value := default_value.(string)
+		attribute.DefaultValue = &default_value
 	}
 
 	if e, _ := expandSingleMap(d.Get("enum")); e != nil {
