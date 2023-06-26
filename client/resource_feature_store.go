@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 const featureStoreDescription = `
@@ -149,103 +148,6 @@ func ResourceFeatureStore() *schema.Resource {
 				Optional:      true,
 				Description:   "Branch to run feature set (and population) for.",
 				ConflictsWith: []string{"commit_target"},
-			},
-		},
-	}
-}
-
-func destinationSchema() *schema.Resource {
-	return &schema.Resource{
-		Schema: map[string]*schema.Schema{
-			"destination": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validateAnamlIdentifier(),
-			},
-			"folder": {
-				Type:     schema.TypeList,
-				Optional: true,
-				MaxItems: 1,
-				Elem:     folderDestinationSchema(),
-			},
-			"table": {
-				Type:     schema.TypeList,
-				Optional: true,
-				MaxItems: 1,
-				Elem:     tableDestinationSchema(),
-			},
-			"topic": {
-				Type:     schema.TypeList,
-				Optional: true,
-				MaxItems: 1,
-				Elem:     topicDestinationSchema(),
-			},
-			"option": {
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Description: "Attributes (key value pairs) to attach to the object",
-				Elem:        attributeSchema(),
-			},
-		},
-	}
-}
-
-func folderDestinationSchema() *schema.Resource {
-	return &schema.Resource{
-		Schema: map[string]*schema.Schema{
-			"path": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringIsNotWhiteSpace,
-			},
-			"partitioning_enabled": {
-				Type:     schema.TypeBool,
-				Required: true,
-			},
-			"save_mode": {
-				Type:     schema.TypeString,
-				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					"overwrite", "ignore", "append", "errorifexists",
-				}, false),
-			},
-		},
-	}
-}
-
-func tableDestinationSchema() *schema.Resource {
-	return &schema.Resource{
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringIsNotWhiteSpace,
-			},
-			"save_mode": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					"overwrite", "ignore", "append", "errorifexists",
-				}, false),
-			},
-		},
-	}
-}
-
-func topicDestinationSchema() *schema.Resource {
-	return &schema.Resource{
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringIsNotWhiteSpace,
-			},
-			"format": {
-				Type:     schema.TypeString,
-				Required: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					"json", "avro",
-				}, false),
 			},
 		},
 	}

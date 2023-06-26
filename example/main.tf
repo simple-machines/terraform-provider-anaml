@@ -12,15 +12,15 @@ terraform {
 
 provider "anaml" {
   host     = "http://localhost:8080/api"
-  username = "03d147fe-0fa8-4aef-bce6-e6fbcd1cd000"
-  password = "test secret"
+  username = "231406c2-00a7-43a1-a68a-1c5ea0a116ca"
+  password = "SNw9y0Ui5K4BU89uQlU+ye+aUFE4K27ydJ9xTNxq0wU="
   branch   = "official"
 }
 
 provider "anaml-operations" {
   host     = "http://127.0.0.1:8080/api"
-  username = "03d147fe-0fa8-4aef-bce6-e6fbcd1cd000"
-  password = "test secret"
+  username = "231406c2-00a7-43a1-a68a-1c5ea0a116ca"
+  password = "SNw9y0Ui5K4BU89uQlU+ye+aUFE4K27ydJ9xTNxq0wU="
 }
 
 
@@ -964,4 +964,74 @@ resource "anaml-operations_webhook" "merge_hook" {
   description = "A hook for new merge requests"
   url         = "http://localhost:8095/hook"
   merge_requests {}
+}
+
+
+resource "anaml-operations_view_materialisation_job" "view_materialisation_batch_no_metadata" {
+  name        = "view_materialisation_batch_no_metadata"
+  description = "Materialise household normalised"
+  cluster     = data.anaml-operations_cluster.local.id
+  usagettl    = "PT48H"
+  views {
+    table                       = anaml_table.household_normalised.id
+    destination {
+        destination             = data.anaml-operations_destination.s3a.id
+        folder {
+          path = "household_normalised_view_results"
+          partitioning_enabled = true
+          save_mode = "overwrite"
+        }
+      }
+  }
+  daily_schedule {
+    start_time_of_day = "00:00:00"
+  }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
+}
+
+resource "anaml-operations_view_materialisation_job" "view_materialisation_batch" {
+  name        = "view_materialisation_batch"
+  description = "Materialise household normalised"
+  cluster     = data.anaml-operations_cluster.local.id
+  usagettl    = "PT48H"
+  include_metadata = true
+  views {
+    table                       = anaml_table.household_normalised.id
+    destination {
+        destination             = data.anaml-operations_destination.s3a.id
+        folder {
+          path = "household_normalised_view_results"
+          partitioning_enabled = true
+          save_mode = "overwrite"
+        }
+      }
+  }
+  daily_schedule {
+    start_time_of_day = "00:00:00"
+  }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
+}
+
+
+resource "anaml-operations_view_materialisation_job" "view_materialisation_streaming" {
+  name        = "view_materialisation_streaming"
+  description = "Materialise household normalised"
+  cluster     = data.anaml-operations_cluster.local.id
+  usagettl    = "PT48H"
+
+  views {
+    table                       = anaml_table.household_normalised.id
+    destination {
+        destination             = data.anaml-operations_destination.s3a.id
+        folder {
+          path = "household_normalised_view_results"
+          partitioning_enabled = true
+          save_mode = "overwrite"
+        }
+      }
+  }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
 }

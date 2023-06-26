@@ -192,6 +192,30 @@ type SecretValueConfig struct {
 	SecretId      string `json:"secretId,omitempty"`
 }
 
+type ViewMaterialisationSpec struct {
+    Table         int                  `json:"table"`
+    Destination   DestinationReference `json:"destination"`
+}
+
+// ViewMaterialisation ...
+type ViewMaterialisationJob struct {
+	ID                        int                       `json:"id,omitempty"`
+	Type                      string                    `json:"adt_type"`
+	Name                      string                    `json:"name"`
+	Description               string                    `json:"description"`
+	Labels                    []string                  `json:"labels"`
+	Attributes                []Attribute               `json:"attributes"`
+    Views                     []ViewMaterialisationSpec `json:"views"`
+	Schedule                  *Schedule                 `json:"schedule"`
+	Cluster                   int                       `json:"cluster"`
+	ClusterPropertySets       []int                     `json:"clusterPropertySets"`
+	AdditionalSparkProperties map[string]string         `json:"additionalSparkProperties,omitempty"`
+	Principal                 *int                      `json:"principal,omitempty"`
+	UsageTTL                  *string                   `json:"usageTTL,omitempty"`
+	IncludeMetadata           bool                      `json:"includeMetadata"`
+	VersionTarget             *VersionTarget            `json:"versionTarget,omitempty"`
+}
+
 // Source ...
 type Source struct {
 	ID                  int                             `json:"id,omitempty"`
