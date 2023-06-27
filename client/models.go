@@ -193,8 +193,8 @@ type SecretValueConfig struct {
 }
 
 type ViewMaterialisationSpec struct {
-    Table         int                  `json:"table"`
-    Destination   DestinationReference `json:"destination"`
+	Table       int                  `json:"table"`
+	Destination DestinationReference `json:"destination"`
 }
 
 // ViewMaterialisation ...
@@ -205,7 +205,7 @@ type ViewMaterialisationJob struct {
 	Description               string                    `json:"description"`
 	Labels                    []string                  `json:"labels"`
 	Attributes                []Attribute               `json:"attributes"`
-    Views                     []ViewMaterialisationSpec `json:"views"`
+	Views                     []ViewMaterialisationSpec `json:"views"`
 	Schedule                  *Schedule                 `json:"schedule"`
 	Cluster                   int                       `json:"cluster"`
 	ClusterPropertySets       []int                     `json:"clusterPropertySets"`

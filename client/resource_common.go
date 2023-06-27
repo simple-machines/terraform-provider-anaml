@@ -3,6 +3,9 @@ package anaml
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+
+	"fmt"
+	"strconv"
 )
 
 func labelSchema() *schema.Schema {
@@ -154,4 +157,108 @@ func flattenAttributes(attributes []Attribute) []map[string]interface{} {
 		res = append(res, single)
 	}
 	return res
+}
+
+func expandDestinationReferences(drs []interface{}) ([]DestinationReference, error) {
+	res := make([]DestinationReference, 0, len(drs))
+
+	for _, dr := range drs {
+		val, _ := dr.(map[string]interface{})
+
+		destID, _ := strconv.Atoi(val["destination"].(string))
+		options := expandAttributesFromInterfaces(val["option"].(*schema.Set).List())
+
+		parsed := DestinationReference{
+			DestinationID: destID,
+			Options:       options,
+		}
+
+		if folder, _ := expandSingleMap(val["folder"]); folder != nil {
+			if path, ok := folder["path"].(string); ok {
+				parsed.Type = "folder"
+				parsed.Folder = path
+				enabled := folder["partitioning_enabled"].(bool)
+				parsed.FolderPartitioningEnabled = &enabled
+				mode := folder["save_mode"].(string)
+				parsed.Mode = mode
+			} else {
+				return nil, fmt.Errorf("error casting table.path %i", folder["path"])
+			}
+		}
+
+		if table, _ := expandSingleMap(val["table"]); table != nil {
+			if tableName, ok := table["name"].(string); ok {
+				parsed.Type = "table"
+				parsed.TableName = tableName
+				if mode, _ := table["save_mode"].(string); mode != "" {
+					parsed.Mode = mode
+				}
+			} else {
+				return nil, fmt.Errorf("error casting table.name %i", table["name"])
+			}
+		}
+
+		if topic, _ := expandSingleMap(val["topic"]); topic != nil {
+			if topicName, ok := topic["name"].(string); ok {
+				parsed.Type = "topic"
+				parsed.Topic = topicName
+				parsed.Format = &KafkaFormat{
+					Type: topic["format"].(string),
+				}
+			} else {
+				return nil, fmt.Errorf("error casting topic.name %i", topic["name"])
+			}
+		}
+
+		res = append(res, parsed)
+	}
+
+	return res, nil
+}
+
+func flattenDestinationReferences(destinations []DestinationReference) ([]map[string]interface{}, error) {
+	res := make([]map[string]interface{}, 0, len(destinations))
+
+	for _, destination := range destinations {
+		single := make(map[string]interface{})
+		single["destination"] = strconv.Itoa(destination.DestinationID)
+		if destination.Options != nil {
+			single["option"] = flattenAttributes(destination.Options)
+		}
+
+		if destination.Type == "folder" {
+			folder := make(map[string]interface{})
+			folder["path"] = destination.Folder
+			folder["partitioning_enabled"] = destination.FolderPartitioningEnabled
+			folder["save_mode"] = destination.Mode
+
+			folders := make([]map[string]interface{}, 0, 1)
+			folders = append(folders, folder)
+			single["folder"] = folders
+		}
+
+		if destination.Type == "table" {
+			table := make(map[string]interface{})
+			table["name"] = destination.TableName
+			table["save_mode"] = destination.Mode
+
+			tables := make([]map[string]interface{}, 0, 1)
+			tables = append(tables, table)
+			single["table"] = tables
+		}
+
+		if destination.Type == "topic" {
+			topic := make(map[string]interface{})
+			topic["name"] = destination.Topic
+			topic["format"] = destination.Format.Type
+
+			topics := make([]map[string]interface{}, 0, 1)
+			topics = append(topics, topic)
+			single["topic"] = topics
+		}
+
+		res = append(res, single)
+	}
+
+	return res, nil
 }

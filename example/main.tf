@@ -12,15 +12,15 @@ terraform {
 
 provider "anaml" {
   host     = "http://localhost:8080/api"
-  username = "231406c2-00a7-43a1-a68a-1c5ea0a116ca"
-  password = "SNw9y0Ui5K4BU89uQlU+ye+aUFE4K27ydJ9xTNxq0wU="
+  username = "03d147fe-0fa8-4aef-bce6-e6fbcd1cd000"
+  password = "test secret"
   branch   = "official"
 }
 
 provider "anaml-operations" {
   host     = "http://127.0.0.1:8080/api"
-  username = "231406c2-00a7-43a1-a68a-1c5ea0a116ca"
-  password = "SNw9y0Ui5K4BU89uQlU+ye+aUFE4K27ydJ9xTNxq0wU="
+  username = "03d147fe-0fa8-4aef-bce6-e6fbcd1cd000"
+  password = "test secret"
 }
 
 
@@ -972,7 +972,7 @@ resource "anaml-operations_view_materialisation_job" "view_materialisation_batch
   description = "Materialise household normalised"
   cluster     = data.anaml-operations_cluster.local.id
   usagettl    = "PT48H"
-  views {
+  view {
     table                       = anaml_table.household_normalised.id
     destination {
         destination             = data.anaml-operations_destination.s3a.id
@@ -996,7 +996,7 @@ resource "anaml-operations_view_materialisation_job" "view_materialisation_batch
   cluster     = data.anaml-operations_cluster.local.id
   usagettl    = "PT48H"
   include_metadata = true
-  views {
+  view {
     table                       = anaml_table.household_normalised.id
     destination {
         destination             = data.anaml-operations_destination.s3a.id
@@ -1021,7 +1021,7 @@ resource "anaml-operations_view_materialisation_job" "view_materialisation_strea
   cluster     = data.anaml-operations_cluster.local.id
   usagettl    = "PT48H"
 
-  views {
+  view {
     table                       = anaml_table.household_normalised.id
     destination {
         destination             = data.anaml-operations_destination.s3a.id

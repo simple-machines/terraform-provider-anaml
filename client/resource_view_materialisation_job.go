@@ -60,11 +60,11 @@ func ResourceViewMaterialisationJob() *schema.Resource {
 				ConflictsWith: []string{"daily_schedule"},
 			},
 			"usagettl": {
-            	Type:         schema.TypeString,
-                Optional:     true,
-                ValidateFunc: validation.StringIsNotWhiteSpace,
-            },
-			"views": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+			"view": {
 				Type:     schema.TypeList,
 				Required: true,
 				Elem:     viewMaterialisationSpecSchema(),
@@ -122,17 +122,17 @@ func ResourceViewMaterialisationJob() *schema.Resource {
 func viewMaterialisationSpecSchema() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
-		    "table": {
-		        Type:         schema.TypeString,
-                Required:     true,
-                ValidateFunc: validateAnamlIdentifier(),
-		    },
-		    "destination": {
-            	Type:     schema.TypeList,
-            	Required: true,
-            	MaxItems:  1,
-            	Elem:     destinationSchema(),
-            },
+			"table": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validateAnamlIdentifier(),
+			},
+			"destination": {
+				Type:     schema.TypeList,
+				Required: true,
+				MaxItems: 1,
+				Elem:     destinationSchema(),
+			},
 		},
 	}
 }
@@ -159,28 +159,28 @@ func resourceViewMaterialisationJobRead(d *schema.ResourceData, m interface{}) e
 
 	if ViewMaterialisationJob.Type == "batch" {
 		if ViewMaterialisationJob.Schedule.Type == "daily" {
-        	dailySchedules, err := parseDailySchedule(ViewMaterialisationJob.Schedule)
-        	if err != nil {
-        		return err
-        	}
-        	if err := d.Set("daily_schedule", dailySchedules); err != nil {
-        		return err
-        	}
-        }
+			dailySchedules, err := parseDailySchedule(ViewMaterialisationJob.Schedule)
+			if err != nil {
+				return err
+			}
+			if err := d.Set("daily_schedule", dailySchedules); err != nil {
+				return err
+			}
+		}
 
-        if ViewMaterialisationJob.Schedule.Type == "cron" {
-        	cronSchedules, err := parseCronSchedule(ViewMaterialisationJob.Schedule)
-        	if err != nil {
-        		return err
-        	}
-        	if err := d.Set("cron_schedule", cronSchedules); err != nil {
-        		return err
-        	}
-        }
+		if ViewMaterialisationJob.Schedule.Type == "cron" {
+			cronSchedules, err := parseCronSchedule(ViewMaterialisationJob.Schedule)
+			if err != nil {
+				return err
+			}
+			if err := d.Set("cron_schedule", cronSchedules); err != nil {
+				return err
+			}
+		}
 
-        if err := d.Set("include_metadata", ViewMaterialisationJob.IncludeMetadata); err != nil {
-        	return err
-        }
+		if err := d.Set("include_metadata", ViewMaterialisationJob.IncludeMetadata); err != nil {
+			return err
+		}
 	}
 
 	if ViewMaterialisationJob.Principal != nil {
@@ -194,9 +194,9 @@ func resourceViewMaterialisationJobRead(d *schema.ResourceData, m interface{}) e
 		return err
 	}
 
-	if err := d.Set("views", views); err != nil {
-    		return err
-    	}
+	if err := d.Set("view", views); err != nil {
+		return err
+	}
 
 	if ViewMaterialisationJob.UsageTTL != nil {
 		if err := d.Set("usagettl", ViewMaterialisationJob.UsageTTL); err != nil {
@@ -319,15 +319,15 @@ func composeViewMaterialisationJob(d *schema.ResourceData) (*ViewMaterialisation
 	}
 
 	var usageTTL *string
-    if d.Get("usagettl").(string) != "" {
-    	usageTTLstr := d.Get("usagettl").(string)
-    	usageTTL = &usageTTLstr
-    }
+	if d.Get("usagettl").(string) != "" {
+		usageTTLstr := d.Get("usagettl").(string)
+		usageTTL = &usageTTLstr
+	}
 
-    views, err := expandViewMaterialisationSpec(d)
-    if err != nil {
-    	return nil, err
-    }
+	views, err := expandViewMaterialisationSpec(d)
+	if err != nil {
+		return nil, err
+	}
 
 	viewMateralisationJob := ViewMaterialisationJob{
 		Name:                      d.Get("name").(string),
@@ -343,27 +343,27 @@ func composeViewMaterialisationJob(d *schema.ResourceData) (*ViewMaterialisation
 		VersionTarget:             versionTarget,
 	}
 
-    dailySchedule, _ := expandSingleMap(d.Get("daily_schedule"))
-    cronSchedule, _ := expandSingleMap(d.Get("cron_schedule"))
+	dailySchedule, _ := expandSingleMap(d.Get("daily_schedule"))
+	cronSchedule, _ := expandSingleMap(d.Get("cron_schedule"))
 	if dailySchedule == nil && cronSchedule == nil {
-	    viewMateralisationJob.Type = "streaming"
+		viewMateralisationJob.Type = "streaming"
 	} else {
 		viewMateralisationJob.Type = "batch"
-        var schedule = composeNeverSchedule()
-        if dailySchedule != nil {
-        	schedule, err = composeDailySchedule(dailySchedule)
-        	if err != nil {
-        		return nil, err
-        	}
-        }
-        if cronSchedule != nil {
-        	schedule, err = composeCronSchedule(cronSchedule)
-        	if err != nil {
-        		return nil, err
-        	}
-        }
-        viewMateralisationJob.Schedule = schedule
-        viewMateralisationJob.IncludeMetadata = d.Get("include_metadata").(bool)
+		var schedule = composeNeverSchedule()
+		if dailySchedule != nil {
+			schedule, err = composeDailySchedule(dailySchedule)
+			if err != nil {
+				return nil, err
+			}
+		}
+		if cronSchedule != nil {
+			schedule, err = composeCronSchedule(cronSchedule)
+			if err != nil {
+				return nil, err
+			}
+		}
+		viewMateralisationJob.Schedule = schedule
+		viewMateralisationJob.IncludeMetadata = d.Get("include_metadata").(bool)
 	}
 
 	return &viewMateralisationJob, nil
@@ -382,119 +382,47 @@ func resourceViewMaterialisationJobDelete(d *schema.ResourceData, m interface{})
 }
 
 func expandViewMaterialisationSpec(d *schema.ResourceData) ([]ViewMaterialisationSpec, error) {
-    views := d.Get("views").([]interface{})
-    res := make([]ViewMaterialisationSpec, 0, len(views))
+	views := d.Get("view").([]interface{})
+	res := make([]ViewMaterialisationSpec, 0, len(views))
 
-    for _, view := range views {
-        val, _ := view.(map[string]interface{})
-    	table, err := strconv.Atoi(val["table"].(string))
-    	if err != nil {
-    		return nil, err
-    	}
+	for _, view := range views {
+		val, _ := view.(map[string]interface{})
+		table, err := strconv.Atoi(val["table"].(string))
+		if err != nil {
+			return nil, err
+		}
 
-        if dr, _ := expandSingleMap(val["destination"]); dr != nil {
-            destID, _ := strconv.Atoi(dr["destination"].(string))
-            options   := expandAttributesFromInterfaces(dr["option"].(*schema.Set).List())
+		destinations, err := expandDestinationReferences(val["destination"].([]interface{}))
+		if err != nil {
+			return nil, err
+		}
 
-            parsed := DestinationReference{
-            	DestinationID: destID,
-            	Options:       options,
-            }
+		if len(destinations) != 1 {
+			return nil, fmt.Errorf("Incorrect number of destinations parsed. This is an internal error to the provider.")
+		}
 
-            if folder, _ := expandSingleMap(dr["folder"]); folder != nil {
-            	if path, ok := folder["path"].(string); ok {
-            		parsed.Type = "folder"
-            		parsed.Folder = path
-            		enabled := folder["partitioning_enabled"].(bool)
-            		parsed.FolderPartitioningEnabled = &enabled
-            		mode := folder["save_mode"].(string)
-            		parsed.Mode = mode
-            	} else {
-            		return nil, fmt.Errorf("error casting table.path %i", folder["path"])
-            	}
-            }
+		viewMaterialisationSpec := ViewMaterialisationSpec{
+			Table:       table,
+			Destination: destinations[0],
+		}
 
-            if table, _ := expandSingleMap(dr["table"]); table != nil {
-            	if tableName, ok := table["name"].(string); ok {
-            		parsed.Type = "table"
-            		parsed.TableName = tableName
-            		if mode, _ := table["save_mode"].(string); mode != "" {
-            			parsed.Mode = mode
-            		}
-            	} else {
-            		return nil, fmt.Errorf("error casting table.name %i", table["name"])
-            	}
-            }
-
-            if topic, _ := expandSingleMap(dr["topic"]); topic != nil {
-            	if topicName, ok := topic["name"].(string); ok {
-            		parsed.Type = "topic"
-            		parsed.Topic = topicName
-            		parsed.Format = &KafkaFormat{
-            			Type: topic["format"].(string),
-            		}
-            	} else {
-            		return nil, fmt.Errorf("error casting topic.name %i", topic["name"])
-            	}
-            }
-
-            viewMaterialisationSpec := ViewMaterialisationSpec {
-                Table: table,
-                Destination: parsed,
-            }
-
-            res = append(res, viewMaterialisationSpec)
-        }
-    }
+		res = append(res, viewMaterialisationSpec)
+	}
 
 	return res, nil
 }
 
-func flattenViewMaterialisationSpec(views []ViewMaterialisationSpec) ([]map[string]interface{}, error) {
-	res := make([]map[string]interface{}, 0, len(views))
+func flattenViewMaterialisationSpec(views []ViewMaterialisationSpec) ([]interface{}, error) {
+	res := make([]interface{}, 0, len(views))
 
 	for _, view := range views {
 		single := make(map[string]interface{})
 		single["table"] = strconv.Itoa(view.Table)
-        destination := view.Destination
-		singleDestRef := make(map[string]interface{})
-		singleDestRef["destination"] = strconv.Itoa(destination.DestinationID)
-		if destination.Options != nil {
-			singleDestRef["option"] = flattenAttributes(destination.Options)
+		destinations, err := flattenDestinationReferences([]DestinationReference{view.Destination})
+		if err != nil {
+			return nil, err
 		}
-
-		if destination.Type == "folder" {
-			folder := make(map[string]interface{})
-			folder["path"] = destination.Folder
-			folder["partitioning_enabled"] = destination.FolderPartitioningEnabled
-			folder["save_mode"] = destination.Mode
-
-			folders := make([]map[string]interface{}, 0, 1)
-			folders = append(folders, folder)
-			singleDestRef["folder"] = folders
-		}
-
-		if destination.Type == "table" {
-			table := make(map[string]interface{})
-			table["name"] = destination.TableName
-			table["save_mode"] = destination.Mode
-
-			tables := make([]map[string]interface{}, 0, 1)
-			tables = append(tables, table)
-			singleDestRef["table"] = tables
-		}
-
-		if destination.Type == "topic" {
-			topic := make(map[string]interface{})
-			topic["name"] = destination.Topic
-			topic["format"] = destination.Format.Type
-
-			topics := make([]map[string]interface{}, 0, 1)
-			topics = append(topics, topic)
-			singleDestRef["topic"] = topics
-		}
-
-        single["destination"] = singleDestRef
+		single["destination"] = destinations
 		res = append(res, single)
 	}
 
