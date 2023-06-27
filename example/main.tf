@@ -965,3 +965,73 @@ resource "anaml-operations_webhook" "merge_hook" {
   url         = "http://localhost:8095/hook"
   merge_requests {}
 }
+
+
+resource "anaml-operations_view_materialisation_job" "view_materialisation_batch_no_metadata" {
+  name        = "view_materialisation_batch_no_metadata"
+  description = "Materialise household normalised"
+  cluster     = data.anaml-operations_cluster.local.id
+  usagettl    = "PT48H"
+  view {
+    table                       = anaml_table.household_normalised.id
+    destination {
+        destination             = data.anaml-operations_destination.s3a.id
+        folder {
+          path = "household_normalised_view_results"
+          partitioning_enabled = true
+          save_mode = "overwrite"
+        }
+      }
+  }
+  daily_schedule {
+    start_time_of_day = "00:00:00"
+  }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
+}
+
+resource "anaml-operations_view_materialisation_job" "view_materialisation_batch" {
+  name        = "view_materialisation_batch"
+  description = "Materialise household normalised"
+  cluster     = data.anaml-operations_cluster.local.id
+  usagettl    = "PT48H"
+  include_metadata = true
+  view {
+    table                       = anaml_table.household_normalised.id
+    destination {
+        destination             = data.anaml-operations_destination.s3a.id
+        folder {
+          path = "household_normalised_view_results"
+          partitioning_enabled = true
+          save_mode = "overwrite"
+        }
+      }
+  }
+  daily_schedule {
+    start_time_of_day = "00:00:00"
+  }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
+}
+
+
+resource "anaml-operations_view_materialisation_job" "view_materialisation_streaming" {
+  name        = "view_materialisation_streaming"
+  description = "Materialise household normalised"
+  cluster     = data.anaml-operations_cluster.local.id
+  usagettl    = "PT48H"
+
+  view {
+    table                       = anaml_table.household_normalised.id
+    destination {
+        destination             = data.anaml-operations_destination.s3a.id
+        folder {
+          path = "household_normalised_view_results"
+          partitioning_enabled = true
+          save_mode = "overwrite"
+        }
+      }
+  }
+
+  labels = [ anaml-operations_label_restriction.terraform.text ]
+}
