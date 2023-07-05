@@ -15,10 +15,11 @@ type Entity struct {
 
 // EntityMapping ..
 type EntityMapping struct {
-	ID      int `json:"id,omitempty"`
-	From    int `json:"from"`
-	To      int `json:"to"`
-	Mapping int `json:"mapping"`
+	ID        int   `json:"id,omitempty"`
+	From      int   `json:"from"`
+	To        int   `json:"to"`
+	Mapping   int   `json:"mapping"`
+	OneToMany *bool `json:"oneToMany,omitempty"`
 }
 
 // EntityPopulation ..

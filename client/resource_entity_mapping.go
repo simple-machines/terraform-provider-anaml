@@ -52,6 +52,22 @@ func ResourceEntityMapping() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validateAnamlIdentifier(),
 			},
+
+			"one_to_many": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    1,
+				Elem:        &schema.Resource{},
+				Description: "The mapping feature produces an array of keys which are related.",
+			},
+			"one_to_one": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				MaxItems:      1,
+				Elem:          &schema.Resource{},
+				ConflictsWith: []string{"one_to_many"},
+				Description:   "The mapping feature produce a single key (or null), which is related.",
+			},
 		},
 	}
 }
@@ -78,6 +94,15 @@ func resourceEntityMappingRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("mapping", strconv.Itoa(mapping.Mapping)); err != nil {
 		return err
 	}
+	falses, trues := flattenBooleanEmptys(mapping.OneToMany)
+
+	if err := d.Set("one_to_one", falses); err != nil {
+		return err
+	}
+	if err := d.Set("one_to_many", trues); err != nil {
+		return err
+	}
+
 	return err
 }
 
@@ -86,10 +111,12 @@ func resourceEntityMappingCreate(d *schema.ResourceData, m interface{}) error {
 	from, _ := strconv.Atoi(d.Get("from").(string))
 	to, _ := strconv.Atoi(d.Get("to").(string))
 	feat, _ := strconv.Atoi(d.Get("mapping").(string))
+
 	mapping := EntityMapping{
-		From:    from,
-		To:      to,
-		Mapping: feat,
+		From:      from,
+		To:        to,
+		Mapping:   feat,
+		OneToMany: booleanEmptys(d.Get("one_to_one").([]interface{}), d.Get("one_to_many").([]interface{})),
 	}
 
 	e, err := c.CreateEntityMapping(mapping)
@@ -109,10 +136,12 @@ func resourceEntityMappingUpdate(d *schema.ResourceData, m interface{}) error {
 	feat, _ := strconv.Atoi(d.Get("mapping").(string))
 
 	mapping := EntityMapping{
-		From:    from,
-		To:      to,
-		Mapping: feat,
+		From:      from,
+		To:        to,
+		Mapping:   feat,
+		OneToMany: booleanEmptys(d.Get("one_to_one").([]interface{}), d.Get("one_to_many").([]interface{})),
 	}
+
 	err := c.UpdateEntityMapping(mappingID, mapping)
 	if err != nil {
 		return err
@@ -131,4 +160,30 @@ func resourceEntityMappingDelete(d *schema.ResourceData, m interface{}) error {
 	}
 
 	return nil
+}
+
+func booleanEmptys(falses []interface{}, trues []interface{}) *bool {
+	if len(falses) > 0 {
+		ret := false
+		return &ret
+	} else if len(trues) > 0 {
+		ret := true
+		return &ret
+	}
+
+	return nil
+}
+
+func flattenBooleanEmptys(p *bool) ([]interface{}, []interface{}) {
+	falses := make([]interface{}, 0, 1)
+	trues := make([]interface{}, 0, 1)
+
+	if p == nil {
+	} else if *p {
+		trues = append(falses, &struct{}{})
+	} else {
+		falses = append(trues, &struct{}{})
+	}
+
+	return falses, trues
 }
