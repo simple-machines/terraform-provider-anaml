@@ -69,10 +69,10 @@ func ResourceTableCaching() *schema.Resource {
 				ConflictsWith: []string{"daily_schedule"},
 			},
 			"principal": {
-            	Type:         schema.TypeString,
-            	Optional:     true,
-            	ValidateFunc: validateAnamlIdentifier(),
-            },
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validateAnamlIdentifier(),
+			},
 			"cluster": {
 				Type:         schema.TypeString,
 				Required:     true,
@@ -231,10 +231,10 @@ func resourceTableCachingRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 	if TableCaching.Principal != nil {
-    	if err := d.Set("principal", strconv.Itoa(*TableCaching.Principal)); err != nil {
-    		return err
-    	}
-    }
+		if err := d.Set("principal", strconv.Itoa(*TableCaching.Principal)); err != nil {
+			return err
+		}
+	}
 	loc, plan := flattenTableCachingPlan(TableCaching.Plan)
 	if err := d.Set(loc, plan); err != nil {
 		return err

@@ -36,10 +36,10 @@ func ResourceTableMonitoring() *schema.Resource {
 				},
 			},
 			"principal": {
-            	Type:         schema.TypeString,
-            	Optional:     true,
-            	ValidateFunc: validateAnamlIdentifier(),
-            },
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validateAnamlIdentifier(),
+			},
 			"enabled": {
 				Type:     schema.TypeBool,
 				Required: true,
@@ -101,10 +101,10 @@ func resourceTableMonitoringRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 	if TableMonitoring.Principal != nil {
-    	if err := d.Set("principal", strconv.Itoa(*TableMonitoring.Principal)); err != nil {
-    		return err
-    	}
-    }
+		if err := d.Set("principal", strconv.Itoa(*TableMonitoring.Principal)); err != nil {
+			return err
+		}
+	}
 	if err := d.Set("cluster", strconv.Itoa(TableMonitoring.Cluster)); err != nil {
 		return err
 	}
