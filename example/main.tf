@@ -12,15 +12,15 @@ terraform {
 
 provider "anaml" {
   host     = "http://localhost:8080/api"
-  username = "8cd5defe-e4e3-499c-b3d2-71a87f507d99"
-  password = "zVf02xNAOe3UCH4NBzPDFEY2aFJVMeF9MccZW0jBEkM="
+  username = "03d147fe-0fa8-4aef-bce6-e6fbcd1cd000"
+  password = "test secret"
   branch   = "official"
 }
 
 provider "anaml-operations" {
   host     = "http://127.0.0.1:8080/api"
-  username = "8cd5defe-e4e3-499c-b3d2-71a87f507d99"
-  password = "zVf02xNAOe3UCH4NBzPDFEY2aFJVMeF9MccZW0jBEkM="
+  username = "03d147fe-0fa8-4aef-bce6-e6fbcd1cd000"
+  password = "test secret"
 }
 
 

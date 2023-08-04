@@ -35,6 +35,11 @@ func ResourceTableMonitoring() *schema.Resource {
 					ValidateFunc: validateAnamlIdentifier(),
 				},
 			},
+			"principal": {
+            	Type:         schema.TypeString,
+            	Optional:     true,
+            	ValidateFunc: validateAnamlIdentifier(),
+            },
 			"enabled": {
 				Type:     schema.TypeBool,
 				Required: true,
@@ -95,6 +100,11 @@ func resourceTableMonitoringRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("enabled", TableMonitoring.Enabled); err != nil {
 		return err
 	}
+	if TableMonitoring.Principal != nil {
+    	if err := d.Set("principal", strconv.Itoa(*TableMonitoring.Principal)); err != nil {
+    		return err
+    	}
+    }
 	if err := d.Set("cluster", strconv.Itoa(TableMonitoring.Cluster)); err != nil {
 		return err
 	}
@@ -162,6 +172,16 @@ func composeTableMonitoring(d *schema.ResourceData) (*TableMonitoring, error) {
 		return nil, err
 	}
 
+	var principal (*int) = nil
+	principalRaw, principalOk := d.GetOk("principal")
+	if principalOk {
+		principal_, err := strconv.Atoi(principalRaw.(string))
+		if err != nil {
+			return nil, err
+		}
+		principal = &principal_
+	}
+
 	if dailySchedule, _ := expandSingleMap(d.Get("daily_schedule")); dailySchedule != nil {
 		schedule, err := composeDailySchedule(dailySchedule)
 		if err != nil {
@@ -171,6 +191,7 @@ func composeTableMonitoring(d *schema.ResourceData) (*TableMonitoring, error) {
 			Name:                d.Get("name").(string),
 			Description:         d.Get("description").(string),
 			Tables:              expandIdentifierList(d.Get("tables").(*schema.Set).List()),
+			Principal:           principal,
 			Enabled:             d.Get("enabled").(bool),
 			Cluster:             cluster,
 			ClusterPropertySets: expandIdentifierList(d.Get("cluster_property_sets").([]interface{})),
@@ -187,6 +208,7 @@ func composeTableMonitoring(d *schema.ResourceData) (*TableMonitoring, error) {
 			Name:                d.Get("name").(string),
 			Description:         d.Get("description").(string),
 			Tables:              expandIdentifierList(d.Get("tables").(*schema.Set).List()),
+			Principal:           principal,
 			Enabled:             d.Get("enabled").(bool),
 			Cluster:             cluster,
 			ClusterPropertySets: expandIdentifierList(d.Get("cluster_property_sets").([]interface{})),
@@ -200,6 +222,7 @@ func composeTableMonitoring(d *schema.ResourceData) (*TableMonitoring, error) {
 		Name:                d.Get("name").(string),
 		Description:         d.Get("description").(string),
 		Enabled:             d.Get("enabled").(bool),
+		Principal:           principal,
 		Cluster:             cluster,
 		ClusterPropertySets: expandIdentifierList(d.Get("cluster_property_sets").([]interface{})),
 		Schedule:            schedule,

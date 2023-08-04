@@ -68,6 +68,11 @@ func ResourceTableCaching() *schema.Resource {
 				Elem:          cronScheduleSchema(),
 				ConflictsWith: []string{"daily_schedule"},
 			},
+			"principal": {
+            	Type:         schema.TypeString,
+            	Optional:     true,
+            	ValidateFunc: validateAnamlIdentifier(),
+            },
 			"cluster": {
 				Type:         schema.TypeString,
 				Required:     true,
@@ -225,6 +230,11 @@ func resourceTableCachingRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("auto", nil); err != nil {
 		return err
 	}
+	if TableCaching.Principal != nil {
+    	if err := d.Set("principal", strconv.Itoa(*TableCaching.Principal)); err != nil {
+    		return err
+    	}
+    }
 	loc, plan := flattenTableCachingPlan(TableCaching.Plan)
 	if err := d.Set(loc, plan); err != nil {
 		return err
@@ -322,6 +332,16 @@ func composeTableCaching(d *schema.ResourceData) (*TableCaching, error) {
 		}
 	}
 
+	var principal (*int) = nil
+	principalRaw, principalOk := d.GetOk("principal")
+	if principalOk {
+		principal_, err := strconv.Atoi(principalRaw.(string))
+		if err != nil {
+			return nil, err
+		}
+		principal = &principal_
+	}
+
 	var retainment *string
 	if d.Get("retainment").(string) != "" {
 		retainmentstr := d.Get("retainment").(string)
@@ -337,6 +357,7 @@ func composeTableCaching(d *schema.ResourceData) (*TableCaching, error) {
 		Name:                d.Get("name").(string),
 		Description:         d.Get("description").(string),
 		PrefixURI:           d.Get("prefix_url").(string),
+		Principal:           principal,
 		Plan:                plan,
 		Retainement:         retainment,
 		Cluster:             cluster,
