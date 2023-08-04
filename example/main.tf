@@ -888,6 +888,24 @@ resource "anaml-operations_caching" "caching" {
   }
 }
 
+resource "anaml-operations_caching" "caching_with_principal" {
+  name        = "household_caching_with_principal"
+  description = "Caching of tables for households"
+  prefix_url  = "file:///tmp/anaml/caching"
+  include {
+    spec {
+      table  = anaml_table.household.id
+      entity = anaml_entity.household.id
+    }
+  }
+  retainment = "PT48H"
+  cluster = data.anaml-operations_cluster.local.id
+  daily_schedule {
+    start_time_of_day = "00:00:00"
+  }
+  principal = anaml-operations_user.jane.id
+}
+
 resource "anaml-operations_caching" "caching_two" {
   name        = "household_caching_auto"
   description = "Caching of tables for households"
@@ -916,6 +934,20 @@ resource "anaml-operations_monitoring" "monitoring" {
   daily_schedule {
     start_time_of_day = "00:00:00"
   }
+}
+
+resource "anaml-operations_monitoring" "monitoring_with_principal" {
+  name        = "household_monitoring_with_principal"
+  description = "Monitoring of tables for households"
+  enabled     = true
+  tables = [
+    anaml_table.household.id
+  ]
+  cluster = data.anaml-operations_cluster.local.id
+  daily_schedule {
+    start_time_of_day = "00:00:00"
+  }
+  principal = anaml-operations_user.jane.id
 }
 
 resource "anaml-operations_user_group" "engineering" {

@@ -454,6 +454,7 @@ type TableMonitoring struct {
 	Cluster             int       `json:"cluster"`
 	ClusterPropertySets []int     `json:"clusterPropertySets"`
 	Enabled             bool      `json:"enabled"`
+	Principal           *int      `json:"principal,omitempty"`
 }
 
 type CachingPlan struct {
@@ -467,6 +468,7 @@ type TableCaching struct {
 	ID                  int          `json:"id,omitempty"`
 	Name                string       `json:"name"`
 	Description         string       `json:"description"`
+	Principal           *int         `json:"principal,omitempty"`
 	Plan                *CachingPlan `json:"plan"`
 	Retainement         *string      `json:"retainment"`
 	PrefixURI           string       `json:"prefixURI"`
