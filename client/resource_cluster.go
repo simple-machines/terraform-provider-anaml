@@ -370,6 +370,7 @@ func resourceClusterCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	d.SetId(strconv.Itoa(e.ID))
+	resourceClusterRead(d, m)
 	return err
 }
 
@@ -386,6 +387,7 @@ func resourceClusterUpdate(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
+	resourceClusterRead(d, m)
 	return nil
 }
 
@@ -594,25 +596,44 @@ func composeSparkConfig(d map[string]interface{}) SparkConfig {
 }
 
 func expandPropertySet(d *schema.ResourceData) []PropertySet {
-	drs := d.Get("property_set").(*schema.Set).List()
+	prev, new := d.GetChange("property_set")
+	prevX := prev.(*schema.Set).List()
+	drs := new.(*schema.Set).List()
 	res := make([]PropertySet, 0, len(drs))
 	for _, dr := range drs {
-		val, _ := dr.(map[string]interface{})
-		source := val["additional_spark_properties"].(map[string]interface{})
+		vals := dr.(map[string]interface{})
+		source := vals["additional_spark_properties"].(map[string]interface{})
 		additionalSparkProperties := make(map[string]string)
 
 		for k, v := range source {
 			additionalSparkProperties[k] = v.(string)
 		}
 
-		if val["name"].(string) != "" {
-			parsed := PropertySet{
-				Name:                      val["name"].(string),
-				AdditionalSparkProperties: additionalSparkProperties,
+		if vals["name"].(string) != "" {
+			var identifier *int
+			name := vals["name"].(string)
+			explicit, hasId := vals["id"].(int)
+
+			if hasId && explicit != 0 {
+				identifier = &explicit
+			} else {
+				// No identifier was explicitly specified.
+				// Try to find a property set from the last read
+				// with the same name, we'll use its ID.
+				for _, drX := range prevX {
+					oldVals, _ := drX.(map[string]interface{})
+					implicit, hasOld := oldVals["id"].(int)
+					oldName := oldVals["name"].(string)
+					if oldName == name && hasOld && implicit != 0 {
+						identifier = &implicit
+					}
+				}
 			}
 
-			if id, ok := val["id"].(int); ok && id != 0 {
-				parsed.ID = &id
+			parsed := PropertySet{
+				ID:                        identifier,
+				Name:                      name,
+				AdditionalSparkProperties: additionalSparkProperties,
 			}
 
 			res = append(res, parsed)
