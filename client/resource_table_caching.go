@@ -92,7 +92,7 @@ func ResourceTableCaching() *schema.Resource {
 		StateUpgraders: []schema.StateUpgrader{
 			{
 				Type:    resourceTableCachingV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: resourceExampleInstanceStateUpgradeV0,
+				Upgrade: resourceTableCachingUpgradeV0,
 				Version: 0,
 			},
 		},
@@ -152,7 +152,7 @@ func resourceTableCachingV0() *schema.Resource {
 	}
 }
 
-func resourceExampleInstanceStateUpgradeV0(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+func resourceTableCachingUpgradeV0(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 	plan := make(map[string]interface{})
 	plan["include"] = rawState["spec"]
 
