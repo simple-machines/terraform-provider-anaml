@@ -445,17 +445,23 @@ type PrincipalId struct {
 	Type string `json:"adt_type"`
 }
 
+type MonitoringPlan struct {
+	Type     string `json:"adt_type"`
+	Tables   []int  `json:"tables,omitempty"`
+	Excluded []int  `json:"excluded"`
+}
+
 // TableMonitoring ...
 type TableMonitoring struct {
-	ID                  int       `json:"id,omitempty"`
-	Name                string    `json:"name"`
-	Description         string    `json:"description"`
-	Tables              []int     `json:"tables"`
-	Schedule            *Schedule `json:"schedule"`
-	Cluster             int       `json:"cluster"`
-	ClusterPropertySets []int     `json:"clusterPropertySets"`
-	Enabled             bool      `json:"enabled"`
-	Principal           *int      `json:"principal,omitempty"`
+	ID                  int             `json:"id,omitempty"`
+	Name                string          `json:"name"`
+	Description         string          `json:"description"`
+	Plan                *MonitoringPlan `json:"plan"`
+	Schedule            *Schedule       `json:"schedule"`
+	Cluster             int             `json:"cluster"`
+	ClusterPropertySets []int           `json:"clusterPropertySets"`
+	Enabled             bool            `json:"enabled"`
+	Principal           *int            `json:"principal,omitempty"`
 }
 
 type CachingPlan struct {
