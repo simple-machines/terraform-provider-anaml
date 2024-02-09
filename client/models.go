@@ -36,8 +36,12 @@ type EntityPopulation struct {
 
 // TimestampInfo ..
 type TimestampInfo struct {
-	Column string `json:"timestampColumn"`
-	Zone   string `json:"timezone,omitempty"`
+	Type       string `json:"adt_type"`
+	PrimaryKey *int   `json:"primaryKey,omitempty"`
+	Column     string `json:"timestampColumn,omitempty"`
+	From       string `json:"fromColumn,omitempty"`
+	ValidTo    string `json:"validTillColumn,omitempty"`
+	Zone       string `json:"timezone,omitempty"`
 }
 
 // EventDescription ..
@@ -543,7 +547,6 @@ type EnumAttributeDisplay struct {
 	Colour string `json:"colour,omitempty"`
 }
 
-// EventDescription ..
 type EventStoreTopicColumns struct {
 	Entity        string         `json:"entity"`
 	TimestampInfo *TimestampInfo `json:"timestampInfo"`

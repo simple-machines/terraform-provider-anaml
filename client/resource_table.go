@@ -132,17 +132,33 @@ func ResourceTable() *schema.Resource {
 				Elem:     eventSchema(),
 			},
 
+			"scd2": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				MaxItems:      1,
+				ConflictsWith: []string{"event", "point_in_time"},
+				Elem:          scd2Schema(),
+			},
+
+			"point_in_time": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				MaxItems:      1,
+				ConflictsWith: []string{"event", "scd2"},
+				Elem:          pointInTimeSchema(),
+			},
+
 			"entity_mapping": {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ValidateFunc:  validateAnamlIdentifier(),
-				ConflictsWith: []string{"event"},
+				ConflictsWith: []string{"event", "scd2", "point_in_time"},
 			},
 			"extra_features": {
 				Type:          schema.TypeList,
 				Description:   "Tables upon which this view is created",
 				Optional:      true,
-				ConflictsWith: []string{"event"},
+				ConflictsWith: []string{"event", "scd2", "point_in_time"},
 
 				Elem: &schema.Schema{
 					Type:         schema.TypeString,
@@ -175,6 +191,66 @@ func eventSchema() *schema.Resource {
 					Type: schema.TypeString,
 				},
 				ValidateDiagFunc: validateMapKeysAnamlIdentifier(),
+			},
+			"timestamp_column": {
+				Type:     schema.TypeString,
+				Required: true,
+			},
+			"timezone": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+		},
+	}
+}
+
+func scd2Schema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"entities": {
+				Type:     schema.TypeMap,
+				Required: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				ValidateDiagFunc: validateMapKeysAnamlIdentifier(),
+			},
+			"primary_key": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validateAnamlIdentifier(),
+			},
+			"from_column": {
+				Type:     schema.TypeString,
+				Required: true,
+			},
+			"valid_to_column": {
+				Type:     schema.TypeString,
+				Required: true,
+			},
+			"timezone": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+		},
+	}
+}
+
+func pointInTimeSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"entities": {
+				Type:     schema.TypeMap,
+				Required: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				ValidateDiagFunc: validateMapKeysAnamlIdentifier(),
+			},
+			"primary_key": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validateAnamlIdentifier(),
 			},
 			"timestamp_column": {
 				Type:     schema.TypeString,
@@ -259,10 +335,7 @@ func resourceTableRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	eventItems := flattenEntityDescription(table.EventInfo)
-	if err := d.Set("event", eventItems); err != nil {
-		return err
-	}
+	flattenEntityDescription(d, table.EventInfo)
 
 	if err := d.Set("expression", table.Expression); err != nil {
 		return err
@@ -370,50 +443,133 @@ func buildTable(d *schema.ResourceData) *Table {
 }
 
 func expandEntityDescription(d *schema.ResourceData) *EventDescription {
-	vIR := d.Get("event").([]interface{})
-	ed := EventDescription{}
-
-	if len(vIR) == 1 {
-		r := vIR[0].(map[string]interface{})
-
+	events := d.Get("event").([]interface{})
+	if len(events) == 1 {
+		r := events[0].(map[string]interface{})
 		entities := make(map[string]string)
 
 		for k, v := range r["entities"].(map[string]interface{}) {
 			entities[k] = v.(string)
 		}
 
-		ed = EventDescription{
+		return &EventDescription{
 			Entities: entities,
 			TimestampInfo: &TimestampInfo{
+				Type:   "event",
 				Column: r["timestamp_column"].(string),
 				Zone:   r["timezone"].(string),
 			},
 		}
-	} else {
-		return nil
 	}
 
-	return &ed
+	scd2s := d.Get("scd2").([]interface{})
+	if len(scd2s) == 1 {
+		r := scd2s[0].(map[string]interface{})
+		entities := make(map[string]string)
+
+		for k, v := range r["entities"].(map[string]interface{}) {
+			entities[k] = v.(string)
+		}
+
+		primary, _ := strconv.Atoi(r["primary_key"].(string))
+		return &EventDescription{
+			Entities: entities,
+			TimestampInfo: &TimestampInfo{
+				Type:       "scd2",
+				PrimaryKey: &primary,
+				From:       r["from_column"].(string),
+				ValidTo:    r["valid_to_column"].(string),
+				Zone:       r["timezone"].(string),
+			},
+		}
+	}
+
+	pits := d.Get("point_in_time").([]interface{})
+	if len(pits) == 1 {
+		r := pits[0].(map[string]interface{})
+		entities := make(map[string]string)
+
+		for k, v := range r["entities"].(map[string]interface{}) {
+			entities[k] = v.(string)
+		}
+
+		primary, _ := strconv.Atoi(r["primary_key"].(string))
+		return &EventDescription{
+			Entities: entities,
+			TimestampInfo: &TimestampInfo{
+				Type:       "snapshot",
+				PrimaryKey: &primary,
+				Column:     r["timestamp_column"].(string),
+				Zone:       r["timezone"].(string),
+			},
+		}
+	}
+
+	return nil
 }
 
-func flattenEntityDescription(ed *EventDescription) []interface{} {
+func flattenEntityDescription(d *schema.ResourceData, ed *EventDescription) error {
 	if ed != nil {
 		ois := make([]interface{}, 1, 1)
-
+		nothing := make([]interface{}, 0, 0)
 		oi := make(map[string]interface{})
 
 		oi["entities"] = ed.Entities
 
 		td := ed.TimestampInfo
-		oi["timestamp_column"] = td.Column
-		oi["timezone"] = td.Zone
+		if td.Type == "event" {
+			oi["timestamp_column"] = td.Column
+			oi["timezone"] = td.Zone
 
-		ois[0] = oi
+			ois[0] = oi
+			if err := d.Set("event", ois); err != nil {
+				return err
+			}
+			if err := d.Set("point_in_time", nothing); err != nil {
+				return err
+			}
+			if err := d.Set("scd2", nothing); err != nil {
+				return err
+			}
+		}
 
-		return ois
+		if td.Type == "scd2" && td.PrimaryKey != nil {
+			oi["primary_key"] = strconv.Itoa(*td.PrimaryKey)
+			oi["from_column"] = td.From
+			oi["valid_to_column"] = td.ValidTo
+			oi["timezone"] = td.Zone
+
+			ois[0] = oi
+			if err := d.Set("scd2", ois); err != nil {
+				return err
+			}
+			if err := d.Set("point_in_time", nothing); err != nil {
+				return err
+			}
+			if err := d.Set("event", nothing); err != nil {
+				return err
+			}
+		}
+
+		if td.Type == "snapshot" && td.PrimaryKey != nil {
+			oi["primary_key"] = strconv.Itoa(*td.PrimaryKey)
+			oi["timestamp_column"] = td.Column
+			oi["timezone"] = td.Zone
+
+			ois[0] = oi
+			if err := d.Set("point_in_time", ois); err != nil {
+				return err
+			}
+			if err := d.Set("scd2", nothing); err != nil {
+				return err
+			}
+			if err := d.Set("event", nothing); err != nil {
+				return err
+			}
+		}
 	}
 
-	return make([]interface{}, 0)
+	return nil
 }
 
 func expandSourceReferences(d *schema.ResourceData) *SourceReference {
