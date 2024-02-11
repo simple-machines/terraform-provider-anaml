@@ -193,12 +193,14 @@ func eventSchema() *schema.Resource {
 				ValidateDiagFunc: validateMapKeysAnamlIdentifier(),
 			},
 			"timestamp_column": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 			"timezone": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 		},
 	}
@@ -221,16 +223,19 @@ func scd2Schema() *schema.Resource {
 				ValidateFunc: validateAnamlIdentifier(),
 			},
 			"from_column": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 			"valid_to_column": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 			"timezone": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:         schema.TypeString,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+				Optional:     true,
 			},
 		},
 	}
@@ -253,12 +258,14 @@ func pointInTimeSchema() *schema.Resource {
 				ValidateFunc: validateAnamlIdentifier(),
 			},
 			"timestamp_column": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 			"timezone": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 		},
 	}
