@@ -57,6 +57,7 @@ func Provider() *schema.Provider {
 			"anaml_feature":           anaml.ResourceFeature(),
 			"anaml_feature_set":       anaml.ResourceFeatureSet(),
 			"anaml_feature_template":  anaml.ResourceFeatureTemplate(),
+			"anaml_metrics_set":       anaml.ResourceMetricsSet(),
 		},
 
 		ConfigureFunc: providerConfigure,

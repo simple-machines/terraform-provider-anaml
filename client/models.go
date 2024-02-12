@@ -139,6 +139,50 @@ type FeatureSet struct {
 	Attributes  []Attribute `json:"attributes"`
 }
 
+// MetricsSource ...
+type MetricsSource struct {
+	Type       string `json:"adt_type"`
+	FeatureSet *int   `json:"featureset,omitempty"`
+	Table      *int   `json:"table,omitempty"`
+	Joins      []int  `json:"joins,omitempty"`
+}
+
+type TypeTag struct {
+	Type string `json:"adt_type"`
+}
+
+// Dimension ...
+type Dimension struct {
+	Type        string   `json:"adt_type"`
+	Granularity *TypeTag `json:"granularity,omitempty"`
+	Edge        *TypeTag `json:"edgeSemantics,omitempty"`
+	Back        *int     `json:"back,omitempty"`
+	Name        *string  `json:"name,omitempty"`
+	Expression  *string  `json:"expression,omitempty"`
+	Filter      *string  `json:"filterExpression,omitempty"`
+}
+
+// Dimension ...
+type Metric struct {
+	Name        *string              `json:"name,omitempty"`
+	Select      SQLExpression        `json:"select"`
+	Filter      *SQLExpression       `json:"filter"`
+	Aggregate   *AggregateExpression `json:"aggregate,omitempty"`
+	PostAggExpr *SQLExpression       `json:"postAggregateExpr"`
+}
+
+// MetricsSet ...
+type MetricsSet struct {
+	ID          int           `json:"id,omitempty"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Labels      []string      `json:"labels"`
+	Attributes  []Attribute   `json:"attributes"`
+	Source      MetricsSource `json:"source"`
+	Dimensions  []Dimension   `json:"dimensions"`
+	Metrics     []Metric      `json:"metrics"`
+}
+
 // VersionTarget ...
 type VersionTarget struct {
 	Type   string  `json:"adt_type"`

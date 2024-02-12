@@ -37,15 +37,13 @@ func ResourceTableCaching() *schema.Resource {
 				Description: "Table and entity specifications to cache with this job",
 				Optional:    true,
 				MaxItems:    1,
-
-				Elem: planSchema(),
+				Elem:        planSchema(),
 			},
 			"auto": {
-				Type:        schema.TypeList,
-				Description: "Table and entity specifications to cache with this job",
-				Optional:    true,
-				MaxItems:    1,
-
+				Type:         schema.TypeList,
+				Description:  "Table and entity specifications to cache with this job",
+				Optional:     true,
+				MaxItems:     1,
 				Elem:         excludeSchema(),
 				ExactlyOneOf: []string{"include", "auto"},
 			},
