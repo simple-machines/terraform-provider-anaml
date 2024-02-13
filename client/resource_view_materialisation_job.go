@@ -158,27 +158,14 @@ func resourceViewMaterialisationJobRead(d *schema.ResourceData, m interface{}) e
 	}
 
 	if ViewMaterialisationJob.Type == "batch" {
-		if ViewMaterialisationJob.Schedule.Type == "daily" {
-			dailySchedules, err := parseDailySchedule(ViewMaterialisationJob.Schedule)
-			if err != nil {
-				return err
-			}
-			if err := d.Set("daily_schedule", dailySchedules); err != nil {
-				return err
-			}
+		daily, cron, err := parseSchedule(ViewMaterialisationJob.Schedule)
+		if err != nil {
+			return err
 		}
-
-		if ViewMaterialisationJob.Schedule.Type == "cron" {
-			cronSchedules, err := parseCronSchedule(ViewMaterialisationJob.Schedule)
-			if err != nil {
-				return err
-			}
-			if err := d.Set("cron_schedule", cronSchedules); err != nil {
-				return err
-			}
+		if err := d.Set("daily_schedule", daily); err != nil {
+			return err
 		}
-
-		if err := d.Set("include_metadata", ViewMaterialisationJob.IncludeMetadata); err != nil {
+		if err := d.Set("cron_schedule", cron); err != nil {
 			return err
 		}
 	}

@@ -229,35 +229,15 @@ func resourceEventStoreRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("access_rules", flattenAccessRules(entity.AccessRules)); err != nil {
 		return err
 	}
-	if entity.Schedule.Type == "daily" {
-		dailySchedules, err := parseDailySchedule(entity.Schedule)
-		if err != nil {
-			return err
-		}
-		if err := d.Set("daily_schedule", dailySchedules); err != nil {
-			return err
-		}
-		if err := d.Set("cron_schedule", nil); err != nil {
-			return err
-		}
-	} else if entity.Schedule.Type == "cron" {
-		cronSchedules, err := parseCronSchedule(entity.Schedule)
-		if err != nil {
-			return err
-		}
-		if err := d.Set("cron_schedule", cronSchedules); err != nil {
-			return err
-		}
-		if err := d.Set("daily_schedule", nil); err != nil {
-			return err
-		}
-	} else {
-		if err := d.Set("cron_schedule", nil); err != nil {
-			return err
-		}
-		if err := d.Set("daily_schedule", nil); err != nil {
-			return err
-		}
+	daily, cron, err := parseSchedule(entity.Schedule)
+	if err != nil {
+		return err
+	}
+	if err := d.Set("daily_schedule", daily); err != nil {
+		return err
+	}
+	if err := d.Set("cron_schedule", cron); err != nil {
+		return err
 	}
 	return err
 }

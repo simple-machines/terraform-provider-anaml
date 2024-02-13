@@ -215,6 +215,23 @@ type FeatureStore struct {
 	VersionTarget             *VersionTarget         `json:"versionTarget,omitempty"`
 }
 
+// MetricsJob ...
+type MetricsJob struct {
+	ID                  int                    `json:"id,omitempty"`
+	Name                string                 `json:"name"`
+	Description         string                 `json:"description"`
+	Labels              []string               `json:"labels"`
+	Attributes          []Attribute            `json:"attributes"`
+	MetricsSet          int                    `json:"metricsSet"`
+	Enabled             bool                   `json:"enabled"`
+	Schedule            *Schedule              `json:"schedule"`
+	Destinations        []DestinationReference `json:"destinations"`
+	Cluster             int                    `json:"cluster"`
+	ClusterPropertySets []int                  `json:"clusterPropertySets"`
+	Principal           int                    `json:"principal"`
+	VersionTarget       *VersionTarget         `json:"versionTarget,omitempty"`
+}
+
 type Schedule struct {
 	Type           string       `json:"adt_type"`
 	StartTimeOfDay *string      `json:"startTimeOfDay,omitempty"`

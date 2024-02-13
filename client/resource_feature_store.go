@@ -242,24 +242,15 @@ func resourceFeatureStoreRead(d *schema.ResourceData, m interface{}) error {
 		}
 	}
 
-	if FeatureStore.Schedule.Type == "daily" {
-		dailySchedules, err := parseDailySchedule(FeatureStore.Schedule)
-		if err != nil {
-			return err
-		}
-		if err := d.Set("daily_schedule", dailySchedules); err != nil {
-			return err
-		}
+	daily, cron, err := parseSchedule(FeatureStore.Schedule)
+	if err != nil {
+		return err
 	}
-
-	if FeatureStore.Schedule.Type == "cron" {
-		cronSchedules, err := parseCronSchedule(FeatureStore.Schedule)
-		if err != nil {
-			return err
-		}
-		if err := d.Set("cron_schedule", cronSchedules); err != nil {
-			return err
-		}
+	if err := d.Set("daily_schedule", daily); err != nil {
+		return err
+	}
+	if err := d.Set("cron_schedule", cron); err != nil {
+		return err
 	}
 
 	if FeatureStore.VersionTarget != nil {

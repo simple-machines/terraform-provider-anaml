@@ -255,24 +255,15 @@ func resourceTableCachingRead(d *schema.ResourceData, m interface{}) error {
 		d.Set("retainment", nil)
 	}
 
-	if TableCaching.Schedule.Type == "daily" {
-		dailySchedules, err := parseDailySchedule(TableCaching.Schedule)
-		if err != nil {
-			return err
-		}
-		if err := d.Set("daily_schedule", dailySchedules); err != nil {
-			return err
-		}
+	daily, cron, err := parseSchedule(TableCaching.Schedule)
+	if err != nil {
+		return err
 	}
-
-	if TableCaching.Schedule.Type == "cron" {
-		cronSchedules, err := parseCronSchedule(TableCaching.Schedule)
-		if err != nil {
-			return err
-		}
-		if err := d.Set("cron_schedule", cronSchedules); err != nil {
-			return err
-		}
+	if err := d.Set("daily_schedule", daily); err != nil {
+		return err
+	}
+	if err := d.Set("cron_schedule", cron); err != nil {
+		return err
 	}
 
 	return err

@@ -247,24 +247,16 @@ func resourceTableMonitoringRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("cluster_property_sets", identifierList(TableMonitoring.ClusterPropertySets)); err != nil {
 		return err
 	}
-	if TableMonitoring.Schedule.Type == "daily" {
-		dailySchedules, err := parseDailySchedule(TableMonitoring.Schedule)
-		if err != nil {
-			return err
-		}
-		if err := d.Set("daily_schedule", dailySchedules); err != nil {
-			return err
-		}
-	}
 
-	if TableMonitoring.Schedule.Type == "cron" {
-		cronSchedules, err := parseCronSchedule(TableMonitoring.Schedule)
-		if err != nil {
-			return err
-		}
-		if err := d.Set("cron_schedule", cronSchedules); err != nil {
-			return err
-		}
+	daily, cron, err := parseSchedule(TableMonitoring.Schedule)
+	if err != nil {
+		return err
+	}
+	if err := d.Set("daily_schedule", daily); err != nil {
+		return err
+	}
+	if err := d.Set("cron_schedule", cron); err != nil {
+		return err
 	}
 
 	return err
