@@ -62,6 +62,8 @@ type Table struct {
 	EventInfo     *EventDescription `json:"eventDescription,omitempty"`
 	EntityMapping int               `json:"entityMapping,omitempty"`
 	ExtraFeatures []int             `json:"extraFeatures,omitempty"`
+	Base          *int              `json:"base,omitempty"`
+	Joins         []int             `json:"joins,omitempty"`
 	Labels        []string          `json:"labels"`
 	Attributes    []Attribute       `json:"attributes"`
 }

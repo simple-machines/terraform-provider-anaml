@@ -100,7 +100,7 @@ func ResourceTable() *schema.Resource {
 				Optional:     true,
 				MaxItems:     1,
 				Elem:         sourceSchema(),
-				ExactlyOneOf: []string{"source", "event_store", "expression", "entity_mapping"},
+				ExactlyOneOf: []string{"source", "event_store", "expression", "entity_mapping", "join"},
 			},
 			"event_store": {
 				Type:     schema.TypeList,
@@ -148,12 +148,21 @@ func ResourceTable() *schema.Resource {
 				Elem:          pointInTimeSchema(),
 			},
 
+			"join": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				MaxItems:      1,
+				ConflictsWith: []string{"event", "scd2", "point_in_time"},
+				Elem:          joinTableSchema(),
+			},
+
 			"entity_mapping": {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ValidateFunc:  validateAnamlIdentifier(),
 				ConflictsWith: []string{"event", "scd2", "point_in_time"},
 			},
+
 			"extra_features": {
 				Type:          schema.TypeList,
 				Description:   "Tables upon which this view is created",
@@ -271,6 +280,29 @@ func pointInTimeSchema() *schema.Resource {
 	}
 }
 
+func joinTableSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"table": {
+				Type:         schema.TypeString,
+				Description:  "The root tables on the Left of the Join.",
+				Required:     true,
+				ValidateFunc: validateAnamlIdentifier(),
+			},
+			"joins": {
+				Type:        schema.TypeList,
+				Description: "Dimensions tables to join to.",
+				Optional:    true,
+
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validateAnamlIdentifier(),
+				},
+			},
+		},
+	}
+}
+
 func sourceSchema() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
@@ -356,10 +388,18 @@ func resourceTableRead(d *schema.ResourceData, m interface{}) error {
 		if err := d.Set("source", flattenSourceReferences(table.Source)); err != nil {
 			return err
 		}
+	} else {
+		if err := d.Set("source", nil); err != nil {
+			return err
+		}
 	}
 
 	if table.Type == "eventstore" {
 		if err := d.Set("event_store", flattenEventStoreReferences(table.Source)); err != nil {
+			return err
+		}
+	} else {
+		if err := d.Set("event_store", nil); err != nil {
 			return err
 		}
 	}
@@ -370,6 +410,24 @@ func resourceTableRead(d *schema.ResourceData, m interface{}) error {
 		}
 
 		if err := d.Set("extra_features", identifierList(table.ExtraFeatures)); err != nil {
+			return err
+		}
+	} else {
+		if err := d.Set("entity_mapping", nil); err != nil {
+			return err
+		}
+
+		if err := d.Set("extra_features", nil); err != nil {
+			return err
+		}
+	}
+
+	if table.Type == "join" {
+		if err := d.Set("join", flattenJoinTableSpecification(table)); err != nil {
+			return err
+		}
+	} else {
+		if err := d.Set("join", nil); err != nil {
 			return err
 		}
 	}
@@ -441,6 +499,11 @@ func buildTable(d *schema.ResourceData) *Table {
 	} else if len(d.Get("source").([]interface{})) == 1 {
 		table.Type = "root"
 		table.Source = expandSourceReferences(d)
+	} else if len(d.Get("join").([]interface{})) == 1 {
+		table.Type = "join"
+		base, others := expandJoinSpecification(d)
+		table.Base = base
+		table.Joins = others
 	} else {
 		table.Type = "eventstore"
 		table.Source = expandEventStoreReferences(d)
@@ -631,6 +694,19 @@ func expandEventStoreReferences(d *schema.ResourceData) *SourceReference {
 	return nil
 }
 
+func expandJoinSpecification(d *schema.ResourceData) (*int, []int) {
+	srs := d.Get("join").([]interface{})
+
+	for _, sr := range srs {
+		val, _ := sr.(map[string]interface{})
+		store, _ := strconv.Atoi(val["table"].(string))
+		joinList := expandIdentifierList(val["joins"].([]interface{}))
+		return &store, joinList
+	}
+
+	return nil, nil
+}
+
 func flattenSourceReferences(source *SourceReference) []map[string]interface{} {
 	res := make([]map[string]interface{}, 0, 1)
 
@@ -659,6 +735,20 @@ func flattenEventStoreReferences(source *SourceReference) []map[string]interface
 	single["store"] = strconv.Itoa(source.EventStoreId)
 	single["entity"] = strconv.Itoa(source.Entity)
 	single["topic"] = source.Topic
+	res = append(res, single)
+
+	return res
+}
+
+func flattenJoinTableSpecification(table *Table) []map[string]interface{} {
+	res := make([]map[string]interface{}, 0, 1)
+	if table.Base == nil {
+		return res
+	}
+
+	single := make(map[string]interface{})
+	single["table"] = strconv.Itoa(*table.Base)
+	single["joins"] = identifierList(table.Joins)
 	res = append(res, single)
 
 	return res
