@@ -50,22 +50,42 @@ type EventDescription struct {
 	TimestampInfo *TimestampInfo    `json:"timestampInfo"`
 }
 
+// ColumnRepresentation ..
+type ColumnRepresentation struct {
+	Type       string  `json:"adt_type"`
+	Expression *string `json:"expression,omitempty"`
+}
+
+// ColumnKind ..
+type ColumnKind struct {
+	Type  string  `json:"adt_type"`
+	Units *string `json:"units,omitempty"`
+}
+
+// ColumnInfo ..
+type ColumnInfo struct {
+	Description string                `json:"description"`
+	Column      *ColumnRepresentation `json:"column"`
+	Kind        *ColumnKind           `json:"kind,omitempty"`
+}
+
 // Table ...
 type Table struct {
-	ID            int               `json:"id,omitempty"`
-	Name          string            `json:"name"`
-	Description   string            `json:"description"`
-	Type          string            `json:"adt_type"`
-	Sources       []int             `json:"sources,omitempty"`
-	Source        *SourceReference  `json:"source,omitempty"`
-	Expression    string            `json:"expression,omitempty"`
-	EventInfo     *EventDescription `json:"eventDescription,omitempty"`
-	EntityMapping int               `json:"entityMapping,omitempty"`
-	ExtraFeatures []int             `json:"extraFeatures,omitempty"`
-	Base          *int              `json:"base,omitempty"`
-	Joins         []int             `json:"joins,omitempty"`
-	Labels        []string          `json:"labels"`
-	Attributes    []Attribute       `json:"attributes"`
+	ID            int                   `json:"id,omitempty"`
+	Name          string                `json:"name"`
+	Description   string                `json:"description"`
+	Type          string                `json:"adt_type"`
+	Sources       []int                 `json:"sources,omitempty"`
+	Source        *SourceReference      `json:"source,omitempty"`
+	Expression    string                `json:"expression,omitempty"`
+	EventInfo     *EventDescription     `json:"eventDescription,omitempty"`
+	EntityMapping int                   `json:"entityMapping,omitempty"`
+	ExtraFeatures []int                 `json:"extraFeatures,omitempty"`
+	Base          *int                  `json:"base,omitempty"`
+	Joins         []int                 `json:"joins,omitempty"`
+	Columns       map[string]ColumnInfo `json:"columns,omitempty"`
+	Labels        []string              `json:"labels"`
+	Attributes    []Attribute           `json:"attributes"`
 }
 
 // EventWindow ...
