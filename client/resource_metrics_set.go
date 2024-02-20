@@ -375,9 +375,8 @@ func buildDimensions(d *schema.ResourceData) ([]Dimension, error) {
 		value := user_dim.(map[string]interface{})
 		name := value["name"].(string)
 		expression := value["expression"].(string)
-		filterRaw, found := value["filter"].(string)
 		var filter *string
-		if found {
+		if filterRaw, ok := value["filter"].(string); ok {
 			filter = &filterRaw
 		}
 		Dimension := Dimension{
@@ -402,16 +401,14 @@ func buildMetrics(d *schema.ResourceData) ([]Metric, error) {
 		name := value["name"].(string)
 		expression := value["select"].(string)
 		aggregation := value["aggregation"].(string)
-		filterRaw, found := value["filter"].(string)
 		var filter *SQLExpression
-		if found {
+		if filterRaw, ok := value["filter"].(string); ok {
 			filter = &SQLExpression{
 				SQL: filterRaw,
 			}
 		}
-		postAggRaw, found := value["post_aggregation"].(string)
 		var postAgg *SQLExpression
-		if found {
+		if postAggRaw, ok := value["post_aggregation"].(string); ok {
 			postAgg = &SQLExpression{
 				SQL: postAggRaw,
 			}
@@ -473,9 +470,8 @@ func readSource(d *schema.ResourceData, source MetricsSource) error {
 }
 
 func readDimensions(d *schema.ResourceData, dimensions []Dimension) error {
-	var timeSingle map[string]interface{}
 	user := make([]interface{}, 0, len(dimensions))
-	time := make([]interface{}, 0, 1)
+	time := make([]interface{}, 0, len(dimensions))
 
 	for _, dimension := range dimensions {
 		if dimension.Type == "user" {
@@ -485,21 +481,18 @@ func readDimensions(d *schema.ResourceData, dimensions []Dimension) error {
 			single["filter"] = dimension.Filter
 			user = append(user, single)
 		} else if dimension.Type == "time" {
-			timeSingle = make(map[string]interface{})
-			timeSingle["granularity"] = dimension.Granularity.Type
+			single := make(map[string]interface{})
+			single["granularity"] = dimension.Granularity.Type
 			if dimension.Edge.Type == "fromtoday" {
-				timeSingle["edge"] = "from_today"
+				single["edge"] = "from_today"
 			} else {
-				timeSingle["edge"] = "to_ending"
+				single["edge"] = "to_ending"
 			}
-			timeSingle["back"] = dimension.Back
+			single["back"] = dimension.Back
+			time = append(time, single)
 		} else {
 			return errors.New("Unrecognised Dimension tag")
 		}
-	}
-
-	if timeSingle != nil {
-		time = append(time, timeSingle)
 	}
 
 	if err := d.Set("time_dimension", time); err != nil {

@@ -231,48 +231,23 @@ func resourceMetricsJobUpdate(d *schema.ResourceData, m interface{}) error {
 }
 
 func composeMetricsJob(d *schema.ResourceData) (*MetricsJob, error) {
-	metricsSet, err := strconv.Atoi(d.Get("metrics_set").(string))
+	metricsSet, err := getAnamlId(d, "metrics_set")
 	if err != nil {
 		return nil, err
 	}
-
-	principal, err := strconv.Atoi(d.Get("principal").(string))
+	cluster, err := getAnamlId(d, "cluster")
 	if err != nil {
 		return nil, err
 	}
-
-	cluster, err := strconv.Atoi(d.Get("cluster").(string))
+	principal, err := getAnamlId(d, "principal")
 	if err != nil {
 		return nil, err
 	}
-
-	var schedule = composeNeverSchedule()
-	if dailySchedule, _ := expandSingleMap(d.Get("daily_schedule")); dailySchedule != nil {
-		schedule, err = composeDailySchedule(dailySchedule)
-		if err != nil {
-			return nil, err
-		}
+	schedule, err := composeSchedule(d)
+	if err != nil {
+		return nil, err
 	}
-	if cronSchedule, _ := expandSingleMap(d.Get("cron_schedule")); cronSchedule != nil {
-		schedule, err = composeCronSchedule(cronSchedule)
-		if err != nil {
-			return nil, err
-		}
-	}
-	var versionTarget (*VersionTarget) = nil
-	if commit, _ := d.Get("commit_target").(string); commit != "" {
-		versionTarget = &VersionTarget{
-			Type:   "commit",
-			Commit: &commit,
-		}
-	}
-	if branch, _ := d.Get("branch_target").(string); branch != "" {
-		versionTarget = &VersionTarget{
-			Type:   "branch",
-			Branch: &branch,
-		}
-	}
-
+	versionTarget := composeVersionTarget(d)
 	destinations, err := expandDestinationReferences(d.Get("destination").([]interface{}))
 	if err != nil {
 		return nil, err

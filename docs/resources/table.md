@@ -18,6 +18,11 @@ description: |-
   This allows for better documentation, re-use and collaboration of features as well as allowing
   for better optimise generation runs.
   View Tables are mainly useful for joining data on keys other than entity id's such as reference data lookups.
+  Join Tables
+  Join tables are similar to View tables, in that they perform operations other tables, but these perform
+  time aware joins between events and dimensional tables, or dimensional and dimensional.
+  Interestingly, Join tables perform efficient and correct joining of SCD2 tables with correctness properties
+  which are challenging to achieve with SQL.
   Pivot Tables
   Pivot Tables allow features to be re-keyed to different entities.
   This can be very useful, as often in business applications one may have different levels of entity; for example,
@@ -31,6 +36,11 @@ description: |-
   features which are to be aggregated to the customer.
   Usually, the features one writes on a pivot table are simple aggregations, such as number of plans (count) or
   average of some column with some filtering. Day and Row windows are not required.
+  Event Store Tables
+  Event store tables are a robust store of tables backed and managed by Anaml. Usually, these will ingest data
+  from a Kafka topic, and describe mappings to events.
+  Table definitions for event store tables reference a managed event store, and the entity for which the data
+  should be interpreted.
   Timestamp and Entities
   To be used in feature generation a Table must have one or more Entities and a timestamp associated
   with it. These are needed to be able to join correctly between tables during the feature generation:
@@ -44,11 +54,13 @@ description: |-
 
 # Tables
 
-A Table represents a source of data for feature generation. A Table can be one of three types:
+A Table represents a source of data for feature generation. A Table can be one of five types:
 
 - External Table
 - View Table
+- Join Table
 - Pivot Table
+- Event Store Table
 
 ### External Tables
 
@@ -68,6 +80,15 @@ This allows for better documentation, re-use and collaboration of features as we
 for better optimise generation runs.
 
 View Tables are mainly useful for joining data on keys other than entity id's such as reference data lookups.
+
+
+### Join Tables
+
+Join tables are similar to View tables, in that they perform operations other tables, but these perform
+time aware joins between events and dimensional tables, or dimensional and dimensional.
+
+Interestingly, Join tables perform efficient and correct joining of SCD2 tables with correctness properties
+which are challenging to achieve with SQL.
 
 
 ### Pivot Tables
@@ -90,17 +111,24 @@ Usually, the features one writes on a pivot table are simple aggregations, such 
 average of some column with some filtering. Day and Row windows are not required.
 
 
-## Timestamp and Entities
+### Event Store Tables
 
-To be used in feature generation a Table must have one or more [Entities](/entities) and a timestamp associated
-with it. These are needed to be able to join correctly between tables during the feature generation:
+Event store tables are a robust store of tables backed and managed by Anaml. Usually, these will ingest data
+from a Kafka topic, and describe mappings to events.
 
-* **Timestamp** - Specifiy the name of the column which contains the timestamp that the row of data was created at.
-* **Entities** - For each Entity within the Table, specify the name of the column that contains the id's and the
-entity type.
+Table definitions for event store tables reference a managed event store, and the entity for which the data
+should be interpreted.
 
-Note that tables without an Entity and timestamp are still useful for use in View Tables. These are often things
-such as reference data tables used for lookups.
+
+## Time and Entity Descriptions
+
+To be used in feature generation a Table must have one or more Entities as well as the semantics
+for how to interpret timestamp columns for the table.
+
+To achieve this, one should use one of the 'event', 'scd2', or 'point_in_time' blocks (as described below).
+
+All of these blocks are able to accept a map of entities can be used as keys for this table in feature
+generation, as well as their timestamp columns.
 
 
 
@@ -109,20 +137,25 @@ such as reference data tables used for lookups.
 
 ### Required
 
-- **name** (String)
+- **name** (String) Name of the table in Anaml.
 
 ### Optional
 
-- **attribute** (Block List) Attributes (key value pairs) to attach to the object (see [below for nested schema](#nestedblock--attribute))
+- **attribute** (Block Set) Attributes (key value pairs) to attach to the object (see [below for nested schema](#nestedblock--attribute))
 - **description** (String)
+- **domain_modelling** (Block List, Max: 1) Model dimensions and measures for tables, and add virtual columns as simple SQL expressions (see [below for nested schema](#nestedblock--domain_modelling))
 - **entity_mapping** (String)
-- **event** (Block List, Max: 1) (see [below for nested schema](#nestedblock--event))
-- **expression** (String)
+- **event** (Block List, Max: 1) This table contains events which occurred at a particular time (see [below for nested schema](#nestedblock--event))
+- **event_store** (Block List, Max: 1) Information for how to interpret an Event store topic as a Table (see [below for nested schema](#nestedblock--event_store))
+- **expression** (String) Expression for a View table.
 - **extra_features** (List of String) Tables upon which this view is created
 - **id** (String) The ID of this resource.
-- **labels** (List of String) Labels to attach to the object
-- **source** (Block List, Max: 1) (see [below for nested schema](#nestedblock--source))
-- **sources** (List of String) Tables upon which this view is created
+- **join** (Block List, Max: 1) Create a Join table, which performs time aware joins between tables. (see [below for nested schema](#nestedblock--join))
+- **labels** (Set of String) Labels to attach to the object
+- **point_in_time** (Block List, Max: 1) This table is a Dimensional table with updates at particular times (see [below for nested schema](#nestedblock--point_in_time))
+- **scd2** (Block List, Max: 1) This table is a Slowly Changing Dimensional table (see [below for nested schema](#nestedblock--scd2))
+- **source** (Block List, Max: 1) Source information for a Root table. (see [below for nested schema](#nestedblock--source))
+- **sources** (List of String) Tables upon which this View is created
 
 <a id="nestedblock--attribute"></a>
 ### Nested Schema for `attribute`
@@ -136,6 +169,76 @@ Optional:
 - **value** (String)
 
 
+<a id="nestedblock--domain_modelling"></a>
+### Nested Schema for `domain_modelling`
+
+Optional:
+
+- **base** (Block List) An existing column to annotate (see [below for nested schema](#nestedblock--domain_modelling--base))
+- **virtual** (Block List) Dimensions tables to join to. (see [below for nested schema](#nestedblock--domain_modelling--virtual))
+
+<a id="nestedblock--domain_modelling--base"></a>
+### Nested Schema for `domain_modelling.base`
+
+Required:
+
+- **name** (String) Name of the Table
+
+Optional:
+
+- **description** (String)
+- **dimension** (Block List, Max: 1) (see [below for nested schema](#nestedblock--domain_modelling--base--dimension))
+- **measure** (Block List, Max: 1) (see [below for nested schema](#nestedblock--domain_modelling--base--measure))
+
+<a id="nestedblock--domain_modelling--base--dimension"></a>
+### Nested Schema for `domain_modelling.base.dimension`
+
+Optional:
+
+- **dummy** (String)
+
+
+<a id="nestedblock--domain_modelling--base--measure"></a>
+### Nested Schema for `domain_modelling.base.measure`
+
+Optional:
+
+- **units** (String) Units for the measure
+
+
+
+<a id="nestedblock--domain_modelling--virtual"></a>
+### Nested Schema for `domain_modelling.virtual`
+
+Required:
+
+- **expression** (String) Name of the Table
+- **name** (String) Name of the Table
+
+Optional:
+
+- **description** (String)
+- **dimension** (Block List, Max: 1) (see [below for nested schema](#nestedblock--domain_modelling--virtual--dimension))
+- **measure** (Block List, Max: 1) (see [below for nested schema](#nestedblock--domain_modelling--virtual--measure))
+
+<a id="nestedblock--domain_modelling--virtual--dimension"></a>
+### Nested Schema for `domain_modelling.virtual.dimension`
+
+Optional:
+
+- **dummy** (String)
+
+
+<a id="nestedblock--domain_modelling--virtual--measure"></a>
+### Nested Schema for `domain_modelling.virtual.measure`
+
+Optional:
+
+- **units** (String) Units for the measure
+
+
+
+
 <a id="nestedblock--event"></a>
 ### Nested Schema for `event`
 
@@ -143,6 +246,57 @@ Required:
 
 - **entities** (Map of String)
 - **timestamp_column** (String)
+
+Optional:
+
+- **timezone** (String)
+
+
+<a id="nestedblock--event_store"></a>
+### Nested Schema for `event_store`
+
+Required:
+
+- **entity** (String)
+- **store** (String)
+- **topic** (String)
+
+
+<a id="nestedblock--join"></a>
+### Nested Schema for `join`
+
+Required:
+
+- **table** (String) The root tables on the Left of the Join.
+
+Optional:
+
+- **joins** (List of String) Dimensions tables to join to.
+
+
+<a id="nestedblock--point_in_time"></a>
+### Nested Schema for `point_in_time`
+
+Required:
+
+- **entities** (Map of String)
+- **primary_key** (String)
+- **timestamp_column** (String)
+
+Optional:
+
+- **timezone** (String)
+
+
+<a id="nestedblock--scd2"></a>
+### Nested Schema for `scd2`
+
+Required:
+
+- **entities** (Map of String)
+- **from_column** (String)
+- **primary_key** (String)
+- **valid_to_column** (String)
 
 Optional:
 

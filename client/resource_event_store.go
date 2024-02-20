@@ -324,22 +324,13 @@ func buildEventStore(d *schema.ResourceData) (*EventStore, error) {
 			HasStreaming: hasStreaming,
 		}
 	}
-	cluster, err := strconv.Atoi(d.Get("cluster").(string))
+	cluster, err := getAnamlId(d, "cluster")
 	if err != nil {
 		return nil, err
 	}
-	schedule := composeNeverSchedule()
-	if dailySchedule, _ := expandSingleMap(d.Get("daily_schedule")); dailySchedule != nil {
-		schedule, err = composeDailySchedule(dailySchedule)
-		if err != nil {
-			return nil, err
-		}
-	}
-	if cronSchedule, _ := expandSingleMap(d.Get("cron_schedule")); cronSchedule != nil {
-		schedule, err = composeCronSchedule(cronSchedule)
-		if err != nil {
-			return nil, err
-		}
+	schedule, err := composeSchedule(d)
+	if err != nil {
+		return nil, err
 	}
 
 	entity := EventStore{

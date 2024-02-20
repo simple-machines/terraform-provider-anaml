@@ -38,14 +38,15 @@ then that field will not be changed when the Feature Template is updated.
 ### Optional
 
 - **aggregation** (String)
-- **attribute** (Block List) Attributes (key value pairs) to attach to the object (see [below for nested schema](#nestedblock--attribute))
+- **attribute** (Block Set) Attributes (key value pairs) to attach to the object (see [below for nested schema](#nestedblock--attribute))
 - **days** (Number) An event window
 - **description** (String)
 - **entity** (String)
 - **entity_restrictions** (List of String) List of entity Id's that the feature is restricted to.
 - **filter** (String) An SQL column expression to filter with
+- **hours** (Number) An event window
 - **id** (String) The ID of this resource.
-- **labels** (List of String) Labels to attach to the object
+- **labels** (Set of String) Labels to attach to the object
 - **months** (Number) The event window description for the number of months to aggregate over.
 - **over** (List of String) A list of Features this row feature depends on
 - **post_aggregation** (String) An SQL expression to apply to the result of the feature aggregation.

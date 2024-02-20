@@ -295,67 +295,26 @@ func resourceTableMonitoringUpdate(d *schema.ResourceData, m interface{}) error 
 }
 
 func composeTableMonitoring(d *schema.ResourceData) (*TableMonitoring, error) {
-	cluster, err := strconv.Atoi(d.Get("cluster").(string))
+	cluster, err := getAnamlId(d, "cluster")
 	if err != nil {
 		return nil, err
 	}
-
-	var principal (*int) = nil
-	principalRaw, principalOk := d.GetOk("principal")
-	if principalOk {
-		principal_, err := strconv.Atoi(principalRaw.(string))
-		if err != nil {
-			return nil, err
-		}
-		principal = &principal_
-	}
-
+	principal := getAnamlIdPointer(d, "principal")
 	plan, err := expandTableMonitoringPlan(d)
 	if err != nil {
 		return nil, err
 	}
-
-	if dailySchedule, _ := expandSingleMap(d.Get("daily_schedule")); dailySchedule != nil {
-		schedule, err := composeDailySchedule(dailySchedule)
-		if err != nil {
-			return nil, err
-		}
-		return &TableMonitoring{
-			Name:                d.Get("name").(string),
-			Description:         d.Get("description").(string),
-			Plan:                plan,
-			Principal:           principal,
-			Enabled:             d.Get("enabled").(bool),
-			Cluster:             cluster,
-			ClusterPropertySets: expandIdentifierList(d.Get("cluster_property_sets").([]interface{})),
-			Schedule:            schedule,
-		}, nil
+	schedule, err := composeSchedule(d)
+	if err != nil {
+		return nil, err
 	}
-
-	if cronSchedule, _ := expandSingleMap(d.Get("cron_schedule")); cronSchedule != nil {
-		schedule, err := composeCronSchedule(cronSchedule)
-		if err != nil {
-			return nil, err
-		}
-		return &TableMonitoring{
-			Name:                d.Get("name").(string),
-			Description:         d.Get("description").(string),
-			Plan:                plan,
-			Principal:           principal,
-			Enabled:             d.Get("enabled").(bool),
-			Cluster:             cluster,
-			ClusterPropertySets: expandIdentifierList(d.Get("cluster_property_sets").([]interface{})),
-			Schedule:            schedule,
-		}, nil
-	}
-
-	schedule := composeNeverSchedule()
 
 	return &TableMonitoring{
 		Name:                d.Get("name").(string),
 		Description:         d.Get("description").(string),
-		Enabled:             d.Get("enabled").(bool),
+		Plan:                plan,
 		Principal:           principal,
+		Enabled:             d.Get("enabled").(bool),
 		Cluster:             cluster,
 		ClusterPropertySets: expandIdentifierList(d.Get("cluster_property_sets").([]interface{})),
 		Schedule:            schedule,

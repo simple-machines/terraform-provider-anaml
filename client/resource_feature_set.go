@@ -107,7 +107,10 @@ func resourceFeatureSetRead(d *schema.ResourceData, m interface{}) error {
 
 func resourceFeatureSetCreate(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
-	entity, _ := strconv.Atoi(d.Get("entity").(string))
+	entity, err := getAnamlId(d, "entity")
+	if err != nil {
+		return err
+	}
 
 	FeatureSet := FeatureSet{
 		Name:        d.Get("name").(string),

@@ -1364,13 +1364,13 @@ func flattenAccessRules(accessRules []AccessRule) []map[string]interface{} {
 		single := make(map[string]interface{})
 		single["resource"] = accessRule.Resource
 		single["principals"] = flattenPrincipalIds(accessRule.Principals)
-		single["masking_rule"] = flatternMaskingRules(accessRule.MaskingRules)
+		single["masking_rule"] = flattenMaskingRules(accessRule.MaskingRules)
 		res = append(res, single)
 	}
 	return res
 }
 
-func flatternMaskingRules(maskingRules []MaskingRule) []map[string]([]map[string]interface{}) {
+func flattenMaskingRules(maskingRules []MaskingRule) []map[string]([]map[string]interface{}) {
 	res := make([]map[string]([]map[string]interface{}), 0, len(maskingRules))
 	for _, maskingRule := range maskingRules {
 		single := make(map[string]([]map[string]interface{}))

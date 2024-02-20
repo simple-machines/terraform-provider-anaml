@@ -148,7 +148,7 @@ func resourceEntityPopulationDelete(d *schema.ResourceData, m interface{}) error
 }
 
 func buildPopulation(d *schema.ResourceData) EntityPopulation {
-	entity, _ := strconv.Atoi(d.Get("entity").(string))
+	entity, _ := getAnamlId(d, "entity")
 	return EntityPopulation{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),

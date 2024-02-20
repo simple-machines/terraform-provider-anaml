@@ -38,16 +38,17 @@ Features will be generated for a specific Entity. This means the aggregation wil
 
 ### Required
 
-- **description** (String)
 - **name** (String)
 
 ### Optional
 
-- **attribute** (Block List) Attributes (key value pairs) to attach to the object (see [below for nested schema](#nestedblock--attribute))
+- **attribute** (Block Set) Attributes (key value pairs) to attach to the object (see [below for nested schema](#nestedblock--attribute))
 - **default_column** (String)
+- **description** (String)
 - **entities** (List of String) Entities from which this composite entity is derived
 - **id** (String) The ID of this resource.
-- **labels** (List of String) Labels to attach to the object
+- **labels** (Set of String) Labels to attach to the object
+- **required_type** (String) The data type the entity is encoded as. If set, tables' entity columns must be of this type. One of string, integer, long, or binary
 
 <a id="nestedblock--attribute"></a>
 ### Nested Schema for `attribute`

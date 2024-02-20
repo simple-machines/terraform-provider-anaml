@@ -60,6 +60,32 @@ func fixedRetryPolicySchema() *schema.Resource {
 	}
 }
 
+func composeVersionTarget(d *schema.ResourceData) *VersionTarget {
+	if commit, ok := d.Get("commit_target").(string); ok && commit != "" {
+		return &VersionTarget{
+			Type:   "commit",
+			Commit: &commit,
+		}
+	}
+	if branch, _ := d.Get("branch_target").(string); branch != "" {
+		return &VersionTarget{
+			Type:   "branch",
+			Branch: &branch,
+		}
+	}
+	return nil
+}
+
+func composeSchedule(d *schema.ResourceData) (*Schedule, error) {
+	if dailySchedule, _ := expandSingleMap(d.Get("daily_schedule")); dailySchedule != nil {
+		return composeDailySchedule(dailySchedule)
+	}
+	if cronSchedule, _ := expandSingleMap(d.Get("cron_schedule")); cronSchedule != nil {
+		return composeCronSchedule(cronSchedule)
+	}
+	return composeNeverSchedule(), nil
+}
+
 func composeNeverSchedule() *Schedule {
 	return &Schedule{
 		Type: "never",

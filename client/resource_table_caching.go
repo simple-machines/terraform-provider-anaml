@@ -302,41 +302,16 @@ func resourceTableCachingUpdate(d *schema.ResourceData, m interface{}) error {
 }
 
 func composeTableCaching(d *schema.ResourceData) (*TableCaching, error) {
-	cluster, err := strconv.Atoi(d.Get("cluster").(string))
+	cluster, err := getAnamlId(d, "cluster")
 	if err != nil {
 		return nil, err
 	}
-
-	var schedule = composeNeverSchedule()
-	if dailySchedule, _ := expandSingleMap(d.Get("daily_schedule")); dailySchedule != nil {
-		schedule, err = composeDailySchedule(dailySchedule)
-		if err != nil {
-			return nil, err
-		}
+	schedule, err := composeSchedule(d)
+	if err != nil {
+		return nil, err
 	}
-	if cronSchedule, _ := expandSingleMap(d.Get("cron_schedule")); cronSchedule != nil {
-		schedule, err = composeCronSchedule(cronSchedule)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	var principal (*int) = nil
-	principalRaw, principalOk := d.GetOk("principal")
-	if principalOk {
-		principal_, err := strconv.Atoi(principalRaw.(string))
-		if err != nil {
-			return nil, err
-		}
-		principal = &principal_
-	}
-
-	var retainment *string
-	if d.Get("retainment").(string) != "" {
-		retainmentstr := d.Get("retainment").(string)
-		retainment = &retainmentstr
-	}
-
+	principal := getAnamlIdPointer(d, "principal")
+	retainment := getStringPointer(d, "retainment")
 	plan, err := expandTableCachingPlan(d)
 	if err != nil {
 		return nil, err

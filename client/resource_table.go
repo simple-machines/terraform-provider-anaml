@@ -10,11 +10,13 @@ import (
 
 const tableDescription = `# Tables
 
-A Table represents a source of data for feature generation. A Table can be one of three types:
+A Table represents a source of data for feature generation. A Table can be one of five types:
 
 - External Table
 - View Table
+- Join Table
 - Pivot Table
+- Event Store Table
 
 ### External Tables
 
@@ -74,19 +76,15 @@ Table definitions for event store tables reference a managed event store, and th
 should be interpreted.
 
 
+## Time and Entity Descriptions
 
+To be used in feature generation a Table must have one or more Entities as well as the semantics
+for how to interpret timestamp columns for the table.
 
-## Timestamp and Entities
+To achieve this, one should use one of the 'event', 'scd2', or 'point_in_time' blocks (as described below).
 
-To be used in feature generation a Table must have one or more [Entities](/entities) and a timestamp associated
-with it. These are needed to be able to join correctly between tables during the feature generation:
-
-* **Timestamp** - Specifiy the name of the column which contains the timestamp that the row of data was created at.
-* **Entities** - For each Entity within the Table, specify the name of the column that contains the id's and the
-entity type.
-
-Note that tables without an Entity and timestamp are still useful for use in View Tables. These are often things
-such as reference data tables used for lookups.
+All of these blocks are able to accept a map of entities can be used as keys for this table in feature
+generation, as well as their timestamp columns.
 `
 
 // ResourceTable ...
@@ -481,7 +479,7 @@ func sourceSchema() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringIsNotWhiteSpace,
-				// ExactlyOneOf: []string{"folder", "table_name", "topic"},
+				ExactlyOneOf: []string{"source.0.folder", "source.0.table_name", "source.0.topic"},
 			},
 			"table_name": {
 				Type:         schema.TypeString,
@@ -960,7 +958,7 @@ func expandColumnKind(info map[string]interface{}) *ColumnKind {
 }
 
 func expandColumnInfo(d *schema.ResourceData) (map[string]ColumnInfo, error) {
-	modelling := d.Get("domain_modelling").([]interface{})
+	modelling := d.Get("domain_modelling").([]interface{});
 	res := make(map[string]ColumnInfo)
 
 	for _, domain := range modelling {

@@ -49,16 +49,19 @@ func ResourceFeature() *schema.Resource {
 				Optional:     true,
 				Description:  "A reference to a Table ID the feature is derived from.",
 				ValidateFunc: validateAnamlIdentifier(),
+				RequiredWith: []string{"aggregation"},
 			},
 			"select": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "An SQL expression for the column to aggregate.",
+				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 			"filter": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "An SQL column expression to filter with.",
+				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 			"hours": {
 				Type:          schema.TypeInt,
@@ -103,6 +106,7 @@ func ResourceFeature() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "An SQL expression to apply to the result of the feature aggregation.",
+				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 			"entity_restrictions": {
 				Type:        schema.TypeList,
@@ -317,6 +321,7 @@ func resourceFeatureDelete(d *schema.ResourceData, m interface{}) error {
 }
 
 func buildFeature(d *schema.ResourceData) (*Feature, error) {
+	template := getAnamlIdPointer(d, "template")
 	feature := Feature{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
@@ -328,45 +333,41 @@ func buildFeature(d *schema.ResourceData) (*Feature, error) {
 		},
 		Labels:     expandLabels(d),
 		Attributes: expandAttributes(d),
+		TemplateID: template,
 	}
 
-	if d.Get("template").(string) != "" {
-		template, _ := strconv.Atoi(d.Get("template").(string))
-		feature.TemplateID = &template
-	}
-
-	if d.Get("filter").(string) != "" {
+	if filter, ok := d.GetOk("filter"); ok {
 		feature.Filter = &SQLExpression{
-			SQL: d.Get("filter").(string),
+			SQL: filter.(string),
 		}
 	}
 
-	if d.Get("post_aggregation").(string) != "" {
+	if post, ok := d.GetOk("post_aggregation"); ok {
 		feature.PostAggExpr = &SQLExpression{
-			SQL: d.Get("post_aggregation").(string),
+			SQL: post.(string),
 		}
 	}
 
-	if d.Get("table").(string) != "" {
-		number, err := strconv.Atoi(d.Get("table").(string))
+	if table, ok := d.GetOk("table"); ok {
+		number, err := strconv.Atoi(table.(string))
 
 		if err != nil {
 			return nil, err
 		}
 
 		window := EventWindow{}
-		if d.Get("hours").(int) != 0 {
+		if hours, ok := d.GetOk("hours"); ok {
 			window.Type = "hourwindow"
-			window.Hours = d.Get("hours").(int)
-		} else if d.Get("days").(int) != 0 {
+			window.Hours = hours.(int)
+		} else if days, ok := d.GetOk("days"); ok {
 			window.Type = "daywindow"
-			window.Days = d.Get("days").(int)
-		} else if d.Get("months").(int) != 0 {
+			window.Days = days.(int)
+		} else if months, ok := d.GetOk("months"); ok {
 			window.Type = "monthwindow"
-			window.Months = d.Get("months").(int)
-		} else if d.Get("rows").(int) != 0 {
+			window.Months = months.(int)
+		} else if rows, ok := d.GetOk("rows"); ok {
 			window.Type = "rowwindow"
-			window.Rows = d.Get("rows").(int)
+			window.Rows = rows.(int)
 		} else {
 			window.Type = "openwindow"
 		}
@@ -382,10 +383,14 @@ func buildFeature(d *schema.ResourceData) (*Feature, error) {
 			feature.EntityRestr = nil
 		}
 	} else {
+		number, err := getAnamlId(d, "entity")
+		if err != nil {
+			return nil, err
+		}
+
+		feature.EntityID = number
 		feature.Type = "row"
 		feature.Over = expandIdentifierList(d.Get("over").([]interface{}))
-		number, _ := strconv.Atoi(d.Get("entity").(string))
-		feature.EntityID = number
 	}
 
 	return &feature, nil
