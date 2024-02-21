@@ -108,9 +108,9 @@ func resourceEntityMappingRead(d *schema.ResourceData, m interface{}) error {
 
 func resourceEntityMappingCreate(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
-	from, _ := strconv.Atoi(d.Get("from").(string))
-	to, _ := strconv.Atoi(d.Get("to").(string))
-	feat, _ := strconv.Atoi(d.Get("mapping").(string))
+	from, _ := getAnamlId(d, "from")
+	to, _ := getAnamlId(d, "to")
+	feat, _ := getAnamlId(d, "mapping")
 
 	mapping := EntityMapping{
 		From:      from,
@@ -131,9 +131,9 @@ func resourceEntityMappingCreate(d *schema.ResourceData, m interface{}) error {
 func resourceEntityMappingUpdate(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
 	mappingID := d.Id()
-	from, _ := strconv.Atoi(d.Get("from").(string))
-	to, _ := strconv.Atoi(d.Get("to").(string))
-	feat, _ := strconv.Atoi(d.Get("mapping").(string))
+	from, _ := getAnamlId(d, "from")
+	to, _ := getAnamlId(d, "to")
+	feat, _ := getAnamlId(d, "mapping")
 
 	mapping := EntityMapping{
 		From:      from,

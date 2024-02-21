@@ -50,6 +50,7 @@ func ResourceEntity() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ExactlyOneOf: []string{"default_column", "entities"},
+				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 			"required_type": {
 				Type:          schema.TypeString,

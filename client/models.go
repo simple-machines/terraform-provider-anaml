@@ -50,20 +50,42 @@ type EventDescription struct {
 	TimestampInfo *TimestampInfo    `json:"timestampInfo"`
 }
 
+// ColumnRepresentation ..
+type ColumnRepresentation struct {
+	Type       string  `json:"adt_type"`
+	Expression *string `json:"expression,omitempty"`
+}
+
+// ColumnKind ..
+type ColumnKind struct {
+	Type  string  `json:"adt_type"`
+	Units *string `json:"units,omitempty"`
+}
+
+// ColumnInfo ..
+type ColumnInfo struct {
+	Description string                `json:"description"`
+	Column      *ColumnRepresentation `json:"column"`
+	Kind        *ColumnKind           `json:"kind,omitempty"`
+}
+
 // Table ...
 type Table struct {
-	ID            int               `json:"id,omitempty"`
-	Name          string            `json:"name"`
-	Description   string            `json:"description"`
-	Type          string            `json:"adt_type"`
-	Sources       []int             `json:"sources,omitempty"`
-	Source        *SourceReference  `json:"source,omitempty"`
-	Expression    string            `json:"expression,omitempty"`
-	EventInfo     *EventDescription `json:"eventDescription,omitempty"`
-	EntityMapping int               `json:"entityMapping,omitempty"`
-	ExtraFeatures []int             `json:"extraFeatures,omitempty"`
-	Labels        []string          `json:"labels"`
-	Attributes    []Attribute       `json:"attributes"`
+	ID            int                   `json:"id,omitempty"`
+	Name          string                `json:"name"`
+	Description   string                `json:"description"`
+	Type          string                `json:"adt_type"`
+	Sources       []int                 `json:"sources,omitempty"`
+	Source        *SourceReference      `json:"source,omitempty"`
+	Expression    string                `json:"expression,omitempty"`
+	EventInfo     *EventDescription     `json:"eventDescription,omitempty"`
+	EntityMapping int                   `json:"entityMapping,omitempty"`
+	ExtraFeatures []int                 `json:"extraFeatures,omitempty"`
+	Base          *int                  `json:"base,omitempty"`
+	Joins         []int                 `json:"joins,omitempty"`
+	Columns       map[string]ColumnInfo `json:"columns,omitempty"`
+	Labels        []string              `json:"labels"`
+	Attributes    []Attribute           `json:"attributes"`
 }
 
 // EventWindow ...
@@ -139,6 +161,50 @@ type FeatureSet struct {
 	Attributes  []Attribute `json:"attributes"`
 }
 
+// MetricsSource ...
+type MetricsSource struct {
+	Type       string `json:"adt_type"`
+	FeatureSet *int   `json:"featureset,omitempty"`
+	Table      *int   `json:"table,omitempty"`
+	Joins      []int  `json:"joins,omitempty"`
+}
+
+type TypeTag struct {
+	Type string `json:"adt_type"`
+}
+
+// Dimension ...
+type Dimension struct {
+	Type        string   `json:"adt_type"`
+	Granularity *TypeTag `json:"granularity,omitempty"`
+	Edge        *TypeTag `json:"edgeSemantics,omitempty"`
+	Back        *int     `json:"back,omitempty"`
+	Name        *string  `json:"name,omitempty"`
+	Expression  *string  `json:"expression,omitempty"`
+	Filter      *string  `json:"filterExpression,omitempty"`
+}
+
+// Dimension ...
+type Metric struct {
+	Name        *string              `json:"name,omitempty"`
+	Select      SQLExpression        `json:"select"`
+	Filter      *SQLExpression       `json:"filter"`
+	Aggregate   *AggregateExpression `json:"aggregate,omitempty"`
+	PostAggExpr *SQLExpression       `json:"postAggregateExpr"`
+}
+
+// MetricsSet ...
+type MetricsSet struct {
+	ID          int           `json:"id,omitempty"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Labels      []string      `json:"labels"`
+	Attributes  []Attribute   `json:"attributes"`
+	Source      MetricsSource `json:"source"`
+	Dimensions  []Dimension   `json:"dimensions"`
+	Metrics     []Metric      `json:"metrics"`
+}
+
 // VersionTarget ...
 type VersionTarget struct {
 	Type   string  `json:"adt_type"`
@@ -169,6 +235,23 @@ type FeatureStore struct {
 	Table                     *int                   `json:"table,omitempty"`
 	IncludeMetadata           bool                   `json:"includeMetadata"`
 	VersionTarget             *VersionTarget         `json:"versionTarget,omitempty"`
+}
+
+// MetricsJob ...
+type MetricsJob struct {
+	ID                  int                    `json:"id,omitempty"`
+	Name                string                 `json:"name"`
+	Description         string                 `json:"description"`
+	Labels              []string               `json:"labels"`
+	Attributes          []Attribute            `json:"attributes"`
+	MetricsSet          int                    `json:"metricsSet"`
+	Enabled             bool                   `json:"enabled"`
+	Schedule            *Schedule              `json:"schedule"`
+	Destinations        []DestinationReference `json:"destinations"`
+	Cluster             int                    `json:"cluster"`
+	ClusterPropertySets []int                  `json:"clusterPropertySets"`
+	Principal           int                    `json:"principal"`
+	VersionTarget       *VersionTarget         `json:"versionTarget,omitempty"`
 }
 
 type Schedule struct {

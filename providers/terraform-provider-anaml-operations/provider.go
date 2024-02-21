@@ -51,6 +51,7 @@ func Provider() *schema.Provider {
 			"anaml-operations_destination":              anaml.ResourceDestination(),
 			"anaml-operations_event_store":              anaml.ResourceEventStore(),
 			"anaml-operations_feature_store":            anaml.ResourceFeatureStore(),
+			"anaml-operations_metrics_job":              anaml.ResourceMetricsJob(),
 			"anaml-operations_label_restriction":        anaml.ResourceLabelRestriction(),
 			"anaml-operations_monitoring":               anaml.ResourceTableMonitoring(),
 			"anaml-operations_source":                   anaml.ResourceSource(),

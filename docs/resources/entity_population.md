@@ -29,7 +29,6 @@ the second of which is named "date".
 
 ### Required
 
-- **description** (String)
 - **entity** (String) The type of entity this population describes
 - **expression** (String) The SQL expression which generates the entity population.
 - **name** (String)
@@ -37,9 +36,10 @@ the second of which is named "date".
 
 ### Optional
 
-- **attribute** (Block List) Attributes (key value pairs) to attach to the object (see [below for nested schema](#nestedblock--attribute))
+- **attribute** (Block Set) Attributes (key value pairs) to attach to the object (see [below for nested schema](#nestedblock--attribute))
+- **description** (String)
 - **id** (String) The ID of this resource.
-- **labels** (List of String) Labels to attach to the object
+- **labels** (Set of String) Labels to attach to the object
 
 <a id="nestedblock--attribute"></a>
 ### Nested Schema for `attribute`

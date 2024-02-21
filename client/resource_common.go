@@ -8,6 +8,39 @@ import (
 	"strconv"
 )
 
+func getAnamlId(d *schema.ResourceData, key string) (int, error) {
+	if raw, ok := d.GetOk(key); ok {
+		if i, err := strconv.Atoi(raw.(string)); err == nil {
+			return i, nil
+		} else {
+			return 0, err
+		}
+	}
+	return 0, fmt.Errorf("Required Identifier %s is missing", key)
+}
+
+func getAnamlIdPointer(d *schema.ResourceData, key string) *int {
+	if raw, ok := d.GetOk(key); ok {
+		if i, err := strconv.Atoi(raw.(string)); err == nil {
+			return &i
+		} else {
+			return nil
+		}
+	}
+	return nil
+}
+
+func getStringPointer(d *schema.ResourceData, key string) *string {
+	if raw, ok := d.GetOk(key); ok {
+		if i, ok := raw.(string); ok {
+			return &i
+		} else {
+			return nil
+		}
+	}
+	return nil
+}
+
 func labelSchema() *schema.Schema {
 	return &schema.Schema{
 		Type: schema.TypeString,

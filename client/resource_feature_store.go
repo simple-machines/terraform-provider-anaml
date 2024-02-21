@@ -242,24 +242,15 @@ func resourceFeatureStoreRead(d *schema.ResourceData, m interface{}) error {
 		}
 	}
 
-	if FeatureStore.Schedule.Type == "daily" {
-		dailySchedules, err := parseDailySchedule(FeatureStore.Schedule)
-		if err != nil {
-			return err
-		}
-		if err := d.Set("daily_schedule", dailySchedules); err != nil {
-			return err
-		}
+	daily, cron, err := parseSchedule(FeatureStore.Schedule)
+	if err != nil {
+		return err
 	}
-
-	if FeatureStore.Schedule.Type == "cron" {
-		cronSchedules, err := parseCronSchedule(FeatureStore.Schedule)
-		if err != nil {
-			return err
-		}
-		if err := d.Set("cron_schedule", cronSchedules); err != nil {
-			return err
-		}
+	if err := d.Set("daily_schedule", daily); err != nil {
+		return err
+	}
+	if err := d.Set("cron_schedule", cron); err != nil {
+		return err
 	}
 
 	if FeatureStore.VersionTarget != nil {
@@ -323,26 +314,6 @@ func resourceFeatureStoreUpdate(d *schema.ResourceData, m interface{}) error {
 }
 
 func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
-	featureSet, err := strconv.Atoi(d.Get("feature_set").(string))
-	if err != nil {
-		return nil, err
-	}
-
-	var principal (*int) = nil
-	principalRaw, principalOk := d.GetOk("principal")
-	if principalOk {
-		principal_, err := strconv.Atoi(principalRaw.(string))
-		if err != nil {
-			return nil, err
-		}
-		principal = &principal_
-	}
-
-	cluster, err := strconv.Atoi(d.Get("cluster").(string))
-	if err != nil {
-		return nil, err
-	}
-
 	source := d.Get("additional_spark_properties").(map[string]interface{})
 	additionalSparkProperties := make(map[string]string)
 
@@ -350,41 +321,21 @@ func composeFeatureStore(d *schema.ResourceData) (*FeatureStore, error) {
 		additionalSparkProperties[k] = v.(string)
 	}
 
-	var population (*int) = nil
-	if d.Get("entity_population").(string) != "" {
-		population_, err := strconv.Atoi(d.Get("entity_population").(string))
-		if err != nil {
-			return nil, err
-		}
-		population = &population_
+	featureSet, err := getAnamlId(d, "feature_set")
+	if err != nil {
+		return nil, err
 	}
-
-	var schedule = composeNeverSchedule()
-	if dailySchedule, _ := expandSingleMap(d.Get("daily_schedule")); dailySchedule != nil {
-		schedule, err = composeDailySchedule(dailySchedule)
-		if err != nil {
-			return nil, err
-		}
+	cluster, err := getAnamlId(d, "cluster")
+	if err != nil {
+		return nil, err
 	}
-	if cronSchedule, _ := expandSingleMap(d.Get("cron_schedule")); cronSchedule != nil {
-		schedule, err = composeCronSchedule(cronSchedule)
-		if err != nil {
-			return nil, err
-		}
+	population := getAnamlIdPointer(d, "entity_population")
+	principal := getAnamlIdPointer(d, "principal")
+	schedule, err := composeSchedule(d)
+	if err != nil {
+		return nil, err
 	}
-	var versionTarget (*VersionTarget) = nil
-	if commit, _ := d.Get("commit_target").(string); commit != "" {
-		versionTarget = &VersionTarget{
-			Type:   "commit",
-			Commit: &commit,
-		}
-	}
-	if branch, _ := d.Get("branch_target").(string); branch != "" {
-		versionTarget = &VersionTarget{
-			Type:   "branch",
-			Branch: &branch,
-		}
-	}
+	versionTarget := composeVersionTarget(d)
 
 	destinations, err := expandDestinationReferences(d.Get("destination").([]interface{}))
 	if err != nil {

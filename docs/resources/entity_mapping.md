@@ -47,5 +47,22 @@ you could define an Entity Mapping from Account to Customer:
 ### Optional
 
 - **id** (String) The ID of this resource.
+- **one_to_many** (Block List, Max: 1) The mapping feature produces an array of keys which are related. (see [below for nested schema](#nestedblock--one_to_many))
+- **one_to_one** (Block List, Max: 1) The mapping feature produce a single key (or null), which is related. (see [below for nested schema](#nestedblock--one_to_one))
+
+<a id="nestedblock--one_to_many"></a>
+### Nested Schema for `one_to_many`
+
+Optional:
+
+- **dummy** (String)
+
+
+<a id="nestedblock--one_to_one"></a>
+### Nested Schema for `one_to_one`
+
+Optional:
+
+- **dummy** (String)
 
 

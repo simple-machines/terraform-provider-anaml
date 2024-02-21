@@ -229,35 +229,15 @@ func resourceEventStoreRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("access_rules", flattenAccessRules(entity.AccessRules)); err != nil {
 		return err
 	}
-	if entity.Schedule.Type == "daily" {
-		dailySchedules, err := parseDailySchedule(entity.Schedule)
-		if err != nil {
-			return err
-		}
-		if err := d.Set("daily_schedule", dailySchedules); err != nil {
-			return err
-		}
-		if err := d.Set("cron_schedule", nil); err != nil {
-			return err
-		}
-	} else if entity.Schedule.Type == "cron" {
-		cronSchedules, err := parseCronSchedule(entity.Schedule)
-		if err != nil {
-			return err
-		}
-		if err := d.Set("cron_schedule", cronSchedules); err != nil {
-			return err
-		}
-		if err := d.Set("daily_schedule", nil); err != nil {
-			return err
-		}
-	} else {
-		if err := d.Set("cron_schedule", nil); err != nil {
-			return err
-		}
-		if err := d.Set("daily_schedule", nil); err != nil {
-			return err
-		}
+	daily, cron, err := parseSchedule(entity.Schedule)
+	if err != nil {
+		return err
+	}
+	if err := d.Set("daily_schedule", daily); err != nil {
+		return err
+	}
+	if err := d.Set("cron_schedule", cron); err != nil {
+		return err
 	}
 	return err
 }
@@ -344,22 +324,13 @@ func buildEventStore(d *schema.ResourceData) (*EventStore, error) {
 			HasStreaming: hasStreaming,
 		}
 	}
-	cluster, err := strconv.Atoi(d.Get("cluster").(string))
+	cluster, err := getAnamlId(d, "cluster")
 	if err != nil {
 		return nil, err
 	}
-	schedule := composeNeverSchedule()
-	if dailySchedule, _ := expandSingleMap(d.Get("daily_schedule")); dailySchedule != nil {
-		schedule, err = composeDailySchedule(dailySchedule)
-		if err != nil {
-			return nil, err
-		}
-	}
-	if cronSchedule, _ := expandSingleMap(d.Get("cron_schedule")); cronSchedule != nil {
-		schedule, err = composeCronSchedule(cronSchedule)
-		if err != nil {
-			return nil, err
-		}
+	schedule, err := composeSchedule(d)
+	if err != nil {
+		return nil, err
 	}
 
 	entity := EventStore{

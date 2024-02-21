@@ -60,6 +60,32 @@ func fixedRetryPolicySchema() *schema.Resource {
 	}
 }
 
+func composeVersionTarget(d *schema.ResourceData) *VersionTarget {
+	if commit, ok := d.Get("commit_target").(string); ok && commit != "" {
+		return &VersionTarget{
+			Type:   "commit",
+			Commit: &commit,
+		}
+	}
+	if branch, _ := d.Get("branch_target").(string); branch != "" {
+		return &VersionTarget{
+			Type:   "branch",
+			Branch: &branch,
+		}
+	}
+	return nil
+}
+
+func composeSchedule(d *schema.ResourceData) (*Schedule, error) {
+	if dailySchedule, _ := expandSingleMap(d.Get("daily_schedule")); dailySchedule != nil {
+		return composeDailySchedule(dailySchedule)
+	}
+	if cronSchedule, _ := expandSingleMap(d.Get("cron_schedule")); cronSchedule != nil {
+		return composeCronSchedule(cronSchedule)
+	}
+	return composeNeverSchedule(), nil
+}
+
 func composeNeverSchedule() *Schedule {
 	return &Schedule{
 		Type: "never",
@@ -110,46 +136,45 @@ func composeNeverRetryPolicy() *RetryPolicy {
 	}
 }
 
-func parseDailySchedule(schedule *Schedule) ([]map[string]interface{}, error) {
+func parseSchedule(schedule *Schedule) ([]map[string]interface{}, []map[string]interface{}, error) {
 	if schedule == nil {
-		return nil, errors.New("Schedule is null")
+		return nil, nil, errors.New("Schedule is null")
 	}
 
-	dailySchedule := make(map[string]interface{})
-	if schedule.StartTimeOfDay != nil {
-		dailySchedule["start_time_of_day"] = *schedule.StartTimeOfDay
-	}
+	daily := make([]map[string]interface{}, 0, 1)
+	cron := make([]map[string]interface{}, 0, 1)
 
-	if schedule.RetryPolicy.Type == "fixed" {
-		fixedRetryPolicy, err := parseFixedRetryPolicy(schedule.RetryPolicy)
-		if err != nil {
-			return nil, err
+	if schedule.Type == "daily" {
+		single := make(map[string]interface{})
+		if schedule.StartTimeOfDay != nil {
+			single["start_time_of_day"] = *schedule.StartTimeOfDay
 		}
 
-		dailySchedule["fixed_retry_policy"] = fixedRetryPolicy
-	}
-
-	return []map[string]interface{}{dailySchedule}, nil
-}
-
-func parseCronSchedule(schedule *Schedule) ([]map[string]interface{}, error) {
-	if schedule == nil {
-		return nil, errors.New("Schedule is null")
-	}
-
-	cronSchedule := make(map[string]interface{})
-	cronSchedule["cron_string"] = schedule.CronString
-
-	if schedule.RetryPolicy.Type == "fixed" {
-		fixedRetryPolicy, err := parseFixedRetryPolicy(schedule.RetryPolicy)
-		if err != nil {
-			return nil, err
+		if schedule.RetryPolicy.Type == "fixed" {
+			fixedRetryPolicy, err := parseFixedRetryPolicy(schedule.RetryPolicy)
+			if err != nil {
+				return nil, nil, err
+			}
+			single["fixed_retry_policy"] = fixedRetryPolicy
 		}
 
-		cronSchedule["fixed_retry_policy"] = fixedRetryPolicy
+		daily = append(daily, single)
+	} else if schedule.Type == "cron" {
+		single := make(map[string]interface{})
+		single["cron_string"] = schedule.CronString
+
+		if schedule.RetryPolicy.Type == "fixed" {
+			fixedRetryPolicy, err := parseFixedRetryPolicy(schedule.RetryPolicy)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			single["fixed_retry_policy"] = fixedRetryPolicy
+		}
+		cron = append(cron, single)
 	}
 
-	return []map[string]interface{}{cronSchedule}, nil
+	return daily, cron, nil
 }
 
 func parseFixedRetryPolicy(retryPolicy *RetryPolicy) ([]map[string]interface{}, error) {

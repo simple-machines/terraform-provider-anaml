@@ -37,15 +37,13 @@ func ResourceTableCaching() *schema.Resource {
 				Description: "Table and entity specifications to cache with this job",
 				Optional:    true,
 				MaxItems:    1,
-
-				Elem: planSchema(),
+				Elem:        planSchema(),
 			},
 			"auto": {
-				Type:        schema.TypeList,
-				Description: "Table and entity specifications to cache with this job",
-				Optional:    true,
-				MaxItems:    1,
-
+				Type:         schema.TypeList,
+				Description:  "Table and entity specifications to cache with this job",
+				Optional:     true,
+				MaxItems:     1,
 				Elem:         excludeSchema(),
 				ExactlyOneOf: []string{"include", "auto"},
 			},
@@ -257,24 +255,15 @@ func resourceTableCachingRead(d *schema.ResourceData, m interface{}) error {
 		d.Set("retainment", nil)
 	}
 
-	if TableCaching.Schedule.Type == "daily" {
-		dailySchedules, err := parseDailySchedule(TableCaching.Schedule)
-		if err != nil {
-			return err
-		}
-		if err := d.Set("daily_schedule", dailySchedules); err != nil {
-			return err
-		}
+	daily, cron, err := parseSchedule(TableCaching.Schedule)
+	if err != nil {
+		return err
 	}
-
-	if TableCaching.Schedule.Type == "cron" {
-		cronSchedules, err := parseCronSchedule(TableCaching.Schedule)
-		if err != nil {
-			return err
-		}
-		if err := d.Set("cron_schedule", cronSchedules); err != nil {
-			return err
-		}
+	if err := d.Set("daily_schedule", daily); err != nil {
+		return err
+	}
+	if err := d.Set("cron_schedule", cron); err != nil {
+		return err
 	}
 
 	return err
@@ -313,41 +302,16 @@ func resourceTableCachingUpdate(d *schema.ResourceData, m interface{}) error {
 }
 
 func composeTableCaching(d *schema.ResourceData) (*TableCaching, error) {
-	cluster, err := strconv.Atoi(d.Get("cluster").(string))
+	cluster, err := getAnamlId(d, "cluster")
 	if err != nil {
 		return nil, err
 	}
-
-	var schedule = composeNeverSchedule()
-	if dailySchedule, _ := expandSingleMap(d.Get("daily_schedule")); dailySchedule != nil {
-		schedule, err = composeDailySchedule(dailySchedule)
-		if err != nil {
-			return nil, err
-		}
+	schedule, err := composeSchedule(d)
+	if err != nil {
+		return nil, err
 	}
-	if cronSchedule, _ := expandSingleMap(d.Get("cron_schedule")); cronSchedule != nil {
-		schedule, err = composeCronSchedule(cronSchedule)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	var principal (*int) = nil
-	principalRaw, principalOk := d.GetOk("principal")
-	if principalOk {
-		principal_, err := strconv.Atoi(principalRaw.(string))
-		if err != nil {
-			return nil, err
-		}
-		principal = &principal_
-	}
-
-	var retainment *string
-	if d.Get("retainment").(string) != "" {
-		retainmentstr := d.Get("retainment").(string)
-		retainment = &retainmentstr
-	}
-
+	principal := getAnamlIdPointer(d, "principal")
+	retainment := getStringPointer(d, "retainment")
 	plan, err := expandTableCachingPlan(d)
 	if err != nil {
 		return nil, err

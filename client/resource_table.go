@@ -1,6 +1,7 @@
 package anaml
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -9,11 +10,13 @@ import (
 
 const tableDescription = `# Tables
 
-A Table represents a source of data for feature generation. A Table can be one of three types:
+A Table represents a source of data for feature generation. A Table can be one of five types:
 
 - External Table
 - View Table
+- Join Table
 - Pivot Table
+- Event Store Table
 
 ### External Tables
 
@@ -33,6 +36,15 @@ This allows for better documentation, re-use and collaboration of features as we
 for better optimise generation runs.
 
 View Tables are mainly useful for joining data on keys other than entity id's such as reference data lookups.
+
+
+### Join Tables
+
+Join tables are similar to View tables, in that they perform operations other tables, but these perform
+time aware joins between events and dimensional tables, or dimensional and dimensional.
+
+Interestingly, Join tables perform efficient and correct joining of SCD2 tables with correctness properties
+which are challenging to achieve with SQL.
 
 
 ### Pivot Tables
@@ -57,20 +69,22 @@ average of some column with some filtering. Day and Row windows are not required
 
 ### Event Store Tables
 
+Event store tables are a robust store of tables backed and managed by Anaml. Usually, these will ingest data
+from a Kafka topic, and describe mappings to events.
+
+Table definitions for event store tables reference a managed event store, and the entity for which the data
+should be interpreted.
 
 
+## Time and Entity Descriptions
 
-## Timestamp and Entities
+To be used in feature generation a Table must have one or more Entities as well as the semantics
+for how to interpret timestamp columns for the table.
 
-To be used in feature generation a Table must have one or more [Entities](/entities) and a timestamp associated
-with it. These are needed to be able to join correctly between tables during the feature generation:
+To achieve this, one should use one of the 'event', 'scd2', or 'point_in_time' blocks (as described below).
 
-* **Timestamp** - Specifiy the name of the column which contains the timestamp that the row of data was created at.
-* **Entities** - For each Entity within the Table, specify the name of the column that contains the id's and the
-entity type.
-
-Note that tables without an Entity and timestamp are still useful for use in View Tables. These are often things
-such as reference data tables used for lookups.
+All of these blocks are able to accept a map of entities can be used as keys for this table in feature
+generation, as well as their timestamp columns.
 `
 
 // ResourceTable ...
@@ -88,6 +102,7 @@ func ResourceTable() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:         schema.TypeString,
+				Description:  "Name of the table in Anaml.",
 				Required:     true,
 				ValidateFunc: validateAnamlName(),
 			},
@@ -97,25 +112,28 @@ func ResourceTable() *schema.Resource {
 			},
 			"source": {
 				Type:         schema.TypeList,
+				Description:  "Source information for a Root table.",
 				Optional:     true,
 				MaxItems:     1,
 				Elem:         sourceSchema(),
-				ExactlyOneOf: []string{"source", "event_store", "expression", "entity_mapping"},
+				ExactlyOneOf: []string{"source", "event_store", "expression", "entity_mapping", "join"},
 			},
 			"event_store": {
-				Type:     schema.TypeList,
-				Optional: true,
-				MaxItems: 1,
-				Elem:     eventStoreSchema(),
+				Type:        schema.TypeList,
+				Description: "Information for how to interpret an Event store topic as a Table",
+				Optional:    true,
+				MaxItems:    1,
+				Elem:        eventStoreSchema(),
 			},
 			"expression": {
 				Type:         schema.TypeString,
+				Description:  "Expression for a View table.",
 				Optional:     true,
 				RequiredWith: []string{"sources"},
 			},
 			"sources": {
 				Type:         schema.TypeList,
-				Description:  "Tables upon which this view is created",
+				Description:  "Tables upon which this View is created",
 				Optional:     true,
 				RequiredWith: []string{"expression"},
 
@@ -126,14 +144,16 @@ func ResourceTable() *schema.Resource {
 			},
 
 			"event": {
-				Type:     schema.TypeList,
-				Optional: true,
-				MaxItems: 1,
-				Elem:     eventSchema(),
+				Type:        schema.TypeList,
+				Description: "This table contains events which occurred at a particular time",
+				Optional:    true,
+				MaxItems:    1,
+				Elem:        eventSchema(),
 			},
 
 			"scd2": {
 				Type:          schema.TypeList,
+				Description:   "This table is a Slowly Changing Dimensional table",
 				Optional:      true,
 				MaxItems:      1,
 				ConflictsWith: []string{"event", "point_in_time"},
@@ -142,10 +162,20 @@ func ResourceTable() *schema.Resource {
 
 			"point_in_time": {
 				Type:          schema.TypeList,
+				Description:   "This table is a Dimensional table with updates at particular times",
 				Optional:      true,
 				MaxItems:      1,
 				ConflictsWith: []string{"event", "scd2"},
 				Elem:          pointInTimeSchema(),
+			},
+
+			"join": {
+				Type:          schema.TypeList,
+				Description:   "Create a Join table, which performs time aware joins between tables.",
+				Optional:      true,
+				MaxItems:      1,
+				ConflictsWith: []string{"event", "scd2", "point_in_time"},
+				Elem:          joinTableSchema(),
 			},
 
 			"entity_mapping": {
@@ -154,6 +184,7 @@ func ResourceTable() *schema.Resource {
 				ValidateFunc:  validateAnamlIdentifier(),
 				ConflictsWith: []string{"event", "scd2", "point_in_time"},
 			},
+
 			"extra_features": {
 				Type:          schema.TypeList,
 				Description:   "Tables upon which this view is created",
@@ -176,6 +207,15 @@ func ResourceTable() *schema.Resource {
 				Optional:    true,
 				Description: "Attributes (key value pairs) to attach to the object",
 				Elem:        attributeSchema(),
+			},
+			"domain_modelling": {
+				Type:             schema.TypeList,
+				Optional:         true,
+				MaxItems:         1,
+				ConflictsWith:    []string{"entity_mapping"},
+				Description:      "Model dimensions and measures for tables, and add virtual columns as simple SQL expressions",
+				Elem:             domainModellingSchema(),
+				DiffSuppressFunc: domainModellingSuppressFunc(),
 			},
 		},
 	}
@@ -271,6 +311,162 @@ func pointInTimeSchema() *schema.Resource {
 	}
 }
 
+func joinTableSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"table": {
+				Type:         schema.TypeString,
+				Description:  "The root tables on the Left of the Join.",
+				Required:     true,
+				ValidateFunc: validateAnamlIdentifier(),
+			},
+			"joins": {
+				Type:        schema.TypeList,
+				Description: "Dimensions tables to join to.",
+				Optional:    true,
+
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validateAnamlIdentifier(),
+				},
+			},
+		},
+	}
+}
+
+func domainModellingSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"base": {
+				Type:        schema.TypeList,
+				Description: "An existing column to annotate",
+				Optional:    true,
+
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:         schema.TypeString,
+							Description:  "Name of the Table",
+							Required:     true,
+							ValidateFunc: validateAnamlName(),
+						},
+						"description": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"dimension": {
+							Type:     schema.TypeList,
+							Optional: true,
+							MaxItems: 1,
+							Elem:     &schema.Resource{},
+						},
+						"measure": {
+							Type:     schema.TypeList,
+							Optional: true,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"units": {
+										Type:        schema.TypeString,
+										Description: "Units for the measure",
+										Optional:    true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"virtual": {
+				Type:        schema.TypeList,
+				Description: "Dimensions tables to join to.",
+				Optional:    true,
+
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:         schema.TypeString,
+							Description:  "Name of the Table",
+							Required:     true,
+							ValidateFunc: validateAnamlName(),
+						},
+						"description": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"expression": {
+							Type:         schema.TypeString,
+							Description:  "Name of the Table",
+							Required:     true,
+							ValidateFunc: validation.StringIsNotWhiteSpace,
+						},
+						"dimension": {
+							Type:     schema.TypeList,
+							Optional: true,
+							MaxItems: 1,
+							Elem:     &schema.Resource{},
+						},
+						"measure": {
+							Type:     schema.TypeList,
+							Optional: true,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"units": {
+										Type:        schema.TypeString,
+										Description: "Units for the measure",
+										Optional:    true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+// We don't want to emit a diff if there is an empty
+// domain modelling block. It's just for the prettiness
+// of the terraform module.
+func domainModellingSuppressFunc() schema.SchemaDiffSuppressFunc {
+	sizeOfSlice := func(item interface{}) int {
+		if slice, ok := item.([]interface{}); ok {
+			return len(slice)
+		}
+		return 0
+	}
+
+	domainModellingSize := func(model interface{}) (int, error) {
+		modelSlice, ok := model.([]interface{})
+		if !ok {
+			return 0, fmt.Errorf("expected []interface{}, got %T", model)
+		}
+		size := 0
+		for _, model := range modelSlice {
+			if mapped, ok := model.(map[string]interface{}); ok {
+				size += sizeOfSlice(mapped["base"])
+				size += sizeOfSlice(mapped["virtual"])
+			}
+		}
+		return size, nil
+	}
+
+	return func(k, old, new string, d *schema.ResourceData) bool {
+		oldModel, newModel := d.GetChange("domain_modelling")
+		oldSize, err := domainModellingSize(oldModel)
+		if err != nil {
+			return false
+		}
+		newSize, err := domainModellingSize(newModel)
+		if err != nil {
+			return false
+		}
+		return oldSize == 0 && newSize == 0
+	}
+}
+
 func sourceSchema() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
@@ -283,7 +479,7 @@ func sourceSchema() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringIsNotWhiteSpace,
-				// ExactlyOneOf: []string{"folder", "table_name", "topic"},
+				ExactlyOneOf: []string{"source.0.folder", "source.0.table_name", "source.0.topic"},
 			},
 			"table_name": {
 				Type:         schema.TypeString,
@@ -356,10 +552,18 @@ func resourceTableRead(d *schema.ResourceData, m interface{}) error {
 		if err := d.Set("source", flattenSourceReferences(table.Source)); err != nil {
 			return err
 		}
+	} else {
+		if err := d.Set("source", nil); err != nil {
+			return err
+		}
 	}
 
 	if table.Type == "eventstore" {
 		if err := d.Set("event_store", flattenEventStoreReferences(table.Source)); err != nil {
+			return err
+		}
+	} else {
+		if err := d.Set("event_store", nil); err != nil {
 			return err
 		}
 	}
@@ -372,6 +576,28 @@ func resourceTableRead(d *schema.ResourceData, m interface{}) error {
 		if err := d.Set("extra_features", identifierList(table.ExtraFeatures)); err != nil {
 			return err
 		}
+	} else {
+		if err := d.Set("entity_mapping", nil); err != nil {
+			return err
+		}
+
+		if err := d.Set("extra_features", nil); err != nil {
+			return err
+		}
+	}
+
+	if table.Type == "join" {
+		if err := d.Set("join", flattenJoinTableSpecification(table)); err != nil {
+			return err
+		}
+	} else {
+		if err := d.Set("join", nil); err != nil {
+			return err
+		}
+	}
+
+	if err := d.Set("domain_modelling", flattenColumnInfo(table.Columns)); err != nil {
+		return err
 	}
 
 	if err := d.Set("labels", table.Labels); err != nil {
@@ -385,7 +611,10 @@ func resourceTableRead(d *schema.ResourceData, m interface{}) error {
 
 func resourceTableCreate(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
-	table := buildTable(d)
+	table, err := buildTable(d)
+	if err != nil {
+		return err
+	}
 	e, err := c.CreateTable(*table)
 	if err != nil {
 		return err
@@ -398,9 +627,12 @@ func resourceTableCreate(d *schema.ResourceData, m interface{}) error {
 func resourceTableUpdate(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
 	tableID := d.Id()
-	table := buildTable(d)
+	table, err := buildTable(d)
+	if err != nil {
+		return err
+	}
 
-	err := c.UpdateTable(tableID, *table)
+	err = c.UpdateTable(tableID, *table)
 	if err != nil {
 		return err
 	}
@@ -420,7 +652,7 @@ func resourceTableDelete(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func buildTable(d *schema.ResourceData) *Table {
+func buildTable(d *schema.ResourceData) (*Table, error) {
 	table := Table{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
@@ -441,12 +673,23 @@ func buildTable(d *schema.ResourceData) *Table {
 	} else if len(d.Get("source").([]interface{})) == 1 {
 		table.Type = "root"
 		table.Source = expandSourceReferences(d)
+	} else if len(d.Get("join").([]interface{})) == 1 {
+		table.Type = "join"
+		base, others := expandJoinSpecification(d)
+		table.Base = base
+		table.Joins = others
 	} else {
 		table.Type = "eventstore"
 		table.Source = expandEventStoreReferences(d)
 	}
 
-	return &table
+	columns, err := expandColumnInfo(d)
+	if err != nil {
+		return nil, err
+	}
+	table.Columns = columns
+
+	return &table, nil
 }
 
 func expandEntityDescription(d *schema.ResourceData) *EventDescription {
@@ -631,6 +874,19 @@ func expandEventStoreReferences(d *schema.ResourceData) *SourceReference {
 	return nil
 }
 
+func expandJoinSpecification(d *schema.ResourceData) (*int, []int) {
+	srs := d.Get("join").([]interface{})
+
+	for _, sr := range srs {
+		val, _ := sr.(map[string]interface{})
+		store, _ := strconv.Atoi(val["table"].(string))
+		joinList := expandIdentifierList(val["joins"].([]interface{}))
+		return &store, joinList
+	}
+
+	return nil, nil
+}
+
 func flattenSourceReferences(source *SourceReference) []map[string]interface{} {
 	res := make([]map[string]interface{}, 0, 1)
 
@@ -661,5 +917,142 @@ func flattenEventStoreReferences(source *SourceReference) []map[string]interface
 	single["topic"] = source.Topic
 	res = append(res, single)
 
+	return res
+}
+
+func flattenJoinTableSpecification(table *Table) []map[string]interface{} {
+	res := make([]map[string]interface{}, 0, 1)
+	if table.Base == nil {
+		return res
+	}
+
+	single := make(map[string]interface{})
+	single["table"] = strconv.Itoa(*table.Base)
+	single["joins"] = identifierList(table.Joins)
+	res = append(res, single)
+
+	return res
+}
+
+func expandColumnKind(info map[string]interface{}) *ColumnKind {
+	dimensions := info["dimension"].([]interface{})
+	measures := info["measure"].([]interface{})
+	for _, _ = range dimensions {
+		return &ColumnKind{
+			Type: "dimension",
+		}
+	}
+	for _, measureRaw := range measures {
+		ret := ColumnKind{
+			Type: "measure",
+		}
+		if measure, ok := measureRaw.(map[string]interface{}); ok {
+			if fetched, ok := measure["units"].(string); ok && fetched != "" {
+				ret.Units = &fetched
+			}
+		}
+		return &ret
+	}
+
+	return nil
+}
+
+func expandColumnInfo(d *schema.ResourceData) (map[string]ColumnInfo, error) {
+	modelling := d.Get("domain_modelling").([]interface{});
+	res := make(map[string]ColumnInfo)
+
+	for _, domain := range modelling {
+		val := domain.(map[string]interface{})
+		bases := val["base"].([]interface{})
+		virtuals := val["virtual"].([]interface{})
+
+		for _, base := range bases {
+			name, baseInfo, err := createColumnInfo(base, "base")
+			if err != nil {
+				return nil, err
+			}
+			res[name] = baseInfo
+		}
+		for _, virtual := range virtuals {
+			name, virtualInfo, err := createColumnInfo(virtual, "virtual")
+			if err != nil {
+				return nil, err
+			}
+			res[name] = virtualInfo
+		}
+	}
+	return res, nil
+}
+
+func createColumnInfo(column interface{}, columnType string) (string, ColumnInfo, error) {
+	value, ok := column.(map[string]interface{})
+	if !ok {
+		return "", ColumnInfo{}, fmt.Errorf("Expected Column info, couldn't derive")
+	}
+	name := value["name"].(string)
+	description := value["description"].(string)
+	kind := expandColumnKind(value)
+	columnRepresentation := ColumnRepresentation{
+		Type: columnType,
+	}
+	if columnType == "virtual" {
+		if expr, ok := value["expression"].(string); ok {
+			columnRepresentation.Expression = &expr
+		} else {
+			return "", ColumnInfo{}, fmt.Errorf("Expected expression for virtual column")
+		}
+	}
+
+	return name, ColumnInfo{
+		Description: description,
+		Column:      &columnRepresentation,
+		Kind:        kind,
+	}, nil
+}
+
+func flattenColumnKind(kind *ColumnKind) ([]map[string]interface{}, []map[string]interface{}) {
+	if kind != nil {
+		if kind.Type == "dimension" {
+			single := make(map[string]interface{})
+			return []map[string]interface{}{single}, nil
+		}
+		if kind.Type == "measure" {
+			single := make(map[string]interface{})
+			if kind.Units != nil {
+				single["units"] = *kind.Units
+			}
+			return nil, []map[string]interface{}{single}
+		}
+	}
+	return nil, nil
+}
+
+func flattenColumnInfo(infos map[string]ColumnInfo) interface{} {
+	res := make([]map[string]interface{}, 0, 1)
+	bases := make([]map[string]interface{}, 0, len(infos))
+	virtuals := make([]map[string]interface{}, 0, len(infos))
+
+	for k, info := range infos {
+		single := make(map[string]interface{})
+		dimensions, measures := flattenColumnKind(info.Kind)
+		single["dimension"] = dimensions
+		single["measure"] = measures
+
+		if info.Column.Type == "base" {
+			single["name"] = k
+			single["description"] = info.Description
+			bases = append(bases, single)
+		} else {
+			single["name"] = k
+			single["expression"] = info.Column.Expression
+			single["description"] = info.Description
+			virtuals = append(virtuals, single)
+		}
+	}
+
+	single := make(map[string]interface{})
+	single["base"] = bases
+	single["virtual"] = virtuals
+	res = append(res, single)
 	return res
 }

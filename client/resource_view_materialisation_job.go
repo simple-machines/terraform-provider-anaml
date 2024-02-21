@@ -158,27 +158,14 @@ func resourceViewMaterialisationJobRead(d *schema.ResourceData, m interface{}) e
 	}
 
 	if ViewMaterialisationJob.Type == "batch" {
-		if ViewMaterialisationJob.Schedule.Type == "daily" {
-			dailySchedules, err := parseDailySchedule(ViewMaterialisationJob.Schedule)
-			if err != nil {
-				return err
-			}
-			if err := d.Set("daily_schedule", dailySchedules); err != nil {
-				return err
-			}
+		daily, cron, err := parseSchedule(ViewMaterialisationJob.Schedule)
+		if err != nil {
+			return err
 		}
-
-		if ViewMaterialisationJob.Schedule.Type == "cron" {
-			cronSchedules, err := parseCronSchedule(ViewMaterialisationJob.Schedule)
-			if err != nil {
-				return err
-			}
-			if err := d.Set("cron_schedule", cronSchedules); err != nil {
-				return err
-			}
+		if err := d.Set("daily_schedule", daily); err != nil {
+			return err
 		}
-
-		if err := d.Set("include_metadata", ViewMaterialisationJob.IncludeMetadata); err != nil {
+		if err := d.Set("cron_schedule", cron); err != nil {
 			return err
 		}
 	}
@@ -282,16 +269,7 @@ func resourceViewMaterialisationJobUpdate(d *schema.ResourceData, m interface{})
 }
 
 func composeViewMaterialisationJob(d *schema.ResourceData) (*ViewMaterialisationJob, error) {
-	var principal (*int) = nil
-	principalRaw, principalOk := d.GetOk("principal")
-	if principalOk {
-		principal_, err := strconv.Atoi(principalRaw.(string))
-		if err != nil {
-			return nil, err
-		}
-		principal = &principal_
-	}
-
+	principal := getAnamlIdPointer(d, "principal")
 	cluster, err := strconv.Atoi(d.Get("cluster").(string))
 	if err != nil {
 		return nil, err
@@ -304,34 +282,24 @@ func composeViewMaterialisationJob(d *schema.ResourceData) (*ViewMaterialisation
 		additionalSparkProperties[k] = v.(string)
 	}
 
-	var versionTarget (*VersionTarget) = nil
-	if commit, _ := d.Get("commit_target").(string); commit != "" {
-		versionTarget = &VersionTarget{
-			Type:   "commit",
-			Commit: &commit,
-		}
-	}
-	if branch, _ := d.Get("branch_target").(string); branch != "" {
-		versionTarget = &VersionTarget{
-			Type:   "branch",
-			Branch: &branch,
-		}
-	}
-
-	var usageTTL *string
-	if d.Get("usagettl").(string) != "" {
-		usageTTLstr := d.Get("usagettl").(string)
-		usageTTL = &usageTTLstr
-	}
+	usageTTL := getStringPointer(d, "usagettl")
 
 	views, err := expandViewMaterialisationSpec(d)
 	if err != nil {
 		return nil, err
 	}
+	schedule, err := composeSchedule(d)
+	if err != nil {
+		return nil, err
+	}
+	versionTarget := composeVersionTarget(d)
 
 	viewMateralisationJob := ViewMaterialisationJob{
 		Name:                      d.Get("name").(string),
 		Description:               d.Get("description").(string),
+		Type:                      "batch",
+		Schedule:                  schedule,
+		IncludeMetadata:           d.Get("include_metadata").(bool),
 		Principal:                 principal,
 		UsageTTL:                  usageTTL,
 		Views:                     views,
@@ -341,29 +309,6 @@ func composeViewMaterialisationJob(d *schema.ResourceData) (*ViewMaterialisation
 		Labels:                    expandLabels(d),
 		Attributes:                expandAttributes(d),
 		VersionTarget:             versionTarget,
-	}
-
-	dailySchedule, _ := expandSingleMap(d.Get("daily_schedule"))
-	cronSchedule, _ := expandSingleMap(d.Get("cron_schedule"))
-	if dailySchedule == nil && cronSchedule == nil {
-		viewMateralisationJob.Type = "streaming"
-	} else {
-		viewMateralisationJob.Type = "batch"
-		var schedule = composeNeverSchedule()
-		if dailySchedule != nil {
-			schedule, err = composeDailySchedule(dailySchedule)
-			if err != nil {
-				return nil, err
-			}
-		}
-		if cronSchedule != nil {
-			schedule, err = composeCronSchedule(cronSchedule)
-			if err != nil {
-				return nil, err
-			}
-		}
-		viewMateralisationJob.Schedule = schedule
-		viewMateralisationJob.IncludeMetadata = d.Get("include_metadata").(bool)
 	}
 
 	return &viewMateralisationJob, nil
