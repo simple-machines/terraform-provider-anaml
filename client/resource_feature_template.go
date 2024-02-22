@@ -49,15 +49,15 @@ func ResourceFeatureTemplate() *schema.Resource {
 				ValidateFunc: validateAnamlIdentifier(),
 			},
 			"select": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "An SQL expression for the column to aggregate",
+				Type:         schema.TypeString,
+				Required:     true,
+				Description:  "An SQL expression for the column to aggregate",
 				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 			"filter": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "An SQL column expression to filter with",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "An SQL column expression to filter with",
 				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 			"hours": {
@@ -98,9 +98,9 @@ func ResourceFeatureTemplate() *schema.Resource {
 				}, false),
 			},
 			"post_aggregation": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "An SQL expression to apply to the result of the feature aggregation.",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "An SQL expression to apply to the result of the feature aggregation.",
 				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 			"entity_restrictions": {
