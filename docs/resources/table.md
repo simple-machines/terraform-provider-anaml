@@ -4,8 +4,8 @@ page_title: "anaml_table Resource - terraform-provider-anaml"
 subcategory: ""
 description: |-
   Tables
-  A Table represents a source of data for feature generation. A Table can be one of three types:
-  External TableView TablePivot Table
+  A Table represents a source of data for feature generation. A Table can be one of five types:
+  External TableView TableJoin TablePivot TableEvent Store Table
   External Tables
   An External Table is the representation of a source table. Therefore you have to specify the
   underlying data sources that the table is stored in.
@@ -41,13 +41,12 @@ description: |-
   from a Kafka topic, and describe mappings to events.
   Table definitions for event store tables reference a managed event store, and the entity for which the data
   should be interpreted.
-  Timestamp and Entities
-  To be used in feature generation a Table must have one or more Entities and a timestamp associated
-  with it. These are needed to be able to join correctly between tables during the feature generation:
-  Timestamp - Specifiy the name of the column which contains the timestamp that the row of data was created at.Entities - For each Entity within the Table, specify the name of the column that contains the id's and the
-  entity type.
-  Note that tables without an Entity and timestamp are still useful for use in View Tables. These are often things
-  such as reference data tables used for lookups.
+  Time and Entity Descriptions
+  To be used in feature generation a Table must have one or more Entities as well as the semantics
+  for how to interpret timestamp columns for the table.
+  To achieve this, one should use one of the 'event', 'scd2', or 'pointintime' blocks (as described below).
+  All of these blocks are able to accept a map of entities can be used as keys for this table in feature
+  generation, as well as their timestamp columns.
 ---
 
 # anaml_table (Resource)
@@ -144,18 +143,16 @@ generation, as well as their timestamp columns.
 - **attribute** (Block Set) Attributes (key value pairs) to attach to the object (see [below for nested schema](#nestedblock--attribute))
 - **description** (String)
 - **domain_modelling** (Block List, Max: 1) Model dimensions and measures for tables, and add virtual columns as simple SQL expressions (see [below for nested schema](#nestedblock--domain_modelling))
-- **entity_mapping** (String)
 - **event** (Block List, Max: 1) This table contains events which occurred at a particular time (see [below for nested schema](#nestedblock--event))
 - **event_store** (Block List, Max: 1) Information for how to interpret an Event store topic as a Table (see [below for nested schema](#nestedblock--event_store))
-- **expression** (String) Expression for a View table.
-- **extra_features** (List of String) Tables upon which this view is created
 - **id** (String) The ID of this resource.
 - **join** (Block List, Max: 1) Create a Join table, which performs time aware joins between tables. (see [below for nested schema](#nestedblock--join))
 - **labels** (Set of String) Labels to attach to the object
+- **pivot** (Block List, Max: 1) Create a Pivot table, which allows features to be aggregated for different entities. (see [below for nested schema](#nestedblock--pivot))
 - **point_in_time** (Block List, Max: 1) This table is a Dimensional table with updates at particular times (see [below for nested schema](#nestedblock--point_in_time))
 - **scd2** (Block List, Max: 1) This table is a Slowly Changing Dimensional table (see [below for nested schema](#nestedblock--scd2))
 - **source** (Block List, Max: 1) Source information for a Root table. (see [below for nested schema](#nestedblock--source))
-- **sources** (List of String) Tables upon which this View is created
+- **view** (Block List, Max: 1) Define a View table using sources and an expression (see [below for nested schema](#nestedblock--view))
 
 <a id="nestedblock--attribute"></a>
 ### Nested Schema for `attribute`
@@ -193,10 +190,7 @@ Optional:
 <a id="nestedblock--domain_modelling--base--dimension"></a>
 ### Nested Schema for `domain_modelling.base.dimension`
 
-Optional:
-
-- **dummy** (String)
-
+No fields are necessary
 
 <a id="nestedblock--domain_modelling--base--measure"></a>
 ### Nested Schema for `domain_modelling.base.measure`
@@ -224,10 +218,7 @@ Optional:
 <a id="nestedblock--domain_modelling--virtual--dimension"></a>
 ### Nested Schema for `domain_modelling.virtual.dimension`
 
-Optional:
-
-- **dummy** (String)
-
+No fields are necessary
 
 <a id="nestedblock--domain_modelling--virtual--measure"></a>
 ### Nested Schema for `domain_modelling.virtual.measure`
@@ -274,6 +265,15 @@ Optional:
 - **joins** (List of String) Dimensions tables to join to.
 
 
+<a id="nestedblock--pivot"></a>
+### Nested Schema for `pivot`
+
+Required:
+
+- **entity_mapping** (String)
+- **features** (List of String) Features to be included in this pivot table
+
+
 <a id="nestedblock--point_in_time"></a>
 ### Nested Schema for `point_in_time`
 
@@ -315,5 +315,14 @@ Optional:
 - **folder** (String)
 - **table_name** (String)
 - **topic** (String)
+
+
+<a id="nestedblock--view"></a>
+### Nested Schema for `view`
+
+Required:
+
+- **expression** (String) Expression for a View table.
+- **sources** (List of String) Tables upon which this View is created
 
 

@@ -116,31 +116,41 @@ func ResourceTable() *schema.Resource {
 				Optional:     true,
 				MaxItems:     1,
 				Elem:         sourceSchema(),
-				ExactlyOneOf: []string{"source", "event_store", "expression", "entity_mapping", "join"},
+				ExactlyOneOf: []string{"source", "event_store", "view", "pivot", "join"},
 			},
+
+			"view": {
+				Type:        schema.TypeList,
+				Description: "Define a View table using sources and an expression",
+				Optional:    true,
+				MaxItems:    1,
+				Elem:        viewTableSchema(),
+			},
+
+			"join": {
+				Type:          schema.TypeList,
+				Description:   "Create a Join table, which performs time aware joins between tables.",
+				Optional:      true,
+				MaxItems:      1,
+				ConflictsWith: []string{"event", "scd2", "point_in_time"},
+				Elem:          joinTableSchema(),
+			},
+
+			"pivot": {
+				Type:          schema.TypeList,
+				Description:   "Create a Pivot table, which allows features to be aggregated for different entities.",
+				Optional:      true,
+				MaxItems:      1,
+				ConflictsWith: []string{"event", "scd2", "point_in_time"},
+				Elem:          pivotTableSchema(),
+			},
+
 			"event_store": {
 				Type:        schema.TypeList,
 				Description: "Information for how to interpret an Event store topic as a Table",
 				Optional:    true,
 				MaxItems:    1,
 				Elem:        eventStoreSchema(),
-			},
-			"expression": {
-				Type:         schema.TypeString,
-				Description:  "Expression for a View table.",
-				Optional:     true,
-				RequiredWith: []string{"sources"},
-			},
-			"sources": {
-				Type:         schema.TypeList,
-				Description:  "Tables upon which this View is created",
-				Optional:     true,
-				RequiredWith: []string{"expression"},
-
-				Elem: &schema.Schema{
-					Type:         schema.TypeString,
-					ValidateFunc: validateAnamlIdentifier(),
-				},
 			},
 
 			"event": {
@@ -169,33 +179,6 @@ func ResourceTable() *schema.Resource {
 				Elem:          pointInTimeSchema(),
 			},
 
-			"join": {
-				Type:          schema.TypeList,
-				Description:   "Create a Join table, which performs time aware joins between tables.",
-				Optional:      true,
-				MaxItems:      1,
-				ConflictsWith: []string{"event", "scd2", "point_in_time"},
-				Elem:          joinTableSchema(),
-			},
-
-			"entity_mapping": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ValidateFunc:  validateAnamlIdentifier(),
-				ConflictsWith: []string{"event", "scd2", "point_in_time"},
-			},
-
-			"extra_features": {
-				Type:          schema.TypeList,
-				Description:   "Tables upon which this view is created",
-				Optional:      true,
-				ConflictsWith: []string{"event", "scd2", "point_in_time"},
-
-				Elem: &schema.Schema{
-					Type:         schema.TypeString,
-					ValidateFunc: validateAnamlIdentifier(),
-				},
-			},
 			"labels": {
 				Type:        schema.TypeSet,
 				Optional:    true,
@@ -208,11 +191,12 @@ func ResourceTable() *schema.Resource {
 				Description: "Attributes (key value pairs) to attach to the object",
 				Elem:        attributeSchema(),
 			},
+
 			"domain_modelling": {
 				Type:             schema.TypeList,
 				Optional:         true,
 				MaxItems:         1,
-				ConflictsWith:    []string{"entity_mapping"},
+				ConflictsWith:    []string{"pivot"},
 				Description:      "Model dimensions and measures for tables, and add virtual columns as simple SQL expressions",
 				Elem:             domainModellingSchema(),
 				DiffSuppressFunc: domainModellingSuppressFunc(),
@@ -324,6 +308,29 @@ func joinTableSchema() *schema.Resource {
 				Type:        schema.TypeList,
 				Description: "Dimensions tables to join to.",
 				Optional:    true,
+
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validateAnamlIdentifier(),
+				},
+			},
+		},
+	}
+}
+
+func pivotTableSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"entity_mapping": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validateAnamlIdentifier(),
+			},
+
+			"features": {
+				Type:        schema.TypeList,
+				Description: "Features to be included in this pivot table",
+				Required:    true,
 
 				Elem: &schema.Schema{
 					Type:         schema.TypeString,
@@ -517,6 +524,28 @@ func eventStoreSchema() *schema.Resource {
 	}
 }
 
+func viewTableSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"expression": {
+				Type:        schema.TypeString,
+				Description: "Expression for a View table.",
+				Required:    true,
+			},
+			"sources": {
+				Type:        schema.TypeList,
+				Description: "Tables upon which this View is created",
+				Required:    true,
+
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validateAnamlIdentifier(),
+				},
+			},
+		},
+	}
+}
+
 func resourceTableRead(d *schema.ResourceData, m interface{}) error {
 	c := m.(*Client)
 	tableID := d.Id()
@@ -540,14 +569,6 @@ func resourceTableRead(d *schema.ResourceData, m interface{}) error {
 
 	flattenEntityDescription(d, table.EventInfo)
 
-	if err := d.Set("expression", table.Expression); err != nil {
-		return err
-	}
-
-	if err := d.Set("sources", identifierList(table.Sources)); err != nil {
-		return err
-	}
-
 	if table.Type == "root" {
 		if err := d.Set("source", flattenSourceReferences(table.Source)); err != nil {
 			return err
@@ -558,30 +579,12 @@ func resourceTableRead(d *schema.ResourceData, m interface{}) error {
 		}
 	}
 
-	if table.Type == "eventstore" {
-		if err := d.Set("event_store", flattenEventStoreReferences(table.Source)); err != nil {
+	if table.Type == "view" {
+		if err := d.Set("view", flattenViewReferences(table)); err != nil {
 			return err
 		}
 	} else {
-		if err := d.Set("event_store", nil); err != nil {
-			return err
-		}
-	}
-
-	if table.Type == "pivot" {
-		if err := d.Set("entity_mapping", strconv.Itoa(table.EntityMapping)); err != nil {
-			return err
-		}
-
-		if err := d.Set("extra_features", identifierList(table.ExtraFeatures)); err != nil {
-			return err
-		}
-	} else {
-		if err := d.Set("entity_mapping", nil); err != nil {
-			return err
-		}
-
-		if err := d.Set("extra_features", nil); err != nil {
+		if err := d.Set("view", nil); err != nil {
 			return err
 		}
 	}
@@ -592,6 +595,26 @@ func resourceTableRead(d *schema.ResourceData, m interface{}) error {
 		}
 	} else {
 		if err := d.Set("join", nil); err != nil {
+			return err
+		}
+	}
+
+	if table.Type == "pivot" {
+		if err := d.Set("pivot", flattenPivotReferences(table)); err != nil {
+			return err
+		}
+	} else {
+		if err := d.Set("pivot", nil); err != nil {
+			return err
+		}
+	}
+
+	if table.Type == "eventstore" {
+		if err := d.Set("event_store", flattenEventStoreReferences(table.Source)); err != nil {
+			return err
+		}
+	} else {
+		if err := d.Set("event_store", nil); err != nil {
 			return err
 		}
 	}
@@ -661,26 +684,29 @@ func buildTable(d *schema.ResourceData) (*Table, error) {
 		Attributes:  expandAttributes(d),
 	}
 
-	if d.Get("expression").(string) != "" {
-		table.Type = "view"
-		table.Expression = d.Get("expression").(string)
-		table.Sources = expandIdentifierList(d.Get("sources").([]interface{}))
-	} else if d.Get("entity_mapping").(string) != "" {
-		table.Type = "pivot"
-		entity, _ := strconv.Atoi(d.Get("entity_mapping").(string))
-		table.EntityMapping = entity
-		table.ExtraFeatures = expandIdentifierList(d.Get("extra_features").([]interface{}))
-	} else if len(d.Get("source").([]interface{})) == 1 {
+	if source, _ := expandSingleMap(d.Get("source")); source != nil {
 		table.Type = "root"
-		table.Source = expandSourceReferences(d)
-	} else if len(d.Get("join").([]interface{})) == 1 {
+		table.Source = expandSourceReferences(source)
+	} else if view, _ := expandSingleMap(d.Get("view")); view != nil {
+		table.Type = "view"
+		expression, sources := expandViewSpecification(view)
+		table.Expression = expression
+		table.Sources = sources
+	} else if join, _ := expandSingleMap(d.Get("join")); join != nil {
 		table.Type = "join"
-		base, others := expandJoinSpecification(d)
+		base, others := expandJoinSpecification(join)
 		table.Base = base
 		table.Joins = others
-	} else {
+	} else if pivot, _ := expandSingleMap(d.Get("pivot")); pivot != nil {
+		table.Type = "pivot"
+		entity_mapping, extra_features := expandPivotSpecification(pivot)
+		table.EntityMapping = entity_mapping
+		table.ExtraFeatures = extra_features
+	} else if event_store, _ := expandSingleMap(d.Get("event_store")); event_store != nil {
 		table.Type = "eventstore"
-		table.Source = expandEventStoreReferences(d)
+		table.Source = expandEventStoreReferences(event_store)
+	} else {
+		return nil, fmt.Errorf("Table did not appear to be one of the expected variants")
 	}
 
 	columns, err := expandColumnInfo(d)
@@ -760,60 +786,54 @@ func expandEntityDescription(d *schema.ResourceData) *EventDescription {
 
 func flattenEntityDescription(d *schema.ResourceData, ed *EventDescription) error {
 	if ed != nil {
-		ois := make([]interface{}, 1, 1)
-		nothing := make([]interface{}, 0, 0)
-		oi := make(map[string]interface{})
-
-		oi["entities"] = ed.Entities
+		single := make(map[string]interface{})
+		single["entities"] = ed.Entities
 
 		td := ed.TimestampInfo
 		if td.Type == "event" {
-			oi["timestamp_column"] = td.Column
-			oi["timezone"] = td.Zone
+			single["timestamp_column"] = td.Column
+			single["timezone"] = td.Zone
 
-			ois[0] = oi
-			if err := d.Set("event", ois); err != nil {
+			if err := d.Set("event", []interface{}{single}); err != nil {
 				return err
 			}
-			if err := d.Set("point_in_time", nothing); err != nil {
+			if err := d.Set("point_in_time", nil); err != nil {
 				return err
 			}
-			if err := d.Set("scd2", nothing); err != nil {
+			if err := d.Set("scd2", nil); err != nil {
 				return err
 			}
 		}
 
 		if td.Type == "scd2" && td.PrimaryKey != nil {
-			oi["primary_key"] = strconv.Itoa(*td.PrimaryKey)
-			oi["from_column"] = td.From
-			oi["valid_to_column"] = td.ValidTo
-			oi["timezone"] = td.Zone
+			single["primary_key"] = strconv.Itoa(*td.PrimaryKey)
+			single["from_column"] = td.From
+			single["valid_to_column"] = td.ValidTo
+			single["timezone"] = td.Zone
 
-			ois[0] = oi
-			if err := d.Set("scd2", ois); err != nil {
+			if err := d.Set("scd2", []interface{}{single}); err != nil {
 				return err
 			}
-			if err := d.Set("point_in_time", nothing); err != nil {
+			if err := d.Set("point_in_time", nil); err != nil {
 				return err
 			}
-			if err := d.Set("event", nothing); err != nil {
+			if err := d.Set("event", nil); err != nil {
 				return err
 			}
 		}
 
 		if td.Type == "snapshot" && td.PrimaryKey != nil {
-			oi["primary_key"] = strconv.Itoa(*td.PrimaryKey)
-			oi["timestamp_column"] = td.Column
-			oi["timezone"] = td.Zone
+			single["primary_key"] = strconv.Itoa(*td.PrimaryKey)
+			single["timestamp_column"] = td.Column
+			single["timezone"] = td.Zone
 
-			ois[0] = oi
-			if err := d.Set("point_in_time", ois); err != nil {
+			if err := d.Set("point_in_time", []interface{}{single}); err != nil {
 				return err
 			}
-			if err := d.Set("scd2", nothing); err != nil {
+			if err := d.Set("scd2", nil); err != nil {
 				return err
 			}
-			if err := d.Set("event", nothing); err != nil {
+			if err := d.Set("event", nil); err != nil {
 				return err
 			}
 		}
@@ -822,69 +842,59 @@ func flattenEntityDescription(d *schema.ResourceData, ed *EventDescription) erro
 	return nil
 }
 
-func expandSourceReferences(d *schema.ResourceData) *SourceReference {
-	srs := d.Get("source").([]interface{})
-
-	for _, sr := range srs {
-		val, _ := sr.(map[string]interface{})
-		sourceID, _ := strconv.Atoi(val["source"].(string))
-
-		source_type := ""
-		if v, ok := val["folder"].(string); ok && v != "" {
-			source_type = "folder"
-		}
-		if v, ok := val["table_name"].(string); ok && v != "" {
-			source_type = "table"
-		}
-		if v, ok := val["topic"].(string); ok && v != "" {
-			source_type = "topic"
-		}
-
-		parsed := SourceReference{
-			Type:      source_type,
-			SourceID:  sourceID,
-			Folder:    val["folder"].(string),
-			TableName: val["table_name"].(string),
-			Topic:     val["topic"].(string),
-		}
-		return &parsed
-	}
-
-	return nil
+func expandViewSpecification(val map[string]interface{}) (string, []int) {
+	expression := val["expression"].(string)
+	sourcesList := expandIdentifierList(val["sources"].([]interface{}))
+	return expression, sourcesList
 }
 
-func expandEventStoreReferences(d *schema.ResourceData) *SourceReference {
-	srs := d.Get("event_store").([]interface{})
+func expandSourceReferences(val map[string]interface{}) *SourceReference {
+	sourceID, _ := strconv.Atoi(val["source"].(string))
 
-	for _, sr := range srs {
-		val, _ := sr.(map[string]interface{})
-
-		store, _ := strconv.Atoi(val["store"].(string))
-		entity, _ := strconv.Atoi(val["entity"].(string))
-		topic, _ := val["topic"].(string)
-
-		parsed := SourceReference{
-			EventStoreId: store,
-			Entity:       entity,
-			Topic:        topic,
-		}
-		return &parsed
+	source_type := ""
+	if v, ok := val["folder"].(string); ok && v != "" {
+		source_type = "folder"
+	}
+	if v, ok := val["table_name"].(string); ok && v != "" {
+		source_type = "table"
+	}
+	if v, ok := val["topic"].(string); ok && v != "" {
+		source_type = "topic"
 	}
 
-	return nil
+	parsed := SourceReference{
+		Type:      source_type,
+		SourceID:  sourceID,
+		Folder:    val["folder"].(string),
+		TableName: val["table_name"].(string),
+		Topic:     val["topic"].(string),
+	}
+	return &parsed
 }
 
-func expandJoinSpecification(d *schema.ResourceData) (*int, []int) {
-	srs := d.Get("join").([]interface{})
+func expandEventStoreReferences(val map[string]interface{}) *SourceReference {
+	store, _ := strconv.Atoi(val["store"].(string))
+	entity, _ := strconv.Atoi(val["entity"].(string))
+	topic, _ := val["topic"].(string)
 
-	for _, sr := range srs {
-		val, _ := sr.(map[string]interface{})
-		store, _ := strconv.Atoi(val["table"].(string))
-		joinList := expandIdentifierList(val["joins"].([]interface{}))
-		return &store, joinList
+	parsed := SourceReference{
+		EventStoreId: store,
+		Entity:       entity,
+		Topic:        topic,
 	}
+	return &parsed
+}
 
-	return nil, nil
+func expandJoinSpecification(val map[string]interface{}) (*int, []int) {
+	store, _ := strconv.Atoi(val["table"].(string))
+	joinList := expandIdentifierList(val["joins"].([]interface{}))
+	return &store, joinList
+}
+
+func expandPivotSpecification(val map[string]interface{}) (int, []int) {
+	entity_mapping, _ := strconv.Atoi(val["entity_mapping"].(string))
+	extra_features := expandIdentifierList(val["features"].([]interface{}))
+	return entity_mapping, extra_features
 }
 
 func flattenSourceReferences(source *SourceReference) []map[string]interface{} {
@@ -899,6 +909,36 @@ func flattenSourceReferences(source *SourceReference) []map[string]interface{} {
 	single["folder"] = source.Folder
 	single["table_name"] = source.TableName
 	single["topic"] = source.Topic
+	res = append(res, single)
+
+	return res
+}
+
+func flattenViewReferences(table *Table) []map[string]interface{} {
+	res := make([]map[string]interface{}, 0, 1)
+
+	if table == nil {
+		return res
+	}
+
+	single := make(map[string]interface{})
+	single["expression"] = table.Expression
+	single["sources"] = identifierList(table.Sources)
+	res = append(res, single)
+
+	return res
+}
+
+func flattenPivotReferences(table *Table) []map[string]interface{} {
+	res := make([]map[string]interface{}, 0, 1)
+
+	if table == nil {
+		return res
+	}
+
+	single := make(map[string]interface{})
+	single["entity_mapping"] = strconv.Itoa(table.EntityMapping)
+	single["features"] = identifierList(table.ExtraFeatures)
 	res = append(res, single)
 
 	return res
@@ -958,7 +998,7 @@ func expandColumnKind(info map[string]interface{}) *ColumnKind {
 }
 
 func expandColumnInfo(d *schema.ResourceData) (map[string]ColumnInfo, error) {
-	modelling := d.Get("domain_modelling").([]interface{});
+	modelling := d.Get("domain_modelling").([]interface{})
 	res := make(map[string]ColumnInfo)
 
 	for _, domain := range modelling {

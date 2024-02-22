@@ -53,16 +53,9 @@ you could define an Entity Mapping from Account to Customer:
 <a id="nestedblock--one_to_many"></a>
 ### Nested Schema for `one_to_many`
 
-Optional:
-
-- **dummy** (String)
-
+No fields are necessary
 
 <a id="nestedblock--one_to_one"></a>
 ### Nested Schema for `one_to_one`
 
-Optional:
-
-- **dummy** (String)
-
-
+No fields are necessary

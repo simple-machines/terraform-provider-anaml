@@ -20,8 +20,8 @@ A Metrics Set is collection of metrics and dimensions that are used to perform b
 
 ### Required
 
-- **name** (String)
 - **metric** (Block List, Min: 1) (see [below for nested schema](#nestedblock--metric))
+- **name** (String)
 
 ### Optional
 

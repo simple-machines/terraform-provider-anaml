@@ -114,8 +114,10 @@ resource "anaml_table" "household_normalised" {
   name        = "household_normalised"
   description = "A household level view"
 
-  expression = "SELECT * FROM household"
-  sources    = [anaml_table.household.id]
+  view {
+    sources    = [anaml_table.household.id]
+    expression = "SELECT * FROM household"
+  }
 
   event {
     entities = {
@@ -927,9 +929,11 @@ resource "anaml-operations_monitoring" "monitoring" {
   name        = "household_monitoring"
   description = "Monitoring of tables for households"
   enabled     = true
-  tables = [
-    anaml_table.household.id
-  ]
+  include {
+    tables = [
+      anaml_table.household.id
+    ]
+  }
   cluster = data.anaml-operations_cluster.local.id
   daily_schedule {
     start_time_of_day = "00:00:00"
@@ -940,9 +944,11 @@ resource "anaml-operations_monitoring" "monitoring_with_principal" {
   name        = "household_monitoring_with_principal"
   description = "Monitoring of tables for households"
   enabled     = true
-  tables = [
-    anaml_table.household.id
-  ]
+  include {
+    tables = [
+      anaml_table.household.id
+    ]
+  }
   cluster = data.anaml-operations_cluster.local.id
   daily_schedule {
     start_time_of_day = "00:00:00"
