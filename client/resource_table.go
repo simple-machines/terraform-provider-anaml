@@ -185,6 +185,7 @@ func ResourceTable() *schema.Resource {
 				Description: "Labels to attach to the object",
 				Elem:        labelSchema(),
 			},
+
 			"attribute": {
 				Type:        schema.TypeSet,
 				Optional:    true,

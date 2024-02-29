@@ -376,7 +376,7 @@ func buildDimensions(d *schema.ResourceData) ([]Dimension, error) {
 		name := value["name"].(string)
 		expression := value["expression"].(string)
 		var filter *string
-		if filterRaw, ok := value["filter"].(string); ok {
+		if filterRaw, _ := value["filter"].(string); filterRaw != ""  {
 			filter = &filterRaw
 		}
 		Dimension := Dimension{
@@ -402,13 +402,13 @@ func buildMetrics(d *schema.ResourceData) ([]Metric, error) {
 		expression := value["select"].(string)
 		aggregation := value["aggregation"].(string)
 		var filter *SQLExpression
-		if filterRaw, ok := value["filter"].(string); ok {
+		if filterRaw, _ := value["filter"].(string); filterRaw != "" {
 			filter = &SQLExpression{
 				SQL: filterRaw,
 			}
 		}
 		var postAgg *SQLExpression
-		if postAggRaw, ok := value["post_aggregation"].(string); ok {
+		if postAggRaw, _ := value["post_aggregation"].(string); postAggRaw != "" {
 			postAgg = &SQLExpression{
 				SQL: postAggRaw,
 			}

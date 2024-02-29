@@ -193,9 +193,9 @@ type Dimension struct {
 type Metric struct {
 	Name        *string              `json:"name,omitempty"`
 	Select      SQLExpression        `json:"select"`
-	Filter      *SQLExpression       `json:"filter"`
-	Aggregate   *AggregateExpression `json:"aggregate,omitempty"`
-	PostAggExpr *SQLExpression       `json:"postAggregateExpr"`
+	Filter      *SQLExpression       `json:"filter,omitempty"`
+	Aggregate   *AggregateExpression `json:"aggregate"`
+	PostAggExpr *SQLExpression       `json:"postAggregateExpr,omitempty"`
 }
 
 // MetricsSet ...
