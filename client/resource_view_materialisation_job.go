@@ -50,14 +50,21 @@ func ResourceViewMaterialisationJob() *schema.Resource {
 				Optional:      true,
 				MaxItems:      1,
 				Elem:          dailyScheduleSchema(),
-				ConflictsWith: []string{"cron_schedule"},
+				ConflictsWith: []string{"cron_schedule", "dependency_schedule"},
 			},
 			"cron_schedule": {
 				Type:          schema.TypeList,
 				Optional:      true,
 				MaxItems:      1,
 				Elem:          cronScheduleSchema(),
-				ConflictsWith: []string{"daily_schedule"},
+				ConflictsWith: []string{"daily_schedule", "dependency_schedule"},
+			},
+			"dependency_schedule": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				MaxItems:      1,
+				Elem:          dependencyScheduleSchema(),
+				ConflictsWith: []string{"daily_schedule", "cron_schedule"},
 			},
 			"usagettl": {
 				Type:         schema.TypeString,
@@ -158,7 +165,7 @@ func resourceViewMaterialisationJobRead(d *schema.ResourceData, m interface{}) e
 	}
 
 	if ViewMaterialisationJob.Type == "batch" {
-		daily, cron, err := parseSchedule(ViewMaterialisationJob.Schedule)
+		daily, cron, dependency, err := parseSchedule(ViewMaterialisationJob.Schedule)
 		if err != nil {
 			return err
 		}
@@ -166,6 +173,9 @@ func resourceViewMaterialisationJobRead(d *schema.ResourceData, m interface{}) e
 			return err
 		}
 		if err := d.Set("cron_schedule", cron); err != nil {
+			return err
+		}
+		if err := d.Set("dependency_schedule", dependency); err != nil {
 			return err
 		}
 	}

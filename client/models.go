@@ -1,5 +1,10 @@
 package anaml
 
+type AnamlObject struct {
+	ID   int    `json:"id"`
+	Type string `json:"adt_type"`
+}
+
 // Entity ..
 type Entity struct {
 	ID            int          `json:"id,omitempty"`
@@ -255,10 +260,11 @@ type MetricsJob struct {
 }
 
 type Schedule struct {
-	Type           string       `json:"adt_type"`
-	StartTimeOfDay *string      `json:"startTimeOfDay,omitempty"`
-	CronString     string       `json:"cronString,omitempty"`
-	RetryPolicy    *RetryPolicy `json:"retryPolicy,omitempty"`
+	Type           string        `json:"adt_type"`
+	StartTimeOfDay *string       `json:"startTimeOfDay,omitempty"`
+	CronString     string        `json:"cronString,omitempty"`
+	RetryPolicy    *RetryPolicy  `json:"retryPolicy,omitempty"`
+	DependentJobs  []AnamlObject `json:"dependentJobs,omitempty"`
 }
 
 type RetryPolicy struct {
@@ -674,6 +680,75 @@ func validRoles() []string {
 		"run_monitoring",
 		"super_user",
 		"view_reports",
+	}
+}
+
+func mapAnamlObjectToResource(v AnamlObject) (string, int) {
+	if v.Type == "anamlentitymapping" {
+		return "entity_mapping", v.ID
+	} else if v.Type == "anamlentity" {
+		return "entity", v.ID
+	} else if v.Type == "anamlentitypopulation" {
+		return "entity_population", v.ID
+	} else if v.Type == "anamleventstore" {
+		return "event_store", v.ID
+	} else if v.Type == "anamlfeature" {
+		return "feature", v.ID
+	} else if v.Type == "anamlfeaturetemplate" {
+		return "feature_template", v.ID
+	} else if v.Type == "anamlfeatureset" {
+		return "feature_set", v.ID
+	} else if v.Type == "anamlfeaturestore" {
+		return "feature_store", v.ID
+	} else if v.Type == "anamltable" {
+		return "table", v.ID
+	} else if v.Type == "anamltablecaching" {
+		return "caching", v.ID
+	} else if v.Type == "anamltablemonitoring" {
+		return "monitoring", v.ID
+	} else if v.Type == "anamlviewmaterialisation" {
+		return "view_materialisation_job", v.ID
+	} else if v.Type == "anamlmetricsset" {
+		return "metrics_set", v.ID
+	} else if v.Type == "anamlmetricsjob" {
+		return "metrics_job", v.ID
+	} else {
+		// Not a known resource, just show what it says.
+		return v.Type, v.ID
+	}
+}
+
+func mapResourceToAnamlObject(v string, i int) *AnamlObject {
+	if v == "entity_mapping" {
+		return &AnamlObject{Type: "anamlentitymapping", ID: i}
+	} else if v == "entity" {
+		return &AnamlObject{Type: "anamlentity", ID: i}
+	} else if v == "entity_population" {
+		return &AnamlObject{Type: "anamlentitypopulation", ID: i}
+	} else if v == "event_store" {
+		return &AnamlObject{Type: "anamleventstore", ID: i}
+	} else if v == "feature" {
+		return &AnamlObject{Type: "anamlfeature", ID: i}
+	} else if v == "feature_template" {
+		return &AnamlObject{Type: "anamlfeaturetemplate", ID: i}
+	} else if v == "feature_set" {
+		return &AnamlObject{Type: "anamlfeatureset", ID: i}
+	} else if v == "feature_store" {
+		return &AnamlObject{Type: "anamlfeaturestore", ID: i}
+	} else if v == "table" {
+		return &AnamlObject{Type: "anamltable", ID: i}
+	} else if v == "caching" {
+		return &AnamlObject{Type: "anamltablecaching", ID: i}
+	} else if v == "monitoring" {
+		return &AnamlObject{Type: "anamltablemonitoring", ID: i}
+	} else if v == "view_materialisation_job" {
+		return &AnamlObject{Type: "anamlviewmaterialisation", ID: i}
+	} else if v == "metrics_set" {
+		return &AnamlObject{Type: "anamlmetricsset", ID: i}
+	} else if v == "metrics_job" {
+		return &AnamlObject{Type: "anamlmetricsjob", ID: i}
+	} else {
+		return nil
 	}
 }
 

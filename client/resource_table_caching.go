@@ -57,14 +57,21 @@ func ResourceTableCaching() *schema.Resource {
 				Optional:      true,
 				MaxItems:      1,
 				Elem:          dailyScheduleSchema(),
-				ConflictsWith: []string{"cron_schedule"},
+				ConflictsWith: []string{"cron_schedule", "dependency_schedule"},
 			},
 			"cron_schedule": {
 				Type:          schema.TypeList,
 				Optional:      true,
 				MaxItems:      1,
 				Elem:          cronScheduleSchema(),
-				ConflictsWith: []string{"daily_schedule"},
+				ConflictsWith: []string{"daily_schedule", "dependency_schedule"},
+			},
+			"dependency_schedule": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				MaxItems:      1,
+				Elem:          dependencyScheduleSchema(),
+				ConflictsWith: []string{"daily_schedule", "cron_schedule"},
 			},
 			"principal": {
 				Type:         schema.TypeString,
@@ -255,7 +262,7 @@ func resourceTableCachingRead(d *schema.ResourceData, m interface{}) error {
 		d.Set("retainment", nil)
 	}
 
-	daily, cron, err := parseSchedule(TableCaching.Schedule)
+	daily, cron, dependency, err := parseSchedule(TableCaching.Schedule)
 	if err != nil {
 		return err
 	}
@@ -263,6 +270,9 @@ func resourceTableCachingRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 	if err := d.Set("cron_schedule", cron); err != nil {
+		return err
+	}
+	if err := d.Set("dependency_schedule", dependency); err != nil {
 		return err
 	}
 

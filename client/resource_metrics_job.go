@@ -66,14 +66,21 @@ func ResourceMetricsJob() *schema.Resource {
 				Optional:      true,
 				MaxItems:      1,
 				Elem:          dailyScheduleSchema(),
-				ConflictsWith: []string{"cron_schedule"},
+				ConflictsWith: []string{"cron_schedule", "dependency_schedule"},
 			},
 			"cron_schedule": {
 				Type:          schema.TypeList,
 				Optional:      true,
 				MaxItems:      1,
 				Elem:          cronScheduleSchema(),
-				ConflictsWith: []string{"daily_schedule"},
+				ConflictsWith: []string{"daily_schedule", "dependency_schedule"},
+			},
+			"dependency_schedule": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				MaxItems:      1,
+				Elem:          dependencyScheduleSchema(),
+				ConflictsWith: []string{"daily_schedule", "cron_schedule"},
 			},
 			"destination": {
 				Type:     schema.TypeList,
@@ -159,7 +166,7 @@ func resourceMetricsJobRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	daily, cron, err := parseSchedule(MetricsJob.Schedule)
+	daily, cron, dependency, err := parseSchedule(MetricsJob.Schedule)
 	if err != nil {
 		return err
 	}
@@ -167,6 +174,9 @@ func resourceMetricsJobRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 	if err := d.Set("cron_schedule", cron); err != nil {
+		return err
+	}
+	if err := d.Set("dependency_schedule", dependency); err != nil {
 		return err
 	}
 
