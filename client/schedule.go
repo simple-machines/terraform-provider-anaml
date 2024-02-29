@@ -2,6 +2,8 @@ package anaml
 
 import (
 	"errors"
+	"fmt"
+	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -32,6 +34,44 @@ func cronScheduleSchema() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+			"fixed_retry_policy": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem:     fixedRetryPolicySchema(),
+			},
+		},
+	}
+}
+
+func dependencyScheduleSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"job": {
+				Type:        schema.TypeList,
+				Description: "Jobs after which this task will be scheduled.",
+				Required:    true,
+
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validateAnamlIdentifier(),
+						},
+						"type": {
+							Type:        schema.TypeString,
+							Description: "Type of the Job (resource type).",
+							Required:    true,
+							ValidateFunc: validation.StringInSlice([]string{
+								"event_store", "metrics_job", "monitoring",
+								"view_materialisation_job", "caching",
+								"feature_store",
+							}, false),
+						},
+					},
+				},
 			},
 			"fixed_retry_policy": {
 				Type:     schema.TypeList,
@@ -83,6 +123,9 @@ func composeSchedule(d *schema.ResourceData) (*Schedule, error) {
 	if cronSchedule, _ := expandSingleMap(d.Get("cron_schedule")); cronSchedule != nil {
 		return composeCronSchedule(cronSchedule)
 	}
+	if dependencySchedule, _ := expandSingleMap(d.Get("dependency_schedule")); dependencySchedule != nil {
+		return composeDependencySchedule(dependencySchedule)
+	}
 	return composeNeverSchedule(), nil
 }
 
@@ -122,6 +165,36 @@ func composeCronSchedule(d map[string]interface{}) (*Schedule, error) {
 	}, nil
 }
 
+func composeDependencySchedule(d map[string]interface{}) (*Schedule, error) {
+	var retryPolicy *RetryPolicy
+	if fixedRetryPolicy, _ := expandSingleMap(d["fixed_retry_policy"]); fixedRetryPolicy != nil {
+		retryPolicy = composeFixedRetryPolicy(fixedRetryPolicy)
+	} else {
+		retryPolicy = composeNeverRetryPolicy()
+	}
+
+	jobs := d["job"].([]interface{})
+	work := make([]AnamlObject, 0, len(jobs))
+
+	for _, job := range jobs {
+		val := job.(map[string]interface{})
+		id, _ := strconv.Atoi(val["id"].(string))
+		rt := val["type"].(string)
+
+		single := mapResourceToAnamlObject(rt, id)
+		if single == nil {
+			return nil, fmt.Errorf("Couldn't obtain anaml object from dependency definition %s", rt)
+		}
+		work = append(work, *single)
+	}
+
+	return &Schedule{
+		Type:          "dependency",
+		DependentJobs: work,
+		RetryPolicy:   retryPolicy,
+	}, nil
+}
+
 func composeFixedRetryPolicy(d map[string]interface{}) *RetryPolicy {
 	return &RetryPolicy{
 		Type:        "fixed",
@@ -136,13 +209,14 @@ func composeNeverRetryPolicy() *RetryPolicy {
 	}
 }
 
-func parseSchedule(schedule *Schedule) ([]map[string]interface{}, []map[string]interface{}, error) {
+func parseSchedule(schedule *Schedule) ([]map[string]interface{}, []map[string]interface{}, []map[string]interface{}, error) {
 	if schedule == nil {
-		return nil, nil, errors.New("Schedule is null")
+		return nil, nil, nil, errors.New("Schedule is null")
 	}
 
 	daily := make([]map[string]interface{}, 0, 1)
 	cron := make([]map[string]interface{}, 0, 1)
+	dependency := make([]map[string]interface{}, 0, 1)
 
 	if schedule.Type == "daily" {
 		single := make(map[string]interface{})
@@ -153,7 +227,7 @@ func parseSchedule(schedule *Schedule) ([]map[string]interface{}, []map[string]i
 		if schedule.RetryPolicy.Type == "fixed" {
 			fixedRetryPolicy, err := parseFixedRetryPolicy(schedule.RetryPolicy)
 			if err != nil {
-				return nil, nil, err
+				return nil, nil, nil, err
 			}
 			single["fixed_retry_policy"] = fixedRetryPolicy
 		}
@@ -166,15 +240,37 @@ func parseSchedule(schedule *Schedule) ([]map[string]interface{}, []map[string]i
 		if schedule.RetryPolicy.Type == "fixed" {
 			fixedRetryPolicy, err := parseFixedRetryPolicy(schedule.RetryPolicy)
 			if err != nil {
-				return nil, nil, err
+				return nil, nil, nil, err
 			}
 
 			single["fixed_retry_policy"] = fixedRetryPolicy
 		}
 		cron = append(cron, single)
+	} else if schedule.Type == "dependency" {
+		single := make(map[string]interface{})
+		work := make([]map[string]interface{}, 0, len(schedule.DependentJobs))
+		for _, depJob := range schedule.DependentJobs {
+			singleJob := make(map[string]interface{})
+			rt, id := mapAnamlObjectToResource(depJob)
+			singleJob["id"] = strconv.Itoa(id)
+			singleJob["type"] = rt
+			work = append(work, singleJob)
+		}
+
+		single["job"] = work
+
+		if schedule.RetryPolicy.Type == "fixed" {
+			fixedRetryPolicy, err := parseFixedRetryPolicy(schedule.RetryPolicy)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+
+			single["fixed_retry_policy"] = fixedRetryPolicy
+		}
+		dependency = append(dependency, single)
 	}
 
-	return daily, cron, nil
+	return daily, cron, dependency, nil
 }
 
 func parseFixedRetryPolicy(retryPolicy *RetryPolicy) ([]map[string]interface{}, error) {

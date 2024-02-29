@@ -77,14 +77,21 @@ func ResourceEventStore() *schema.Resource {
 				Optional:      true,
 				MaxItems:      1,
 				Elem:          dailyScheduleSchema(),
-				ConflictsWith: []string{"cron_schedule"},
+				ConflictsWith: []string{"cron_schedule", "dependency_schedule"},
 			},
 			"cron_schedule": {
 				Type:          schema.TypeList,
 				Optional:      true,
 				MaxItems:      1,
 				Elem:          cronScheduleSchema(),
-				ConflictsWith: []string{"daily_schedule"},
+				ConflictsWith: []string{"daily_schedule", "dependency_schedule"},
+			},
+			"dependency_schedule": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				MaxItems:      1,
+				Elem:          dependencyScheduleSchema(),
+				ConflictsWith: []string{"daily_schedule", "cron_schedule"},
 			},
 			"cluster": {
 				Type:         schema.TypeString,
@@ -229,7 +236,7 @@ func resourceEventStoreRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("access_rules", flattenAccessRules(entity.AccessRules)); err != nil {
 		return err
 	}
-	daily, cron, err := parseSchedule(entity.Schedule)
+	daily, cron, dependency, err := parseSchedule(entity.Schedule)
 	if err != nil {
 		return err
 	}
@@ -237,6 +244,9 @@ func resourceEventStoreRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 	if err := d.Set("cron_schedule", cron); err != nil {
+		return err
+	}
+	if err := d.Set("dependency_schedule", dependency); err != nil {
 		return err
 	}
 	return err
