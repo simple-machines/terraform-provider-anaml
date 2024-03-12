@@ -1253,13 +1253,13 @@ func composeFileFormat(d map[string]interface{}) *FileFormat {
 	}
 
 	if d["file_format"] == "csv" {
-		if compression, ok := d["compression"].(string); ok {
+		if compression, ok := d["compression"].(string); ok && compression != "" {
 			fileFormat.Compression = &compression
 		}
-		if dateFormat, ok := d["date_format"].(string); ok {
+		if dateFormat, ok := d["date_format"].(string); ok && dateFormat != "" {
 			fileFormat.DateFormat = &dateFormat
 		}
-		if emptyValue, ok := d["empty_value"].(string); ok {
+		if emptyValue, ok := d["empty_value"].(string); ok && emptyValue != "" {
 			fileFormat.EmptyValue = &emptyValue
 		}
 		if ignoreLeadingWhiteSpace, ok := d["ignore_leading_whitespace"].(bool); ok {
@@ -1274,13 +1274,13 @@ func composeFileFormat(d map[string]interface{}) *FileFormat {
 		if quoteAll, ok := d["quote_all"].(bool); ok {
 			fileFormat.QuoteAll = &quoteAll
 		}
-		if sep, ok := d["field_separator"].(string); ok {
+		if sep, ok := d["field_separator"].(string); ok && sep != "" {
 			fileFormat.Sep = &sep
 		}
-		if timestampFormat, ok := d["timestamp_format"].(string); ok {
+		if timestampFormat, ok := d["timestamp_format"].(string); ok && timestampFormat != "" {
 			fileFormat.TimestampFormat = &timestampFormat
 		}
-		if lineSep, ok := d["line_separator"].(string); ok {
+		if lineSep, ok := d["line_separator"].(string); ok && lineSep != "" {
 			fileFormat.LineSep = &lineSep
 		}
 	}
