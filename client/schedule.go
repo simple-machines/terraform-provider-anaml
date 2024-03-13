@@ -14,7 +14,7 @@ func dailyScheduleSchema() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"start_time_of_day": {
 				Type:         schema.TypeString,
-				Optional:     true,
+				Required:     true,
 				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 			"fixed_retry_policy": {

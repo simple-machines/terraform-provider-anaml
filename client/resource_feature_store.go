@@ -101,7 +101,7 @@ func ResourceFeatureStore() *schema.Resource {
 			},
 			"destination": {
 				Type:     schema.TypeList,
-				Optional: true,
+				Required: true,
 				Elem:     destinationSchema(),
 			},
 			"cluster": {
