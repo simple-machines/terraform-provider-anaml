@@ -40,6 +40,7 @@ func Provider() *schema.Provider {
 			"anaml-operations_destination":   anaml.DataSourceDestination(),
 			"anaml-operations_source":        anaml.DataSourceSource(),
 			"anaml-operations_feature_store": anaml.DataSourceFeatureStore(),
+			"anaml-operations_user":          anaml.DataSourceUser(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
