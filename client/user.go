@@ -30,6 +30,33 @@ func (c *Client) GetUser(userID string) (*User, error) {
 	return &user, nil
 }
 
+func (c *Client) FindUserByEmail(email string) (*User, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/user", c.HostURL), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	q := req.URL.Query()
+	q.Add("email", email)
+	req.URL.RawQuery = q.Encode()
+
+	body, err := c.doRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	if body == nil {
+		return nil, nil
+	}
+
+	user := User{}
+	err = json.Unmarshal(body, &user)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 func (c *Client) CreateUser(creationRequest User) (*User, error) {
 	rb, err := json.Marshal(creationRequest)
 	if err != nil {
