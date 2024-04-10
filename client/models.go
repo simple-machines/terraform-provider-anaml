@@ -67,11 +67,16 @@ type ColumnKind struct {
 	Units *string `json:"units,omitempty"`
 }
 
+type ColumnConstraint struct {
+	Type string `json:"adt_type"`
+}
+
 // ColumnInfo ..
 type ColumnInfo struct {
 	Description string                `json:"description"`
 	Column      *ColumnRepresentation `json:"column"`
 	Kind        *ColumnKind           `json:"kind,omitempty"`
+	Constraints []ColumnConstraint    `json:"constraints,omitempty"`
 }
 
 // Table ...

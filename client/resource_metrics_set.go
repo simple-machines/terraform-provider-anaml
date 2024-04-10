@@ -376,7 +376,7 @@ func buildDimensions(d *schema.ResourceData) ([]Dimension, error) {
 		name := value["name"].(string)
 		expression := value["expression"].(string)
 		var filter *string
-		if filterRaw, _ := value["filter"].(string); filterRaw != ""  {
+		if filterRaw, _ := value["filter"].(string); filterRaw != "" {
 			filter = &filterRaw
 		}
 		Dimension := Dimension{

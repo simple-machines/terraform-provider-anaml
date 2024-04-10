@@ -382,6 +382,12 @@ func domainModellingSchema() *schema.Resource {
 								},
 							},
 						},
+						"not_null": {
+							Type:     schema.TypeList,
+							Optional: true,
+							MaxItems: 1,
+							Elem:     &schema.Resource{},
+						},
 					},
 				},
 			},
@@ -427,6 +433,12 @@ func domainModellingSchema() *schema.Resource {
 									},
 								},
 							},
+						},
+						"not_null": {
+							Type:     schema.TypeList,
+							Optional: true,
+							MaxItems: 1,
+							Elem:     &schema.Resource{},
 						},
 					},
 				},
@@ -998,6 +1010,18 @@ func expandColumnKind(info map[string]interface{}) *ColumnKind {
 	return nil
 }
 
+func expandColumnConstraints(info map[string]interface{}) []ColumnConstraint {
+	res := make([]ColumnConstraint, 0, 1)
+	notnulls := info["not_null"].([]interface{})
+	for _, _ = range notnulls {
+		res = append(res, ColumnConstraint{
+			Type: "notnull",
+		})
+	}
+
+	return res
+}
+
 func expandColumnInfo(d *schema.ResourceData) (map[string]ColumnInfo, error) {
 	modelling := d.Get("domain_modelling").([]interface{})
 	res := make(map[string]ColumnInfo)
@@ -1033,6 +1057,8 @@ func createColumnInfo(column interface{}, columnType string) (string, ColumnInfo
 	name := value["name"].(string)
 	description := value["description"].(string)
 	kind := expandColumnKind(value)
+	constraints := expandColumnConstraints(value)
+
 	columnRepresentation := ColumnRepresentation{
 		Type: columnType,
 	}
@@ -1048,6 +1074,7 @@ func createColumnInfo(column interface{}, columnType string) (string, ColumnInfo
 		Description: description,
 		Column:      &columnRepresentation,
 		Kind:        kind,
+		Constraints: constraints,
 	}, nil
 }
 
@@ -1068,6 +1095,16 @@ func flattenColumnKind(kind *ColumnKind) ([]map[string]interface{}, []map[string
 	return nil, nil
 }
 
+func flattenColumnConstraints(constraints []ColumnConstraint) []map[string]interface{} {
+	notnulls := make([]map[string]interface{}, 0, 1)
+	for _, constraint := range constraints {
+		if constraint.Type == "notnull" {
+			notnulls = append(notnulls, make(map[string]interface{}))
+		}
+	}
+	return notnulls
+}
+
 func flattenColumnInfo(infos map[string]ColumnInfo) interface{} {
 	res := make([]map[string]interface{}, 0, 1)
 	bases := make([]map[string]interface{}, 0, len(infos))
@@ -1076,8 +1113,10 @@ func flattenColumnInfo(infos map[string]ColumnInfo) interface{} {
 	for k, info := range infos {
 		single := make(map[string]interface{})
 		dimensions, measures := flattenColumnKind(info.Kind)
+		notnulls := flattenColumnConstraints(info.Constraints)
 		single["dimension"] = dimensions
 		single["measure"] = measures
+		single["not_null"] = notnulls
 
 		if info.Column.Type == "base" {
 			single["name"] = k
