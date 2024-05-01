@@ -67,8 +67,27 @@ type ColumnKind struct {
 	Units *string `json:"units,omitempty"`
 }
 
+const (
+	ColumnConstraint_NOT_NULL            = "notnull"
+	ColumnConstraint_UNIQUE              = "uniqueness"
+	ColumnConstraint_NOT_CONSTANT        = "notconstant"
+	ColumnConstraint_ACCEPTED_VALUES     = "acceptedvalues"
+	ColumnConstraint_IN_RANGE            = "inrange"
+	ColumnConstraint_STATISTICS_IN_RANGE = "statisticsinrange"
+	ColumnConstraint_ROW_CHECK           = "rowcheck"
+	ColumnConstraint_AGGREGATE_CHECK     = "aggregatecheck"
+)
+
 type ColumnConstraint struct {
-	Type string `json:"adt_type"`
+	Type         string               `json:"adt_type"`
+	Name         *string              `json:"name,omitempty"`
+	Threshold    *float64             `json:"threshold"`
+	Min          *string              `json:"min"`
+	Max          *string              `json:"max"`
+	Expression   *SQLExpression       `json:"expression"`
+	Aggregation  *AggregateExpression `json:"aggregation"`
+	PerPartition *bool                `json:"perPartition,omitempty"`
+	Acceptable   []string             `json:"ok,omitempty"`
 }
 
 // ColumnInfo ..

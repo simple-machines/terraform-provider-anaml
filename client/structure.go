@@ -15,6 +15,11 @@ import (
 var namePattern = regexp.MustCompile(`^[a-z][a-z0-9_]*$`)
 var identifierPattern = regexp.MustCompile(`^[0-9]+$`)
 
+type Bag = map[string]interface{}
+func makeBags(num int) []Bag {
+	return make([]Bag, 0, num)
+}
+
 // Takes the result of flatmap. Expand for an array of strings
 // and returns a []string
 func expandStringList(configured []interface{}) []string {
@@ -42,7 +47,7 @@ func expandIdentifierList(configured []interface{}) []int {
 	return vs
 }
 
-func expandSingleMap(value interface{}) (map[string]interface{}, error) {
+func expandSingleMap(value interface{}) (Bag, error) {
 	if value == nil {
 		return nil, errors.New("Value is null")
 	}
@@ -56,7 +61,7 @@ func expandSingleMap(value interface{}) (map[string]interface{}, error) {
 		return nil, errors.New("Array is empty")
 	}
 
-	single, ok := array[0].(map[string]interface{})
+	single, ok := array[0].(Bag)
 	if !ok {
 		return nil, fmt.Errorf("Value at index 0 of array is not a map. Value: %v", array[0])
 	}
