@@ -186,6 +186,11 @@ func excludedTables() *schema.Resource {
 func monitoringTables() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
+			"full_scan": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
 			"tables": {
 				Type:        schema.TypeSet,
 				Description: "Tables to monitor with this job",
@@ -345,9 +350,11 @@ func resourceTableMonitoringDelete(d *schema.ResourceData, m interface{}) error 
 
 func expandTableMonitoringPlan(d *schema.ResourceData) (*MonitoringPlan, error) {
 	if inclusion, _ := expandSingleMap(d.Get("include")); inclusion != nil {
+		fullScan, _ := d.Get("full_scan").(bool)
 		plan := MonitoringPlan{
-			Type:   "inclusion",
-			Tables: expandIdentifierList(inclusion["tables"].(*schema.Set).List()),
+			Type:     "inclusion",
+			Tables:   expandIdentifierList(inclusion["tables"].(*schema.Set).List()),
+			FullScan: &fullScan,
 		}
 		return &plan, nil
 	}
@@ -370,6 +377,7 @@ func flattenTableMonitoringPlan(plan *MonitoringPlan) (string, []map[string]inte
 	if plan.Type == "inclusion" {
 		single := make(map[string]interface{})
 		single["tables"] = identifierList(plan.Tables)
+		single["full_scan"] = plan.FullScan
 		res = append(res, single)
 		loc = "include"
 	} else {

@@ -16,6 +16,7 @@ var namePattern = regexp.MustCompile(`^[a-z][a-z0-9_]*$`)
 var identifierPattern = regexp.MustCompile(`^[0-9]+$`)
 
 type Bag = map[string]interface{}
+
 func makeBags(num int) []Bag {
 	return make([]Bag, 0, num)
 }

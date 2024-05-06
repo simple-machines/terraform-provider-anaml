@@ -566,6 +566,7 @@ type MonitoringPlan struct {
 	Type     string `json:"adt_type"`
 	Tables   []int  `json:"tables,omitempty"`
 	Excluded []int  `json:"excluded"`
+	FullScan *bool  `json:"fullScan"`
 }
 
 // TableMonitoring ...
