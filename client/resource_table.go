@@ -342,93 +342,240 @@ func pivotTableSchema() *schema.Resource {
 	}
 }
 
+func domainModellingCommon() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"name": {
+			Type:         schema.TypeString,
+			Description:  "Name of the Table",
+			Required:     true,
+			ValidateFunc: validateAnamlName(),
+		},
+		"description": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"dimension": {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem:     &schema.Resource{},
+		},
+		"measure": {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"units": {
+						Type:        schema.TypeString,
+						Description: "Units for the measure",
+						Optional:    true,
+					},
+				},
+			},
+		},
+		"not_null": {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"name": {
+						Type:        schema.TypeString,
+						Description: "Custom name for the check",
+						Optional:    true,
+					},
+					"threshold": {
+						Type:     schema.TypeFloat,
+						Optional: true,
+					},
+				},
+			},
+		},
+		"unique": {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"name": {
+						Type:        schema.TypeString,
+						Description: "Custom name for the check",
+						Optional:    true,
+					},
+				},
+			},
+		},
+		"not_constant": {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"name": {
+						Type:        schema.TypeString,
+						Description: "Custom name for the check",
+						Optional:    true,
+					},
+					"enforce_in_partitions": {
+						Type:     schema.TypeBool,
+						Optional: true,
+						Default:  true,
+					},
+				},
+			},
+		},
+		"accepted_values": {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"name": {
+						Type:        schema.TypeString,
+						Description: "Custom name for the check",
+						Optional:    true,
+					},
+					"values": {
+						Type:        schema.TypeSet,
+						Description: "Features to include in the feature set",
+						Required:    true,
+
+						Elem: &schema.Schema{
+							Type:         schema.TypeString,
+							ValidateFunc: validation.StringIsNotWhiteSpace,
+						},
+					},
+				},
+			},
+		},
+		"within_range": {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"name": {
+						Type:        schema.TypeString,
+						Description: "Custom name for the check",
+						Optional:    true,
+					},
+					"minimum": {
+						Type:        schema.TypeString,
+						Description: "Minimum value (inclusive)",
+						Optional:    true,
+					},
+					"maximum": {
+						Type:        schema.TypeString,
+						Description: "Maximum value (inclusive)",
+						Optional:    true,
+					},
+					"threshold": {
+						Type:     schema.TypeFloat,
+						Optional: true,
+					},
+				},
+			},
+		},
+		"aggregate_within_range": {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"name": {
+						Type:        schema.TypeString,
+						Description: "Custom name for the check",
+						Optional:    true,
+					},
+					"aggregation": {
+						Type:        schema.TypeString,
+						Required:    true,
+						Description: "The aggregation to perform.",
+						ValidateFunc: validation.StringInSlice([]string{
+							"sum", "count", "countdistinct", "avg", "std", "min", "max",
+						}, false),
+					},
+					"minimum": {
+						Type:        schema.TypeString,
+						Description: "Minimum value (inclusive)",
+						Optional:    true,
+					},
+					"maximum": {
+						Type:        schema.TypeString,
+						Description: "Maximum value (inclusive)",
+						Optional:    true,
+					},
+				},
+			},
+		},
+		"row_check": {
+			Type:     schema.TypeList,
+			Optional: true,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"name": {
+						Type:        schema.TypeString,
+						Description: "Custom name for the check",
+						Optional:    true,
+					},
+					"expression": {
+						Type:     schema.TypeString,
+						Optional: true,
+					},
+					"threshold": {
+						Type:     schema.TypeFloat,
+						Optional: true,
+					},
+				},
+			},
+		},
+		"aggregate_check": {
+			Type:     schema.TypeList,
+			Optional: true,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"name": {
+						Type:        schema.TypeString,
+						Description: "Custom name for the check",
+						Optional:    true,
+					},
+					"expression": {
+						Type:        schema.TypeString,
+						Description: "Units for the measure",
+						Optional:    true,
+					},
+				},
+			},
+		},
+	}
+}
+
 func domainModellingSchema() *schema.Resource {
+	var virtualSchema = domainModellingCommon()
+	virtualSchema["expression"] = &schema.Schema{
+		Type:         schema.TypeString,
+		Description:  "Name of the Table",
+		Required:     true,
+		ValidateFunc: validation.StringIsNotWhiteSpace,
+	}
+
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"base": {
 				Type:        schema.TypeList,
 				Description: "An existing column to annotate",
 				Optional:    true,
-
 				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": {
-							Type:         schema.TypeString,
-							Description:  "Name of the Table",
-							Required:     true,
-							ValidateFunc: validateAnamlName(),
-						},
-						"description": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"dimension": {
-							Type:     schema.TypeList,
-							Optional: true,
-							MaxItems: 1,
-							Elem:     &schema.Resource{},
-						},
-						"measure": {
-							Type:     schema.TypeList,
-							Optional: true,
-							MaxItems: 1,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"units": {
-										Type:        schema.TypeString,
-										Description: "Units for the measure",
-										Optional:    true,
-									},
-								},
-							},
-						},
-					},
+					Schema: domainModellingCommon(),
 				},
 			},
 			"virtual": {
 				Type:        schema.TypeList,
 				Description: "Dimensions tables to join to.",
 				Optional:    true,
-
 				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": {
-							Type:         schema.TypeString,
-							Description:  "Name of the Table",
-							Required:     true,
-							ValidateFunc: validateAnamlName(),
-						},
-						"description": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"expression": {
-							Type:         schema.TypeString,
-							Description:  "Name of the Table",
-							Required:     true,
-							ValidateFunc: validation.StringIsNotWhiteSpace,
-						},
-						"dimension": {
-							Type:     schema.TypeList,
-							Optional: true,
-							MaxItems: 1,
-							Elem:     &schema.Resource{},
-						},
-						"measure": {
-							Type:     schema.TypeList,
-							Optional: true,
-							MaxItems: 1,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"units": {
-										Type:        schema.TypeString,
-										Description: "Units for the measure",
-										Optional:    true,
-									},
-								},
-							},
-						},
-					},
+					Schema: virtualSchema,
 				},
 			},
 		},
@@ -453,7 +600,7 @@ func domainModellingSuppressFunc() schema.SchemaDiffSuppressFunc {
 		}
 		size := 0
 		for _, model := range modelSlice {
-			if mapped, ok := model.(map[string]interface{}); ok {
+			if mapped, ok := model.(Bag); ok {
 				size += sizeOfSlice(mapped["base"])
 				size += sizeOfSlice(mapped["virtual"])
 			}
@@ -722,10 +869,10 @@ func buildTable(d *schema.ResourceData) (*Table, error) {
 func expandEntityDescription(d *schema.ResourceData) *EventDescription {
 	events := d.Get("event").([]interface{})
 	if len(events) == 1 {
-		r := events[0].(map[string]interface{})
+		r := events[0].(Bag)
 		entities := make(map[string]string)
 
-		for k, v := range r["entities"].(map[string]interface{}) {
+		for k, v := range r["entities"].(Bag) {
 			entities[k] = v.(string)
 		}
 
@@ -741,10 +888,10 @@ func expandEntityDescription(d *schema.ResourceData) *EventDescription {
 
 	scd2s := d.Get("scd2").([]interface{})
 	if len(scd2s) == 1 {
-		r := scd2s[0].(map[string]interface{})
+		r := scd2s[0].(Bag)
 		entities := make(map[string]string)
 
-		for k, v := range r["entities"].(map[string]interface{}) {
+		for k, v := range r["entities"].(Bag) {
 			entities[k] = v.(string)
 		}
 
@@ -763,10 +910,10 @@ func expandEntityDescription(d *schema.ResourceData) *EventDescription {
 
 	pits := d.Get("point_in_time").([]interface{})
 	if len(pits) == 1 {
-		r := pits[0].(map[string]interface{})
+		r := pits[0].(Bag)
 		entities := make(map[string]string)
 
-		for k, v := range r["entities"].(map[string]interface{}) {
+		for k, v := range r["entities"].(Bag) {
 			entities[k] = v.(string)
 		}
 
@@ -787,7 +934,7 @@ func expandEntityDescription(d *schema.ResourceData) *EventDescription {
 
 func flattenEntityDescription(d *schema.ResourceData, ed *EventDescription) error {
 	if ed != nil {
-		single := make(map[string]interface{})
+		single := make(Bag)
 		single["entities"] = ed.Entities
 
 		td := ed.TimestampInfo
@@ -843,13 +990,13 @@ func flattenEntityDescription(d *schema.ResourceData, ed *EventDescription) erro
 	return nil
 }
 
-func expandViewSpecification(val map[string]interface{}) (string, []int) {
+func expandViewSpecification(val Bag) (string, []int) {
 	expression := val["expression"].(string)
 	sourcesList := expandIdentifierList(val["sources"].([]interface{}))
 	return expression, sourcesList
 }
 
-func expandSourceReferences(val map[string]interface{}) *SourceReference {
+func expandSourceReferences(val Bag) *SourceReference {
 	sourceID, _ := strconv.Atoi(val["source"].(string))
 
 	source_type := ""
@@ -873,7 +1020,7 @@ func expandSourceReferences(val map[string]interface{}) *SourceReference {
 	return &parsed
 }
 
-func expandEventStoreReferences(val map[string]interface{}) *SourceReference {
+func expandEventStoreReferences(val Bag) *SourceReference {
 	store, _ := strconv.Atoi(val["store"].(string))
 	entity, _ := strconv.Atoi(val["entity"].(string))
 	topic, _ := val["topic"].(string)
@@ -886,26 +1033,26 @@ func expandEventStoreReferences(val map[string]interface{}) *SourceReference {
 	return &parsed
 }
 
-func expandJoinSpecification(val map[string]interface{}) (*int, []int) {
+func expandJoinSpecification(val Bag) (*int, []int) {
 	store, _ := strconv.Atoi(val["table"].(string))
 	joinList := expandIdentifierList(val["joins"].([]interface{}))
 	return &store, joinList
 }
 
-func expandPivotSpecification(val map[string]interface{}) (int, []int) {
+func expandPivotSpecification(val Bag) (int, []int) {
 	entity_mapping, _ := strconv.Atoi(val["entity_mapping"].(string))
 	extra_features := expandIdentifierList(val["features"].([]interface{}))
 	return entity_mapping, extra_features
 }
 
-func flattenSourceReferences(source *SourceReference) []map[string]interface{} {
-	res := make([]map[string]interface{}, 0, 1)
+func flattenSourceReferences(source *SourceReference) []Bag {
+	res := make([]Bag, 0, 1)
 
 	if source == nil {
 		return res
 	}
 
-	single := make(map[string]interface{})
+	single := make(Bag)
 	single["source"] = strconv.Itoa(source.SourceID)
 	single["folder"] = source.Folder
 	single["table_name"] = source.TableName
@@ -915,14 +1062,14 @@ func flattenSourceReferences(source *SourceReference) []map[string]interface{} {
 	return res
 }
 
-func flattenViewReferences(table *Table) []map[string]interface{} {
-	res := make([]map[string]interface{}, 0, 1)
+func flattenViewReferences(table *Table) []Bag {
+	res := make([]Bag, 0, 1)
 
 	if table == nil {
 		return res
 	}
 
-	single := make(map[string]interface{})
+	single := make(Bag)
 	single["expression"] = table.Expression
 	single["sources"] = identifierList(table.Sources)
 	res = append(res, single)
@@ -930,14 +1077,14 @@ func flattenViewReferences(table *Table) []map[string]interface{} {
 	return res
 }
 
-func flattenPivotReferences(table *Table) []map[string]interface{} {
-	res := make([]map[string]interface{}, 0, 1)
+func flattenPivotReferences(table *Table) []Bag {
+	res := make([]Bag, 0, 1)
 
 	if table == nil {
 		return res
 	}
 
-	single := make(map[string]interface{})
+	single := make(Bag)
 	single["entity_mapping"] = strconv.Itoa(table.EntityMapping)
 	single["features"] = identifierList(table.ExtraFeatures)
 	res = append(res, single)
@@ -945,14 +1092,14 @@ func flattenPivotReferences(table *Table) []map[string]interface{} {
 	return res
 }
 
-func flattenEventStoreReferences(source *SourceReference) []map[string]interface{} {
-	res := make([]map[string]interface{}, 0, 1)
+func flattenEventStoreReferences(source *SourceReference) []Bag {
+	res := make([]Bag, 0, 1)
 
 	if source == nil {
 		return res
 	}
 
-	single := make(map[string]interface{})
+	single := make(Bag)
 	single["store"] = strconv.Itoa(source.EventStoreId)
 	single["entity"] = strconv.Itoa(source.Entity)
 	single["topic"] = source.Topic
@@ -961,13 +1108,13 @@ func flattenEventStoreReferences(source *SourceReference) []map[string]interface
 	return res
 }
 
-func flattenJoinTableSpecification(table *Table) []map[string]interface{} {
-	res := make([]map[string]interface{}, 0, 1)
+func flattenJoinTableSpecification(table *Table) []Bag {
+	res := make([]Bag, 0, 1)
 	if table.Base == nil {
 		return res
 	}
 
-	single := make(map[string]interface{})
+	single := make(Bag)
 	single["table"] = strconv.Itoa(*table.Base)
 	single["joins"] = identifierList(table.Joins)
 	res = append(res, single)
@@ -975,7 +1122,7 @@ func flattenJoinTableSpecification(table *Table) []map[string]interface{} {
 	return res
 }
 
-func expandColumnKind(info map[string]interface{}) *ColumnKind {
+func expandColumnKind(info Bag) *ColumnKind {
 	dimensions := info["dimension"].([]interface{})
 	measures := info["measure"].([]interface{})
 	for _, _ = range dimensions {
@@ -987,7 +1134,7 @@ func expandColumnKind(info map[string]interface{}) *ColumnKind {
 		ret := ColumnKind{
 			Type: "measure",
 		}
-		if measure, ok := measureRaw.(map[string]interface{}); ok {
+		if measure, ok := measureRaw.(Bag); ok {
 			if fetched, ok := measure["units"].(string); ok && fetched != "" {
 				ret.Units = &fetched
 			}
@@ -998,12 +1145,116 @@ func expandColumnKind(info map[string]interface{}) *ColumnKind {
 	return nil
 }
 
+func expandColumnConstraints(info Bag) []ColumnConstraint {
+	res := make([]ColumnConstraint, 0, 0)
+
+	extractName := func(single Bag) *string {
+		if fetched, ok := single["name"].(string); ok && fetched != "" {
+			return &fetched
+		}
+		return nil
+	}
+
+	extractConstraint := func(raw interface{}, constraintType string) ColumnConstraint {
+		single := raw.(Bag)
+		built := ColumnConstraint{
+			Type: constraintType,
+			Name: extractName(single),
+		}
+		return built
+	}
+
+	for _, raw := range info["not_null"].([]interface{}) {
+		built := extractConstraint(raw, ColumnConstraint_NOT_NULL)
+		if fetched, ok := raw.(Bag)["threshold"].(float64); ok && fetched != 0.0 {
+			built.Threshold = &fetched
+		}
+		res = append(res, built)
+	}
+
+	for _, raw := range info["unique"].([]interface{}) {
+		built := extractConstraint(raw, ColumnConstraint_UNIQUE)
+		res = append(res, built)
+	}
+
+	for _, raw := range info["not_constant"].([]interface{}) {
+		built := extractConstraint(raw, ColumnConstraint_NOT_CONSTANT)
+		if fetched, ok := raw.(Bag)["enforce_in_partitions"].(bool); ok {
+			built.PerPartition = &fetched
+		}
+		res = append(res, built)
+	}
+
+	for _, raw := range info["within_range"].([]interface{}) {
+		built := extractConstraint(raw, ColumnConstraint_IN_RANGE)
+		if fetched, ok := raw.(Bag)["minimum"].(string); ok && fetched != "" {
+			built.Min = &fetched
+		}
+		if fetched, ok := raw.(Bag)["maximum"].(string); ok && fetched != "" {
+			built.Max = &fetched
+		}
+		if fetched, ok := raw.(Bag)["threshold"].(float64); ok && fetched != 0.0 {
+			built.Threshold = &fetched
+		}
+		res = append(res, built)
+	}
+
+	for _, raw := range info["aggregate_within_range"].([]interface{}) {
+		built := extractConstraint(raw, ColumnConstraint_STATISTICS_IN_RANGE)
+		if fetched, ok := raw.(Bag)["aggregation"].(string); ok && fetched != "" {
+			built.Aggregation = &AggregateExpression{
+				Type: fetched,
+			}
+		}
+		if fetched, ok := raw.(Bag)["minimum"].(string); ok && fetched != "" {
+			built.Min = &fetched
+		}
+		if fetched, ok := raw.(Bag)["maximum"].(string); ok && fetched != "" {
+			built.Max = &fetched
+		}
+		res = append(res, built)
+	}
+
+	for _, raw := range info["row_check"].([]interface{}) {
+		built := extractConstraint(raw, ColumnConstraint_ROW_CHECK)
+		if fetched, ok := raw.(Bag)["expression"].(string); ok && fetched != "" {
+			built.Expression = &SQLExpression{
+				SQL: fetched,
+			}
+		}
+		if fetched, ok := raw.(Bag)["threshold"].(float64); ok && fetched != 0.0 {
+			built.Threshold = &fetched
+		}
+		res = append(res, built)
+	}
+
+	for _, raw := range info["aggregate_check"].([]interface{}) {
+		built := extractConstraint(raw, ColumnConstraint_AGGREGATE_CHECK)
+		if fetched, ok := raw.(Bag)["expression"].(string); ok && fetched != "" {
+			built.Expression = &SQLExpression{
+				SQL: fetched,
+			}
+		}
+		res = append(res, built)
+	}
+
+	for _, raw := range info["accepted_values"].([]interface{}) {
+		built := extractConstraint(raw, ColumnConstraint_ACCEPTED_VALUES)
+		if fetched, ok := raw.(Bag)["values"].(*schema.Set); ok {
+			built.Acceptable = expandStringList(fetched.List())
+		}
+		res = append(res, built)
+	}
+
+	return res
+}
+
 func expandColumnInfo(d *schema.ResourceData) (map[string]ColumnInfo, error) {
 	modelling := d.Get("domain_modelling").([]interface{})
 	res := make(map[string]ColumnInfo)
 
 	for _, domain := range modelling {
-		val := domain.(map[string]interface{})
+		val := domain.(Bag)
 		bases := val["base"].([]interface{})
 		virtuals := val["virtual"].([]interface{})
 
@@ -1026,13 +1277,15 @@ func expandColumnInfo(d *schema.ResourceData) (map[string]ColumnInfo, error) {
 }
 
 func createColumnInfo(column interface{}, columnType string) (string, ColumnInfo, error) {
-	value, ok := column.(map[string]interface{})
+	value, ok := column.(Bag)
 	if !ok {
 		return "", ColumnInfo{}, fmt.Errorf("Expected Column info, couldn't derive")
 	}
 	name := value["name"].(string)
 	description := value["description"].(string)
 	kind := expandColumnKind(value)
+	constraints := expandColumnConstraints(value)
+
 	columnRepresentation := ColumnRepresentation{
 		Type: columnType,
 	}
@@ -1048,36 +1301,105 @@ func createColumnInfo(column interface{}, columnType string) (string, ColumnInfo
 		Description: description,
 		Column:      &columnRepresentation,
 		Kind:        kind,
+		Constraints: constraints,
 	}, nil
 }
 
-func flattenColumnKind(kind *ColumnKind) ([]map[string]interface{}, []map[string]interface{}) {
+func flattenColumnKind(kind *ColumnKind) ([]Bag, []Bag) {
 	if kind != nil {
 		if kind.Type == "dimension" {
-			single := make(map[string]interface{})
-			return []map[string]interface{}{single}, nil
+			single := make(Bag)
+			return []Bag{single}, nil
 		}
 		if kind.Type == "measure" {
-			single := make(map[string]interface{})
+			single := make(Bag)
 			if kind.Units != nil {
 				single["units"] = *kind.Units
 			}
-			return nil, []map[string]interface{}{single}
+			return nil, []Bag{single}
 		}
 	}
 	return nil, nil
 }
 
+func flattenColumnConstraints(constraints []ColumnConstraint) ([]Bag, []Bag, []Bag, []Bag, []Bag, []Bag, []Bag, []Bag) {
+	notnulls := makeBags(1)
+	uniques := makeBags(1)
+	notconstants := makeBags(1)
+	inranges := makeBags(1)
+	agginranges := makeBags(1)
+	rowchecks := makeBags(1)
+	aggregatechecks := makeBags(1)
+	acceptedvalues := makeBags(1)
+
+	for _, constraint := range constraints {
+		single := make(Bag)
+		single["name"] = constraint.Name
+		if constraint.Type == ColumnConstraint_NOT_NULL {
+			if constraint.Threshold != nil {
+				single["threshold"] = constraint.Threshold
+			}
+			notnulls = append(notnulls, single)
+		} else if constraint.Type == ColumnConstraint_UNIQUE {
+			uniques = append(uniques, single)
+		} else if constraint.Type == ColumnConstraint_NOT_CONSTANT {
+			single["enforce_in_partitions"] = constraint.PerPartition
+			notconstants = append(notconstants, single)
+		} else if constraint.Type == ColumnConstraint_IN_RANGE {
+			single["minimum"] = constraint.Min
+			single["maximum"] = constraint.Max
+			if constraint.Threshold != nil {
+				single["threshold"] = constraint.Threshold
+			}
+			inranges = append(inranges, single)
+		} else if constraint.Type == ColumnConstraint_STATISTICS_IN_RANGE {
+			single["minimum"] = constraint.Min
+			single["maximum"] = constraint.Max
+			if constraint.Aggregation != nil {
+				single["aggregation"] = constraint.Aggregation.Type
+			}
+			agginranges = append(agginranges, single)
+		} else if constraint.Type == ColumnConstraint_ROW_CHECK {
+			if constraint.Expression != nil {
+				single["expression"] = constraint.Expression.SQL
+			}
+			if constraint.Threshold != nil {
+				single["threshold"] = constraint.Threshold
+			}
+			rowchecks = append(rowchecks, single)
+		} else if constraint.Type == ColumnConstraint_AGGREGATE_CHECK {
+			if constraint.Expression != nil {
+				single["expression"] = constraint.Expression.SQL
+			}
+			aggregatechecks = append(aggregatechecks, single)
+		} else if constraint.Type == ColumnConstraint_ACCEPTED_VALUES {
+			single["values"] = constraint.Acceptable
+			acceptedvalues = append(acceptedvalues, single)
+		}
+	}
+
+	return notnulls, uniques, notconstants, inranges, agginranges, rowchecks, aggregatechecks, acceptedvalues
+}
+
 func flattenColumnInfo(infos map[string]ColumnInfo) interface{} {
-	res := make([]map[string]interface{}, 0, 1)
-	bases := make([]map[string]interface{}, 0, len(infos))
-	virtuals := make([]map[string]interface{}, 0, len(infos))
+	res := makeBags(1)
+	bases := makeBags(len(infos))
+	virtuals := makeBags(len(infos))
 
 	for k, info := range infos {
-		single := make(map[string]interface{})
+		single := make(Bag)
 		dimensions, measures := flattenColumnKind(info.Kind)
+		notnulls, uniques, notconstants, inranges, agginranges, rowchecks, aggregatechecks, acceptedvalues := flattenColumnConstraints(info.Constraints)
 		single["dimension"] = dimensions
 		single["measure"] = measures
+		single["not_null"] = notnulls
+		single["unique"] = uniques
+		single["not_constant"] = notconstants
+		single["within_range"] = inranges
+		single["aggregate_within_range"] = agginranges
+		single["row_check"] = rowchecks
+		single["aggregate_check"] = aggregatechecks
+		single["accepted_values"] = acceptedvalues
 
 		if info.Column.Type == "base" {
 			single["name"] = k
@@ -1091,7 +1413,7 @@ func flattenColumnInfo(infos map[string]ColumnInfo) interface{} {
 		}
 	}
 
-	single := make(map[string]interface{})
+	single := make(Bag)
 	single["base"] = bases
 	single["virtual"] = virtuals
 	res = append(res, single)
