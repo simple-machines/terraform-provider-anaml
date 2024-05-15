@@ -158,6 +158,7 @@ type Feature struct {
 	TemplateID  *int                 `json:"template,omitempty"`
 	Labels      []string             `json:"labels"`
 	Attributes  []Attribute          `json:"attributes"`
+	Constraints []ColumnConstraint   `json:"constraints,omitempty"`
 }
 
 // FeatureTemplate ... again, completely normalised.

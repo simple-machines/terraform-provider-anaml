@@ -48,6 +48,17 @@ func expandIdentifierList(configured []interface{}) []int {
 	return vs
 }
 
+func unionSchemas(items []map[string]*schema.Schema) map[string]*schema.Schema {
+	res := make(map[string]*schema.Schema)
+	for _, item := range items {
+		for k, v := range item {
+			res[k] = v
+		}
+	}
+
+	return res
+}
+
 func expandSingleMap(value interface{}) (Bag, error) {
 	if value == nil {
 		return nil, errors.New("Value is null")
