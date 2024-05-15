@@ -1145,110 +1145,6 @@ func expandColumnKind(info Bag) *ColumnKind {
 	return nil
 }
 
-func expandColumnConstraints(info Bag) []ColumnConstraint {
-	res := make([]ColumnConstraint, 0, 0)
-
-	extractName := func(single Bag) *string {
-		if fetched, ok := single["name"].(string); ok && fetched != "" {
-			return &fetched
-		}
-		return nil
-	}
-
-	extractConstraint := func(raw interface{}, constraintType string) ColumnConstraint {
-		single := raw.(Bag)
-		built := ColumnConstraint{
-			Type: constraintType,
-			Name: extractName(single),
-		}
-		return built
-	}
-
-	for _, raw := range info["not_null"].([]interface{}) {
-		built := extractConstraint(raw, ColumnConstraint_NOT_NULL)
-		if fetched, ok := raw.(Bag)["threshold"].(float64); ok && fetched != 0.0 {
-			built.Threshold = &fetched
-		}
-		res = append(res, built)
-	}
-
-	for _, raw := range info["unique"].([]interface{}) {
-		built := extractConstraint(raw, ColumnConstraint_UNIQUE)
-		res = append(res, built)
-	}
-
-	for _, raw := range info["not_constant"].([]interface{}) {
-		built := extractConstraint(raw, ColumnConstraint_NOT_CONSTANT)
-		if fetched, ok := raw.(Bag)["enforce_in_partitions"].(bool); ok {
-			built.PerPartition = &fetched
-		}
-		res = append(res, built)
-	}
-
-	for _, raw := range info["within_range"].([]interface{}) {
-		built := extractConstraint(raw, ColumnConstraint_IN_RANGE)
-		if fetched, ok := raw.(Bag)["minimum"].(string); ok && fetched != "" {
-			built.Min = &fetched
-		}
-		if fetched, ok := raw.(Bag)["maximum"].(string); ok && fetched != "" {
-			built.Max = &fetched
-		}
-		if fetched, ok := raw.(Bag)["threshold"].(float64); ok && fetched != 0.0 {
-			built.Threshold = &fetched
-		}
-		res = append(res, built)
-	}
-
-	for _, raw := range info["aggregate_within_range"].([]interface{}) {
-		built := extractConstraint(raw, ColumnConstraint_STATISTICS_IN_RANGE)
-		if fetched, ok := raw.(Bag)["aggregation"].(string); ok && fetched != "" {
-			built.Aggregation = &AggregateExpression{
-				Type: fetched,
-			}
-		}
-		if fetched, ok := raw.(Bag)["minimum"].(string); ok && fetched != "" {
-			built.Min = &fetched
-		}
-		if fetched, ok := raw.(Bag)["maximum"].(string); ok && fetched != "" {
-			built.Max = &fetched
-		}
-		res = append(res, built)
-	}
-
-	for _, raw := range info["row_check"].([]interface{}) {
-		built := extractConstraint(raw, ColumnConstraint_ROW_CHECK)
-		if fetched, ok := raw.(Bag)["expression"].(string); ok && fetched != "" {
-			built.Expression = &SQLExpression{
-				SQL: fetched,
-			}
-		}
-		if fetched, ok := raw.(Bag)["threshold"].(float64); ok && fetched != 0.0 {
-			built.Threshold = &fetched
-		}
-		res = append(res, built)
-	}
-
-	for _, raw := range info["aggregate_check"].([]interface{}) {
-		built := extractConstraint(raw, ColumnConstraint_AGGREGATE_CHECK)
-		if fetched, ok := raw.(Bag)["expression"].(string); ok && fetched != "" {
-			built.Expression = &SQLExpression{
-				SQL: fetched,
-			}
-		}
-		res = append(res, built)
-	}
-
-	for _, raw := range info["accepted_values"].([]interface{}) {
-		built := extractConstraint(raw, ColumnConstraint_ACCEPTED_VALUES)
-		if fetched, ok := raw.(Bag)["values"].(*schema.Set); ok {
-			built.Acceptable = expandStringList(fetched.List())
-		}
-		res = append(res, built)
-	}
-
-	return res
-}
-
 func expandColumnInfo(d *schema.ResourceData) (map[string]ColumnInfo, error) {
 	modelling := d.Get("domain_modelling").([]interface{})
 	res := make(map[string]ColumnInfo)
@@ -1322,65 +1218,6 @@ func flattenColumnKind(kind *ColumnKind) ([]Bag, []Bag) {
 	return nil, nil
 }
 
-func flattenColumnConstraints(constraints []ColumnConstraint) ([]Bag, []Bag, []Bag, []Bag, []Bag, []Bag, []Bag, []Bag) {
-	notnulls := makeBags(1)
-	uniques := makeBags(1)
-	notconstants := makeBags(1)
-	inranges := makeBags(1)
-	agginranges := makeBags(1)
-	rowchecks := makeBags(1)
-	aggregatechecks := makeBags(1)
-	acceptedvalues := makeBags(1)
-
-	for _, constraint := range constraints {
-		single := make(Bag)
-		single["name"] = constraint.Name
-		if constraint.Type == ColumnConstraint_NOT_NULL {
-			if constraint.Threshold != nil {
-				single["threshold"] = constraint.Threshold
-			}
-			notnulls = append(notnulls, single)
-		} else if constraint.Type == ColumnConstraint_UNIQUE {
-			uniques = append(uniques, single)
-		} else if constraint.Type == ColumnConstraint_NOT_CONSTANT {
-			single["enforce_in_partitions"] = constraint.PerPartition
-			notconstants = append(notconstants, single)
-		} else if constraint.Type == ColumnConstraint_IN_RANGE {
-			single["minimum"] = constraint.Min
-			single["maximum"] = constraint.Max
-			if constraint.Threshold != nil {
-				single["threshold"] = constraint.Threshold
-			}
-			inranges = append(inranges, single)
-		} else if constraint.Type == ColumnConstraint_STATISTICS_IN_RANGE {
-			single["minimum"] = constraint.Min
-			single["maximum"] = constraint.Max
-			if constraint.Aggregation != nil {
-				single["aggregation"] = constraint.Aggregation.Type
-			}
-			agginranges = append(agginranges, single)
-		} else if constraint.Type == ColumnConstraint_ROW_CHECK {
-			if constraint.Expression != nil {
-				single["expression"] = constraint.Expression.SQL
-			}
-			if constraint.Threshold != nil {
-				single["threshold"] = constraint.Threshold
-			}
-			rowchecks = append(rowchecks, single)
-		} else if constraint.Type == ColumnConstraint_AGGREGATE_CHECK {
-			if constraint.Expression != nil {
-				single["expression"] = constraint.Expression.SQL
-			}
-			aggregatechecks = append(aggregatechecks, single)
-		} else if constraint.Type == ColumnConstraint_ACCEPTED_VALUES {
-			single["values"] = constraint.Acceptable
-			acceptedvalues = append(acceptedvalues, single)
-		}
-	}
-
-	return notnulls, uniques, notconstants, inranges, agginranges, rowchecks, aggregatechecks, acceptedvalues
-}
-
 func flattenColumnInfo(infos map[string]ColumnInfo) interface{} {
 	res := makeBags(1)
 	bases := makeBags(len(infos))
@@ -1389,17 +1226,13 @@ func flattenColumnInfo(infos map[string]ColumnInfo) interface{} {
 	for k, info := range infos {
 		single := make(Bag)
 		dimensions, measures := flattenColumnKind(info.Kind)
-		notnulls, uniques, notconstants, inranges, agginranges, rowchecks, aggregatechecks, acceptedvalues := flattenColumnConstraints(info.Constraints)
+		constraints := flattenColumnConstraints(info.Constraints)
 		single["dimension"] = dimensions
 		single["measure"] = measures
-		single["not_null"] = notnulls
-		single["unique"] = uniques
-		single["not_constant"] = notconstants
-		single["within_range"] = inranges
-		single["aggregate_within_range"] = agginranges
-		single["row_check"] = rowchecks
-		single["aggregate_check"] = aggregatechecks
-		single["accepted_values"] = acceptedvalues
+
+		for ctor, vs := range constraints {
+			single[ctor] = vs
+		}
 
 		if info.Column.Type == "base" {
 			single["name"] = k
