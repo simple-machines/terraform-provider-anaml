@@ -521,7 +521,7 @@ func domainModellingCommon() map[string]*schema.Schema {
 					},
 					"expression": {
 						Type:     schema.TypeString,
-						Optional: true,
+						Required: true,
 					},
 					"threshold": {
 						Type:     schema.TypeFloat,
