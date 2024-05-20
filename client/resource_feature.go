@@ -187,9 +187,9 @@ func featureModellingSchema() *schema.Resource {
 				},
 			},
 			"unique": {
-				Type:     schema.TypeList,
-				Optional: true,
-				MaxItems: 0,
+				Type:          schema.TypeList,
+				Optional:      true,
+				ConflictsWith: []string{"domain_modelling"},
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
@@ -304,9 +304,9 @@ func featureModellingSchema() *schema.Resource {
 				},
 			},
 			"row_check": {
-				Type:     schema.TypeList,
-				Optional: true,
-				MaxItems: 0,
+				Type:          schema.TypeList,
+				Optional:      true,
+				ConflictsWith: []string{"domain_modelling"},
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
@@ -316,7 +316,7 @@ func featureModellingSchema() *schema.Resource {
 						},
 						"expression": {
 							Type:     schema.TypeString,
-							Optional: true,
+							Required: true,
 						},
 						"threshold": {
 							Type:     schema.TypeFloat,
@@ -326,9 +326,9 @@ func featureModellingSchema() *schema.Resource {
 				},
 			},
 			"aggregate_check": {
-				Type:     schema.TypeList,
-				Optional: true,
-				MaxItems: 0,
+				Type:          schema.TypeList,
+				Optional:      true,
+				ConflictsWith: []string{"domain_modelling"},
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
