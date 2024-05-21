@@ -1073,3 +1073,32 @@ resource "anaml-operations_view_materialisation_job" "view_materialisation_strea
 
   labels = [ anaml-operations_label_restriction.terraform.text ]
 }
+
+resource "anaml_metric_set" "average_baskets" {
+  name   = "average_baskets"
+  description = "This metric set shows the average baskets grouped by the customers state and their gender."
+
+  tables_source {
+    table = anaml_table.transactions.id
+  }
+
+  dimension {
+    name        = "customer_state"
+    expression  = "customer_state"
+  }
+  dimension {
+    name        = "gender"
+    expression  = "gender"
+  }
+
+  metric {
+    name = "average_basket_spend"
+    select = "average_basket_spend"
+    aggregate = "avg"
+  }
+  metric {
+    name = "total_basket_spend"
+    select = "total_basket_spend"
+    aggregate = "sum"
+  }
+}
