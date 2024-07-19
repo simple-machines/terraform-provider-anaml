@@ -2,6 +2,7 @@ package anaml
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -19,8 +20,6 @@ one or more columns from that table. Each Feature is generated for a single enti
 There are two types of Features:
 - Event Features
 - Row Features
-
-
 `
 
 func ResourceFeature() *schema.Resource {
@@ -153,7 +152,245 @@ func ResourceFeature() *schema.Resource {
 				Description: "Attributes (key value pairs) to attach to the object",
 				Elem:        attributeSchema(),
 			},
+
+			"domain_modelling": {
+				Type:             schema.TypeList,
+				Optional:         true,
+				MaxItems:         1,
+				Description:      "Model dimensions and measures for tables, and add virtual columns as simple SQL expressions",
+				Elem:             featureModellingSchema(),
+				DiffSuppressFunc: featureModellingDiffSuppressFunc(),
+			},
 		},
+	}
+}
+
+func featureModellingSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"not_null": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:        schema.TypeString,
+							Description: "Custom name for the check",
+							Optional:    true,
+						},
+						"threshold": {
+							Type:     schema.TypeFloat,
+							Optional: true,
+						},
+					},
+				},
+			},
+			"unique": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				ConflictsWith: []string{"domain_modelling"},
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:        schema.TypeString,
+							Description: "Custom name for the check",
+							Optional:    true,
+						},
+					},
+				},
+			},
+			"not_constant": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:        schema.TypeString,
+							Description: "Custom name for the check",
+							Optional:    true,
+						},
+						"enforce_in_partitions": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Default:  true,
+						},
+					},
+				},
+			},
+			"accepted_values": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:        schema.TypeString,
+							Description: "Custom name for the check",
+							Optional:    true,
+						},
+						"values": {
+							Type:        schema.TypeSet,
+							Description: "Features to include in the feature set",
+							Required:    true,
+
+							Elem: &schema.Schema{
+								Type:         schema.TypeString,
+								ValidateFunc: validation.StringIsNotWhiteSpace,
+							},
+						},
+					},
+				},
+			},
+			"within_range": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:        schema.TypeString,
+							Description: "Custom name for the check",
+							Optional:    true,
+						},
+						"minimum": {
+							Type:        schema.TypeString,
+							Description: "Minimum value (inclusive)",
+							Optional:    true,
+						},
+						"maximum": {
+							Type:        schema.TypeString,
+							Description: "Maximum value (inclusive)",
+							Optional:    true,
+						},
+						"threshold": {
+							Type:     schema.TypeFloat,
+							Optional: true,
+						},
+					},
+				},
+			},
+			"aggregate_within_range": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:        schema.TypeString,
+							Description: "Custom name for the check",
+							Optional:    true,
+						},
+						"aggregation": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The aggregation to perform.",
+							ValidateFunc: validation.StringInSlice([]string{
+								"sum", "count", "avg", "std", "min", "max",
+							}, false),
+						},
+						"minimum": {
+							Type:        schema.TypeString,
+							Description: "Minimum value (inclusive)",
+							Optional:    true,
+						},
+						"maximum": {
+							Type:        schema.TypeString,
+							Description: "Maximum value (inclusive)",
+							Optional:    true,
+						},
+					},
+				},
+			},
+			"row_check": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				ConflictsWith: []string{"domain_modelling"},
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:        schema.TypeString,
+							Description: "Custom name for the check",
+							Optional:    true,
+						},
+						"expression": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"threshold": {
+							Type:     schema.TypeFloat,
+							Optional: true,
+						},
+					},
+				},
+			},
+			"aggregate_check": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				ConflictsWith: []string{"domain_modelling"},
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:        schema.TypeString,
+							Description: "Custom name for the check",
+							Optional:    true,
+						},
+						"expression": {
+							Type:        schema.TypeString,
+							Description: "Units for the measure",
+							Optional:    true,
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+// We don't want to emit a diff if there is an empty
+// domain modelling block. It's just for the prettiness
+// of the terraform module.
+func featureModellingDiffSuppressFunc() schema.SchemaDiffSuppressFunc {
+	sizeOfSlice := func(item interface{}) int {
+		if slice, ok := item.([]interface{}); ok {
+			return len(slice)
+		}
+		return 0
+	}
+
+	domainModellingSize := func(model interface{}) (int, error) {
+		modelSlice, ok := model.([]interface{})
+		if !ok {
+			return 0, fmt.Errorf("expected []interface{}, got %T", model)
+		}
+		size := 0
+		for _, model := range modelSlice {
+			if mapped, ok := model.(Bag); ok {
+				size += sizeOfSlice(mapped["not_null"])
+				size += sizeOfSlice(mapped["unique"])
+				size += sizeOfSlice(mapped["not_constant"])
+				size += sizeOfSlice(mapped["accepted_values"])
+				size += sizeOfSlice(mapped["within_range"])
+				size += sizeOfSlice(mapped["aggregate_within_range"])
+				size += sizeOfSlice(mapped["row_check"])
+				size += sizeOfSlice(mapped["aggregate_check"])
+			}
+		}
+		return size, nil
+	}
+
+	return func(k, old, new string, d *schema.ResourceData) bool {
+		oldModel, newModel := d.GetChange("domain_modelling")
+		oldSize, err := domainModellingSize(oldModel)
+		if err != nil {
+			return false
+		}
+		newSize, err := domainModellingSize(newModel)
+		if err != nil {
+			return false
+		}
+		return oldSize == 0 && newSize == 0
 	}
 }
 
@@ -273,6 +510,17 @@ func resourceFeatureRead(d *schema.ResourceData, m interface{}) error {
 	if err := d.Set("attribute", flattenAttributes(feature.Attributes)); err != nil {
 		return err
 	}
+	if len(feature.Constraints) > 0 {
+		bag := flattenColumnConstraints(feature.Constraints)
+		if err := d.Set("domain_modelling", []Bag{bag}); err != nil {
+			return err
+		}
+	} else {
+		if err := d.Set("domain_modelling", nil); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -391,6 +639,14 @@ func buildFeature(d *schema.ResourceData) (*Feature, error) {
 		feature.EntityID = number
 		feature.Type = "row"
 		feature.Over = expandIdentifierList(d.Get("over").([]interface{}))
+	}
+
+	modelling := d.Get("domain_modelling").([]interface{})
+	for _, domain := range modelling {
+		if value, ok := domain.(Bag); ok {
+			constraints := expandColumnConstraints(value)
+			feature.Constraints = constraints
+		}
 	}
 
 	return &feature, nil
