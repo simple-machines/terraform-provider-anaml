@@ -75,6 +75,11 @@ func ResourceMetricsSet() *schema.Resource {
 				Required: true,
 				Elem:     metricSchema(),
 			},
+			"derived_metric": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem:     derivedMetricSchema(),
+			},
 		},
 	}
 }
@@ -196,6 +201,24 @@ func metricSchema() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "An SQL expression to apply to the result of the feature aggregation.",
+			},
+		},
+	}
+}
+
+func derivedMetricSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"name": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validateAnamlName(),
+			},
+			"select": {
+				Type:         schema.TypeString,
+				Required:     true,
+				Description:  "An SQL expression for the column to aggregate.",
+				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 		},
 	}
@@ -393,10 +416,11 @@ func buildDimensions(d *schema.ResourceData) ([]Dimension, error) {
 }
 
 func buildMetrics(d *schema.ResourceData) ([]Metric, error) {
-	metric_array := d.Get("metric").([]interface{})
-	res := make([]Metric, 0, len(metric_array))
+	base_array := d.Get("metric").([]interface{})
+	derived_array := d.Get("derived_metric").([]interface{})
+	res := make([]Metric, 0, len(base_array)+len(derived_array))
 
-	for _, raw := range metric_array {
+	for _, raw := range base_array {
 		value := raw.(map[string]interface{})
 		name := value["name"].(string)
 		expression := value["select"].(string)
@@ -414,6 +438,7 @@ func buildMetrics(d *schema.ResourceData) ([]Metric, error) {
 			}
 		}
 		Metric := Metric{
+			Type: "base",
 			Name: &name,
 			Select: SQLExpression{
 				SQL: expression,
@@ -426,6 +451,24 @@ func buildMetrics(d *schema.ResourceData) ([]Metric, error) {
 		}
 
 		res = append(res, Metric)
+
+	}
+
+	for _, raw := range derived_array {
+		value := raw.(map[string]interface{})
+		name := value["name"].(string)
+		expression := value["select"].(string)
+
+		Metric := Metric{
+			Type: "derived",
+			Name: &name,
+			Select: SQLExpression{
+				SQL: expression,
+			},
+		}
+
+		res = append(res, Metric)
+
 	}
 
 	return res, nil
@@ -506,28 +549,36 @@ func readDimensions(d *schema.ResourceData, dimensions []Dimension) error {
 }
 
 func readMetrics(d *schema.ResourceData, input []Metric) error {
-	metrics := make([]interface{}, 0, len(input))
+	base := make([]interface{}, 0, len(input))
+	derived := make([]interface{}, 0, len(input))
 
 	for _, metric := range input {
 		single := make(map[string]interface{})
 		single["name"] = metric.Name
 		single["select"] = metric.Select.SQL
-		single["aggregation"] = metric.Aggregate.Type
-		single["filter"] = nil
-		if metric.Filter != nil {
-			single["filter"] = metric.Filter.SQL
-		}
-		single["post_aggregation"] = nil
-		if metric.PostAggExpr != nil {
-			single["post_aggregation"] = metric.PostAggExpr.SQL
-		}
+		if metric.Type == "base" {
+			single["aggregation"] = metric.Aggregate.Type
+			single["filter"] = nil
+			if metric.Filter != nil {
+				single["filter"] = metric.Filter.SQL
+			}
+			single["post_aggregation"] = nil
+			if metric.PostAggExpr != nil {
+				single["post_aggregation"] = metric.PostAggExpr.SQL
+			}
+			base = append(base, single)
 
-		metrics = append(metrics, single)
+		} else {
+			derived = append(derived, single)
+		}
 	}
 
-	if err := d.Set("metric", metrics); err != nil {
+	if err := d.Set("metric", base); err != nil {
 		return err
 	}
 
+	if err := d.Set("derived_metric", derived); err != nil {
+		return err
+	}
 	return nil
 }

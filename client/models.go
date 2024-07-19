@@ -216,6 +216,7 @@ type Dimension struct {
 
 // Dimension ...
 type Metric struct {
+	Type        string               `json:"adt_type"`
 	Name        *string              `json:"name,omitempty"`
 	Select      SQLExpression        `json:"select"`
 	Filter      *SQLExpression       `json:"filter,omitempty"`
