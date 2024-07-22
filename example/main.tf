@@ -1062,19 +1062,19 @@ resource "anaml-operations_view_materialisation_job" "view_materialisation_strea
   view {
     table                       = anaml_table.household_normalised.id
     destination {
-        destination             = data.anaml-operations_destination.s3a.id
-        folder {
-          path = "household_normalised_view_results"
-          partitioning_enabled = true
-          save_mode = "overwrite"
-        }
+      destination             = data.anaml-operations_destination.s3a.id
+      folder {
+        path = "household_normalised_view_results"
+        partitioning_enabled = true
+        save_mode = "overwrite"
       }
+    }
   }
 
   labels = [ anaml-operations_label_restriction.terraform.text ]
 }
 
-resource "anaml_metric_set" "average_baskets" {
+resource "anaml_metrics_set" "average_baskets" {
   name   = "average_baskets"
   description = "This metric set shows the average baskets grouped by the customers state and their gender."
 
@@ -1094,11 +1094,11 @@ resource "anaml_metric_set" "average_baskets" {
   metric {
     name = "average_basket_spend"
     select = "average_basket_spend"
-    aggregate = "avg"
+    aggregation = "avg"
   }
   metric {
     name = "total_basket_spend"
     select = "total_basket_spend"
-    aggregate = "sum"
+    aggregation = "sum"
   }
 }
