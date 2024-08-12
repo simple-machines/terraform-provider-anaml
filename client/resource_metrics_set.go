@@ -155,9 +155,9 @@ func timeDimensionSchema() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ValidateFunc: validation.StringInSlice([]string{
-					"from_today", "to_ending",
+					"from_today", "to_ending", "start_of_next",
 				}, false),
-				Default: "to_ending",
+				Default: "from_today",
 			},
 			"back": {
 				Type:         schema.TypeInt,
@@ -371,17 +371,22 @@ func buildDimensions(d *schema.ResourceData) ([]Dimension, error) {
 			Type: value["granularity"].(string),
 		}
 		edgeRaw, found := value["edge"].(string)
-		edgeTag := "toending"
+		edgeTag := "fromtoday"
 
 		if found && edgeRaw == "from_today" {
 			edgeTag = "fromtoday"
+		} else if found && edgeRaw == "to_ending" {
+			edgeTag = "toending"
+		} else if found && edgeRaw == "start_of_next" {
+			edgeTag = "tonextstart"
 		}
+
 		edge := TypeTag{
 			Type: edgeTag,
 		}
 		backRaw, found := value["back"].(int)
 		var back *int
-		if found && edgeRaw == "from_today" {
+		if found {
 			back = &backRaw
 		}
 		Dimension := Dimension{
@@ -528,8 +533,12 @@ func readDimensions(d *schema.ResourceData, dimensions []Dimension) error {
 			single["granularity"] = dimension.Granularity.Type
 			if dimension.Edge.Type == "fromtoday" {
 				single["edge"] = "from_today"
-			} else {
+			} else if dimension.Edge.Type == "toending" {
 				single["edge"] = "to_ending"
+			} else if dimension.Edge.Type == "tonextstart" {
+				single["edge"] = "start_of_next"
+			} else {
+				return errors.New("Unrecognised time dimension edge")
 			}
 			single["back"] = dimension.Back
 			time = append(time, single)
